@@ -1,8 +1,11 @@
 # DesignSpaceEditor
 
-A RoboFont extension to create and edit designspace files.
+An **experimental** RoboFont extension to create and edit designspace files.
+
 * open, edit and save existing files
 * start new files
+* The window does not behave like a document yet. The save button is clumsy at the moment.
+* Some new elements in the designspace that are not yet part of MutatorMath.
 
 ![Screenshot](screen.jpg)
 
