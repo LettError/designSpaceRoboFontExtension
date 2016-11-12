@@ -6,3 +6,4 @@ A description on the [DesignSpaceDocument](https://github.com/LettError/MutatorM
 
 This extension contains some code that will be published as a separate module. 
 
+[Screenshot](screen.jpg)
