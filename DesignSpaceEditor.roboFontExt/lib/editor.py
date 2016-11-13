@@ -39,7 +39,7 @@ def ClassNameIncrementer(clsName, bases, dct):
 
 
 class KeyedGlyphDescriptor(NSObject):
-    __metaclass__ = ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.glyphName = None
@@ -53,7 +53,7 @@ class KeyedGlyphDescriptor(NSObject):
         return len(self.patterns)==1
         
 class KeyedSourceDescriptor(NSObject):
-    __metaclass__ = ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -74,7 +74,8 @@ class KeyedSourceDescriptor(NSObject):
     
     def setName(self):
         # make a name attribute based on the location
-        name = ['source:']
+        # this will overwrite things that the source file might already contain.
+        name = ['source', self.familyName, self.styleName]
         for k, v in self.location.items():
             name.append("%s_%3.3f"%(k, v))
         self.name = "_".join(name)
@@ -166,7 +167,7 @@ class KeyedSourceDescriptor(NSObject):
                 NSBeep()
     
 class KeyedInstanceDescriptor(NSObject):
-    __metaclass__ = ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -186,7 +187,7 @@ class KeyedInstanceDescriptor(NSObject):
 
     def setName(self):
         # make a name attribute based on the location
-        name = ['instance:']
+        name = ['instance', self.familyName, self.styleName]
         for k, v in self.location.items():
             name.append("%s_%3.3f"%(k, v))
         self.name = "_".join(name)
@@ -242,7 +243,6 @@ class KeyedInstanceDescriptor(NSObject):
             saveDir = ""
         else:
             saveDir = self.dir
-        #self.path = "saveDir: %s fileName %s"%(saveDir, fileName)
         self.path = os.path.join(saveDir, fileName)
 
     def setValue_forUndefinedKey_(self, value=None, key=None):
@@ -794,6 +794,8 @@ class DesignSpaceEditor:
         docFolder = os.path.dirname(path)
         for item in self.instancesItem:
             item.setPathRelativeTo(docFolder, self.instanceFolderName)
+            item.setName()
+        for item in self.mastersItem:
             item.setName()
         # dump all the paths
         #self.dumpFilePaths()
