@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 
 """
 
-    designspaceEditor
+    designSpaceDocument
 
     - read and write designspace files
     - axes must be defined.
@@ -15,11 +15,11 @@ import xml.etree.ElementTree as ET
 
 
 __all__ = [
-    'DesignSpaceEditorError', 'BaseDocReader', 'DesignSpaceDocument', 
+    'DesignSpaceDocumentError', 'BaseDocReader', 'DesignSpaceDocument', 
     'SourceDescriptor', 'InstanceDescriptor',
     'AxisDescriptor', 'BaseDocReader', 'BaseDocWriter']
 
-class DesignSpaceEditorError(Exception):
+class DesignSpaceDocumentError(Exception):
     def __init__(self, msg, obj=None):
         self.msg = msg
         self.obj = obj
@@ -146,17 +146,17 @@ class BaseDocWriter(object):
         if pretty:
             _indent(self.root, whitespace=self._whiteSpace)
         tree = ET.ElementTree(self.root)
-        tree.write(self.path, encoding=u"UTF-8", method='xml', xml_declaration=True)
+        tree.write(self.path, encoding=u"utf-8", method='xml', xml_declaration=True)
 
     def _makeLocationElement(self, locationObject, name=None):
-        """ Convert Location object to an locationElement."""
+        """ Convert Location dict to a locationElement."""
         locElement = ET.Element("location")
         if name is not None:
            locElement.attrib['name'] = name
         defaultLoc = self.newDefaultLocation()
         validatedLocation = {}
         for axisName, axisValue in defaultLoc.items():
-            # update the location object with missing default axis values
+            # update the location dict with missing default axis values
             if not axisName in locationObject:
                 validatedLocation[axisName] = axisValue
             else:
@@ -165,12 +165,17 @@ class BaseDocWriter(object):
            dimElement = ET.Element('dimension')
            dimElement.attrib['name'] = dimensionName
            if type(dimensionValue)==tuple:
-               dimElement.attrib['xvalue'] = "%f"%dimensionValue[0]
-               dimElement.attrib['yvalue'] = "%f"%dimensionValue[1]
+               dimElement.attrib['xvalue'] = self.intOrFloat(dimensionValue[0])
+               dimElement.attrib['yvalue'] = self.intOrFloat(dimensionValue[1])
            else:
-               dimElement.attrib['xvalue'] = "%f"%dimensionValue
+               dimElement.attrib['xvalue'] = self.intOrFloat(dimensionValue)
            locElement.append(dimElement)
         return locElement, validatedLocation
+    
+    def intOrFloat(self, num):
+        if int(num) == num:
+            return "%d"%num
+        return "%f"%num
 
     def _addAxis(self, axisObject):
         self.axes.append(axisObject)
@@ -343,7 +348,14 @@ class BaseDocReader(object):
             axisObject.name = axisElement.attrib.get("name")
             axisObject.minimum = float(axisElement.attrib.get("minimum"))
             axisObject.maximum = float(axisElement.attrib.get("maximum"))
-            axisObject.default = float(axisElement.attrib.get("default"))
+            # we need to check if there is an attribute named "initial"
+            if axisElement.attrib.get("default") is None:
+                if axisElement.attrib.get("initial") is not None:
+                    axisObject.default = float(axisElement.attrib.get("initial"))
+                else:
+                    axisObject.default = axisObject.minimum
+            else:
+                axisObject.default = float(axisElement.attrib.get("default"))
             axisObject.tag = axisElement.attrib.get("tag")
             for mapElement in axisElement.findall('map'):
                 a = float(mapElement.attrib['input'])
@@ -513,7 +525,7 @@ class BaseDocReader(object):
         glyphData = {}
         glyphName = glyphElement.attrib.get('name')
         if glyphName is None:
-            raise DesignSpaceEditorError("Glyph object without name attribute.")
+            raise DesignSpaceDocumentError("Glyph object without name attribute.")
         mute = glyphElement.attrib.get("mute")
         if mute == "1":
             glyphData['mute'] = True
@@ -640,7 +652,7 @@ if __name__ == "__main__":
         >>> i1.postScriptFontName = "InstancePostscriptName"
         >>> i1.styleMapFamilyName = "InstanceStyleMapFamilyName"
         >>> i1.styleMapStyleName = "InstanceStyleMapStyleName"
-        >>> glyphData = dict(name="arrow", mute=True)
+        >>> glyphData = dict(name="arrow", mute=True, unicode="0x123")
         >>> i1.glyphs['arrow'] = glyphData
         >>> doc.addInstance(i1)
         >>> # add instance 2
