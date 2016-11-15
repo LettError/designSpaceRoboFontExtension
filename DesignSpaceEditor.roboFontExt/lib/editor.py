@@ -39,7 +39,7 @@ def ClassNameIncrementer(clsName, bases, dct):
 
 
 class KeyedGlyphDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    #__metaclass__= ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.glyphName = None
@@ -53,7 +53,7 @@ class KeyedGlyphDescriptor(NSObject):
         return len(self.patterns)==1
         
 class KeyedSourceDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    #__metaclass__= ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -167,7 +167,7 @@ class KeyedSourceDescriptor(NSObject):
                 NSBeep()
     
 class KeyedInstanceDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    #__metaclass__= ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -289,7 +289,7 @@ class KeyedInstanceDescriptor(NSObject):
         return self.styleName
     
 class KeyedAxisDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    #__metaclass__= ClassNameIncrementer
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
         ("italic", "ital"),
@@ -603,11 +603,6 @@ class DesignSpaceEditor:
             callback=self.callbackOpenMaster,
             sizeStyle="small")
         self.mastersGroup.openButton.enable(False)
-        self.mastersGroup.addButton = Button(
-            addButtonSize, "Add",
-            callback=self.callbackAddOpenFonts,
-            sizeStyle="small")
-        self.mastersGroup.addButton.enable(False)
         
         self.instancesGroup = Group((0,0,0,0))
         self.instancesItem = List((0, toolbarHeight, -0, -0), [],
@@ -666,7 +661,7 @@ class DesignSpaceEditor:
         
         # document and path
         if self.designSpacePath is None:
-            report.append("This document has not been saved yet.")
+            #report.append("This document has not been saved yet.")
             if len(self.doc.sources)>0:
                 masterFolder = self.getSaveDirFromMasters()
                 report.append("Make sure to save this document in %s."%masterFolder)
@@ -739,12 +734,8 @@ class DesignSpaceEditor:
             progress.close()            
     
     def callbackBecameMain(self, sender):
-        allFonts = AllFonts()
-        if len(allFonts)>0:
-            self.mastersGroup.addButton.enable(True)
-        else:
-            self.mastersGroup.addButton.enable(False)
-        
+        pass
+                
     def callbackInstancesDblClick(self, sender):
         print "callbackInstancesDblClick"
     
@@ -1019,9 +1010,7 @@ class DesignSpaceEditor:
         for item in self.mastersItem:
             itemDir = os.path.dirname(item.path)
             paths[itemDir] = True
-        if len(paths)==0:
-            self.setMasterStatus("Add some UFOs.")
-        elif len(paths)==1:
+        if len(paths)==1:
             self.setMasterStatus("All masters in the same folder.")
         else:
             self.setMasterStatus("Masters from mixed folders.")

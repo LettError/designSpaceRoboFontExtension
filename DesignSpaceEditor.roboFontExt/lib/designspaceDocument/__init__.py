@@ -719,6 +719,5 @@ if __name__ == "__main__":
     def _test():
         import doctest
         doctest.testmod()
-        print "done"
     
     _test()
