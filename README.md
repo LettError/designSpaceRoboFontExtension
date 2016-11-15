@@ -1,12 +1,20 @@
 # DesignSpaceEditor
 
-An **experimental** RoboFont extension to create and edit designspace files. If you want a preview, measuring tools and a nice graphic representation of the design space, have a look at [Superpolator](http://new.superpolator.com/home/order/)
+An **experimental** RoboFont extension to create and edit designspace files. If you want a **preview**, **measuring tools** and a **nice graphic** representation of the design space, have a look at [Superpolator](http://new.superpolator.com/home/order/).
 
-* Open, edit and save existing files
-* Start new files.
+* Open, edit and save existing designspace files.
+* Start new designspace files.
 * Open master UFOs
 * The window does not behave like a document yet. The save button is clumsy at the moment.
 * Some new elements in the designspace that are not yet part of MutatorMath.
+* Should be compatible with **MutatorMath** and **FontTools.varlib**.
+
+## Usage
+1. Add some axes first. 
+2. Then load some masters.
+3. Then save the document in the same folder as your masters, or one level up. The document will store a relative path to the masters and instances.
+4. Define instances and whatever else you need to do.
+5. Save. 
 
 ![Screenshot](screen.png)
 
@@ -36,11 +44,11 @@ An **experimental** RoboFont extension to create and edit designspace files. If 
 * This panel shows a very basic validation report of what needs to be done and where the UFOs are, etc.
 
 ## Notes
-* This extension contains some code that will be published as a separate module.
-* This uses the [DesignSpaceDocument](https://github.com/LettError/designSpaceDocument) reader and writer.
+* This extension uses the [DesignSpaceDocument](https://github.com/LettError/designSpaceDocument) reader and writer.
 
 ## Todo
 * Add generate button that calls the regular MutatorMath build. 
 * Investigate the feasability of storing some preferences.
+* Separate validation for MutatorMath and Varlib use.
 * The name of the folder where to save the instances would be a nice pref.
 * Maybe a teensy preview.
