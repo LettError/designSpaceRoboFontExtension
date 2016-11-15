@@ -18,7 +18,7 @@ from vanilla import *
 
 
 
-hasPathSymbol = u"✓"
+checkSymbol = u"✓"
 
 # NSOBject Hack, please remove before release.
 def ClassNameIncrementer(clsName, bases, dct):
@@ -100,7 +100,7 @@ class KeyedSourceDescriptor(NSObject):
         
     def sourceHasFileKey(self):
         if os.path.exists(self.path):
-            return hasPathSymbol
+            return checkSymbol
         return ""
     
     def sourceFamilyNameKey(self):
@@ -199,7 +199,7 @@ class KeyedInstanceDescriptor(NSObject):
         if self.path is None:
             return ""
         if os.path.exists(self.path):
-            return hasPathSymbol
+            return checkSymbol
         return u""
     
     def getAxisValue(self, axisIndex):
@@ -289,7 +289,7 @@ class KeyedInstanceDescriptor(NSObject):
         return self.styleName
     
 class KeyedAxisDescriptor(NSObject):
-    __metaclass__ = ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
         ("italic", "ital"),
@@ -298,6 +298,9 @@ class KeyedAxisDescriptor(NSObject):
         ("width", "wdth"),
         ("weight", "wght"),
         ]
+
+    defaultLabelNameLanguageTag = "en"
+    
     def __new__(cls):
         self = cls.alloc().init()
         self.tag = None     # opentype tag for this axis
@@ -312,7 +315,7 @@ class KeyedAxisDescriptor(NSObject):
     def registeredTagKey(self):
         for name, tag in self.registeredTags:
             if name == self.name and tag == self.tag:
-                return u"®"
+                return checkSymbol
         return ""
         
     def setValue_forUndefinedKey_(self, value=None, key=None):
@@ -343,7 +346,17 @@ class KeyedAxisDescriptor(NSObject):
                 self.default = num
             except ValueError:
                 NSBeep()
-
+        elif key == "labelNameKey":
+            if self.registeredTagKey():
+                return ""
+            else:
+                self.labelNames[self.defaultLabelNameLanguageTag] = value
+    
+    def labelNameKey(self):
+        if self.registeredTagKey():
+            return "-"
+        return self.labelNames.get("en", "edit")
+        
     def axisNameKey(self):
         return self.name
     def axisTagKey(self):
@@ -377,7 +390,6 @@ class DesignSpaceEditor:
     instanceFolderName = "instances"
     def __init__(self, designSpacePath=None):
         self.designSpacePath = designSpacePath
-        #imageCell = newImageListCell()
         self.doc = None
         self._newInstanceCounter = 1
         if designSpacePath is None:
@@ -391,9 +403,13 @@ class DesignSpaceEditor:
                 'itemIdentifier': "toolbarSave",
                 'label': 'Save',
                 'callback': self.save,
-                #'imageObject': NSImage.alloc().initWithContentsOfFile_('toolbar_axes_m.pdf')
-                'imageObject': NSImage.imageNamed_('toolbar_axes_m')
-                
+                'imageNamed': "toolbarScriptOpen",
+            },
+            {
+                'itemIdentifier': "addOPenFonts",
+                'label': 'Add Open Fonts',
+                'callback': self.callbackAddOpenFonts,
+                'imageNamed': "toolbarScriptOpen",
             },
         ]
         self.w.addToolbar("DesignSpaceToolbar", toolbarItems)
@@ -498,7 +514,7 @@ class DesignSpaceEditor:
                 },
             ]
         axisColDescriptions = [
-                {   'title': '',
+                {   'title': u"®",
                     'key':'registeredTagKey',
                     'width':40,
                     'editable':False,
@@ -528,6 +544,11 @@ class DesignSpaceEditor:
                     'width':100,
                     'editable':True,
                 },
+                {   'title': 'Labelname',
+                    'key':'labelNameKey',
+                    'width':150,
+                    'editable':True,
+                },
             ]
         glyphsColDescriptions = [
                 {   'title': '',
@@ -548,7 +569,8 @@ class DesignSpaceEditor:
         buttonMargin = 2
         buttonHeight = 20
         openButtonSize = (48,buttonMargin+1,50,buttonHeight)
-        statusTextSize = (105, buttonMargin+4,-10,buttonHeight)
+        statusTextSize = (165, buttonMargin+4,-10,buttonHeight)
+        addButtonSize = (102,buttonMargin+1,50,buttonHeight)
         axisToolDescriptions = [
             {'title': "+", 'width': 20,},
             {'title': "-", 'width': 20}
@@ -581,6 +603,11 @@ class DesignSpaceEditor:
             callback=self.callbackOpenMaster,
             sizeStyle="small")
         self.mastersGroup.openButton.enable(False)
+        self.mastersGroup.addButton = Button(
+            addButtonSize, "Add",
+            callback=self.callbackAddOpenFonts,
+            sizeStyle="small")
+        self.mastersGroup.addButton.enable(False)
         
         self.instancesGroup = Group((0,0,0,0))
         self.instancesItem = List((0, toolbarHeight, -0, -0), [],
@@ -631,6 +658,7 @@ class DesignSpaceEditor:
         self.w.open()
         if designSpacePath is not None:
             self.w.getNSWindow().setRepresentedURL_(NSURL.fileURLWithPath_(designSpacePath))
+        self.w.bind("became main", self.callbackBecameMain)
     
     def validate(self):
         # validate all data and write a report here.
@@ -709,6 +737,13 @@ class DesignSpaceEditor:
                     pass
                 progress.update()
             progress.close()            
+    
+    def callbackBecameMain(self, sender):
+        allFonts = AllFonts()
+        if len(allFonts)>0:
+            self.mastersGroup.addButton.enable(True)
+        else:
+            self.mastersGroup.addButton.enable(False)
         
     def callbackInstancesDblClick(self, sender):
         print "callbackInstancesDblClick"
@@ -956,6 +991,16 @@ class DesignSpaceEditor:
 
     def callbackOpenMaster(self, sender):
         self.openSelectedItem(self.mastersItem)
+        self.updateAxesColumns()
+        self.enableInstanceList()
+        self.validate()
+    
+    def callbackAddOpenFonts(self, sender):
+        # add the open fonts
+        weHave = [s.path for s in self.doc.sources]
+        for f in AllFonts():
+            if f.path not in weHave:
+                self.addSourceFromFont(f)
         self.enableInstanceList()
         self.validate()
 
@@ -996,22 +1041,34 @@ class DesignSpaceEditor:
         self.enableInstanceList()
         self.reportMasterPathStatus()
         self.validate()
-        
-    def finalizeAddMaster(self, paths):
+    
+    def addSourceFromFont(self, font):
         defaults = {}
         for axisDescriptor in self.doc.axes:
             defaults[axisDescriptor.name] = axisDescriptor.default
+        sourceDescriptor = KeyedSourceDescriptor()
+        sourceDescriptor.path = font.path
+        sourceDescriptor.familyName = font.info.familyName
+        sourceDescriptor.styleName = font.info.styleName
+        sourceDescriptor.location = {}
+        sourceDescriptor.location.update(defaults)
+        self.doc.addSource(sourceDescriptor)
+        self.mastersItem.set(self.doc.sources)
+        sourceDescriptor.setName()
+
+    def finalizeAddMaster(self, paths):
         for path in paths:
             font = OpenFont(path, showUI=False)
-            sourceDescriptor = KeyedSourceDescriptor()
-            sourceDescriptor.path = path
-            sourceDescriptor.familyName = font.info.familyName
-            sourceDescriptor.styleName = font.info.styleName
-            sourceDescriptor.location = {}
-            sourceDescriptor.location.update(defaults)
-            self.doc.addSource(sourceDescriptor)
-            self.mastersItem.set(self.doc.sources)
-            sourceDescriptor.setName()
+            self.addSourceFromFont(font)
+            # sourceDescriptor = KeyedSourceDescriptor()
+            # sourceDescriptor.path = path
+            # sourceDescriptor.familyName = font.info.familyName
+            # sourceDescriptor.styleName = font.info.styleName
+            # sourceDescriptor.location = {}
+            # sourceDescriptor.location.update(defaults)
+            # self.doc.addSource(sourceDescriptor)
+            # self.mastersItem.set(self.doc.sources)
+            # sourceDescriptor.setName()
         self.updateAxesColumns()
         self.enableInstanceList()
         self.reportMasterPathStatus()
