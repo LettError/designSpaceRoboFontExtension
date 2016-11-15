@@ -2,8 +2,8 @@
 
 import os, time
 from AppKit import NSToolbarFlexibleSpaceItemIdentifier, NSURL, NSImageCell, NSImageAlignTop, NSScaleNone, NSImageFrameNone, NSImage, NSObject
-import designspaceDocument
-from designspaceDocument import *
+import designSpaceDocument
+from designSpaceDocument import *
 from defcon import Font
 from defconAppKit.windows.progressWindow import ProgressWindow
 from vanilla import *
@@ -39,7 +39,7 @@ def ClassNameIncrementer(clsName, bases, dct):
 
 
 class KeyedGlyphDescriptor(NSObject):
-    #__metaclass__= ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.glyphName = None
@@ -53,7 +53,7 @@ class KeyedGlyphDescriptor(NSObject):
         return len(self.patterns)==1
         
 class KeyedSourceDescriptor(NSObject):
-    #__metaclass__= ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -167,7 +167,7 @@ class KeyedSourceDescriptor(NSObject):
                 NSBeep()
     
 class KeyedInstanceDescriptor(NSObject):
-    #__metaclass__= ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -289,7 +289,7 @@ class KeyedInstanceDescriptor(NSObject):
         return self.styleName
     
 class KeyedAxisDescriptor(NSObject):
-    #__metaclass__= ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
         ("italic", "ital"),
@@ -347,9 +347,7 @@ class KeyedAxisDescriptor(NSObject):
             except ValueError:
                 NSBeep()
         elif key == "labelNameKey":
-            if self.registeredTagKey():
-                return ""
-            else:
+            if not self.registeredTagKey():
                 self.labelNames[self.defaultLabelNameLanguageTag] = value
     
     def labelNameKey(self):
@@ -676,9 +674,12 @@ class DesignSpaceEditor:
             report.append("Axes:")
             for axis in self.doc.axes:
                 if axis.registeredTagKey():
-                    report.append("\t\"%s\" registered OpenType axis name"%axis.name)
+                    report.append("\t\"%s\" registered OpenType axis name."%axis.name)
                 else:
-                    report.append("\t\"%s\" is a non-standard axis name"%axis.name)
+                    report.append("\t\"%s\" is a non-standard axis name."%axis.name)
+                    for k, v in axis.labelNames.items():
+                        report.append("\t\tlabel name %s: \"%s\""%(k,v))
+
                 
         # masters
         if len(self.doc.sources)==0:
