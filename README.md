@@ -8,7 +8,7 @@ An **experimental** RoboFont extension to create and edit designspace files. If 
 * The window does not behave like a document yet. The save button is clumsy at the moment.
 * Some new elements in the designspace that are not yet part of MutatorMath.
 
-![Screenshot](screen.jpg)
+![Screenshot](screen.png)
 
 ## Axes
 * Use the `+` button to create a new axis.
@@ -41,4 +41,6 @@ An **experimental** RoboFont extension to create and edit designspace files. If 
 
 ## Todo
 * Add generate button that calls the regular MutatorMath build. 
+* Investigate the feasability of storing some preferences.
+* The name of the folder where to save the instances would be a nice pref.
 * Maybe a teensy preview.
