@@ -390,10 +390,10 @@ class DesignSpaceEditor:
         self.designSpacePath = designSpacePath
         self.doc = None
         self._newInstanceCounter = 1
-        if designSpacePath is None:
+        if self.designSpacePath is None:
             fileNameTitle = "Untitled.designspace"
         else:
-            fileNameTitle = os.path.basename(designSpacePath)
+            fileNameTitle = os.path.basename(self.designSpacePath)
         self.w = Window((940, 700), fileNameTitle, minSize=(200,400))
         self._updatingTheAxesNames = False
         toolbarItems = [
@@ -643,14 +643,15 @@ class DesignSpaceEditor:
            # this panel will show glyphs and compatibiility.
            #dict(label="Glyphs", view=self.glyphsGroup, size=250, collapsed=False, canResize=True),
         ]
-        self.read(designSpacePath)
+
+        self.read(self.designSpacePath)
         self.w.accordionView = AccordionView((0, 0, -0, -0), descriptions)
         self.updateAxesColumns()
         self.enableInstanceList()
         self.reportMasterPathStatus()
         self.w.open()
-        if designSpacePath is not None:
-            self.w.getNSWindow().setRepresentedURL_(NSURL.fileURLWithPath_(designSpacePath))
+        if self.designSpacePath is not None:
+            self.w.getNSWindow().setRepresentedURL_(NSURL.fileURLWithPath_(self.designSpacePath))
         self.w.bind("became main", self.callbackBecameMain)
     
     def validate(self):

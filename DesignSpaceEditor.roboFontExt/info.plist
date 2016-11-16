@@ -6,6 +6,14 @@
 	<array>
 		<dict>
 			<key>path</key>
+			<string>openDesignSpaceFile.py</string>
+			<key>preferredName</key>
+			<string>Open DesignSpace</string>
+			<key>shortKey</key>
+			<string></string>
+		</dict>
+		<dict>
+			<key>path</key>
 			<string>newDesignSpaceFile.py</string>
 			<key>preferredName</key>
 			<string>New DesignSpace</string>

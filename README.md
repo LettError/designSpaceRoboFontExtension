@@ -1,6 +1,6 @@
 # DesignSpaceEditor
 
-An **experimental** RoboFont extension to create and edit designspace files. If you want a **preview**, **measuring tools** and a **nice graphic** representation of the design space, have a look at [Superpolator](http://new.superpolator.com/home/order/).
+An **experimental** RoboFont extension to create and edit designspace files. If you want a **preview**, **measuring tools**, more than **5 axes** and a **nice graphic** representation of the design space, have a look at [Superpolator](http://new.superpolator.com/home/order/).
 
 * Open, edit and save existing designspace files.
 * Start new designspace files.
@@ -20,10 +20,10 @@ An **experimental** RoboFont extension to create and edit designspace files. If 
 
 ## Axes
 * Use the `+` button to create a new axis.
-* Rename the axis to what you need. If you type one of the registered OpenType axis names (*weight*, *width*, *optical*, *slant* or *italic*) the tag will be filled in automatically and a comforting `✓` appears next to the axis name to indicate this is indeed a standard axis.
+* Rename the axis to what you need. If you type one of the registered OpenType axis names (*weight*, *width*, *optical*, *slant* or *italic*, all lowercase) the tag will be filled in automatically and a comforting `✓` appears next to the axis name to indicate this is indeed a standard axis.
 * Minimum value, maximum value are the boundaries of the axis.
 * Default is the default value on the axis for new instances.
-* For unregistered axes you'll be able to add a *labelname*. This name is intended for user-facing UI labeling. It will use `xml:lang="en"` for these entries. 
+* For unregistered axes you'll be able to add a *labelname*. This name is intended for user-facing UI labeling. It will use `xml:lang="en"` for these entries. This field is not yet fully supported in the varlib tools.
 
 ## Masters
 * Use the `+` button to add masters: a file dialog will appear and you can select a UFO.
