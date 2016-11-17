@@ -1,9 +1,13 @@
 # coding=utf-8
 
+
+
+
 import os, time
 from AppKit import NSToolbarFlexibleSpaceItemIdentifier, NSURL, NSImageCell, NSImageAlignTop, NSScaleNone, NSImageFrameNone, NSImage, NSObject
 import designSpaceDocument
 from designSpaceDocument import *
+from mojo.extensions import getExtensionDefault, setExtensionDefault, ExtensionBundle
 from defcon import Font
 from defconAppKit.windows.progressWindow import ProgressWindow
 from vanilla import *
@@ -13,6 +17,8 @@ from mojo.UI import AccordionView
 from mojo.roboFont import *
 
 from vanilla import *
+import settings
+reload(settings)
 
 #import descriptors
 
@@ -79,7 +85,7 @@ class KeyedSourceDescriptor(NSObject):
         for k, v in self.location.items():
             name.append("%s_%3.3f"%(k, v))
         self.name = "_".join(name)
-        
+    
     def copyThisStuff(self, state=True):
         if state:
             self.copyLib = True
@@ -94,6 +100,14 @@ class KeyedSourceDescriptor(NSObject):
         
     def setAxisOrder(self, names):
         self.axisOrder = names
+    
+    def defaultMasterKey(self):
+        # apparently this is uses to indicate that this master
+        # might be intended to be the default font in this system.
+        # we could consider making this a separate flag?
+        if self.copyInfo:
+            return "*"
+        return ""
         
     def sourceUFONameKey(self):
         return os.path.basename(self.path)
@@ -385,8 +399,13 @@ def newImageListCell():
 
 
 class DesignSpaceEditor:
-    instanceFolderName = "instances"
     def __init__(self, designSpacePath=None):
+
+        self.settingsIdentifier = "%s.%s" % (settings.settingsIdentifier, "general")
+        self.updateFromSettings()
+        #extensionSettings = getExtensionDefault(self.settingsIdentifier, dict())
+        #self.instanceFolderName = extensionSettings.get('instanceFolderName', "instances")
+
         self.designSpacePath = designSpacePath
         self.doc = None
         self._newInstanceCounter = 1
@@ -409,16 +428,30 @@ class DesignSpaceEditor:
                 'callback': self.callbackAddOpenFonts,
                 'imageNamed': "toolbarScriptOpen",
             },
+            {
+                'itemIdentifier': NSToolbarFlexibleSpaceItemIdentifier,
+            },
+            {
+                'itemIdentifier': "settings",
+                'label': 'Settings',
+                'callback': self.toolbarSettings,
+                'imageNamed': "prefToolbarMisc",
+            },
         ]
         self.w.addToolbar("DesignSpaceToolbar", toolbarItems)
         
-        fileIconWidth = 30
+        fileIconWidth = 20
         ufoNameWidth = 220
         axisValueWidth = 80
         familyNameWidth = 130
         masterColDescriptions = [
                 {   'title': '',
                     'key':'sourceHasFileKey',
+                    'width':fileIconWidth,
+                    'editable':False,
+                },
+                {   'title': '',
+                    'key':'defaultMasterKey',
                     'width':fileIconWidth,
                     'editable':False,
                 },
@@ -514,7 +547,7 @@ class DesignSpaceEditor:
         axisColDescriptions = [
                 {   'title': u"®",
                     'key':'registeredTagKey',
-                    'width':40,
+                    'width':2*fileIconWidth,
                     'editable':False,
                 },
                 {   'title': 'Name',
@@ -653,6 +686,13 @@ class DesignSpaceEditor:
         if self.designSpacePath is not None:
             self.w.getNSWindow().setRepresentedURL_(NSURL.fileURLWithPath_(self.designSpacePath))
         self.w.bind("became main", self.callbackBecameMain)
+
+    def _getDefaultValue(self, identifier, key):
+        data = getExtensionDefault(identifier, dict())
+        return data.get(key, defaultOptions[key])
+
+    def getInstancesFolder(self):
+        return self._getDefaultValue("%s.general" % settingsIdentifier, "instanceFolderName")
     
     def validate(self):
         # validate all data and write a report here.
@@ -694,6 +734,15 @@ class DesignSpaceEditor:
                         report.append("\tPlease move to the same folder as this document.")
         
         # instances
+        if self.instanceFolderName is None:
+            report.append("No instance folder name set.")
+        else:
+            if self.designSpacePath is None:
+                path = "<document folder>"
+            else:
+                path = os.path.dirname(self.designSpacePath)
+            report.append("Instance folder:\n\t%s/%s"%(path, self.instanceFolderName))
+            
         if len(self.doc.instances)==0:
             report.append("Define an instance.")
         else:
@@ -702,6 +751,18 @@ class DesignSpaceEditor:
                 report.append("\t%s"%instance.path)
         
         self.reportGroup.text.set("\n".join(report))
+    
+    def updateFromSettings(self):
+        extensionSettings = getExtensionDefault(self.settingsIdentifier, dict())
+        self.instanceFolderName = extensionSettings.get('instanceFolderName', "instances")
+
+    def applySettingsCallback(self, sender):
+        # callback for the settings window
+        self.updateFromSettings()
+        self.validate()
+        
+    def toolbarSettings(self, sender):
+        settings.Settings(self.w, self.applySettingsCallback)
             
     def setMasterStatus(self, text):
         self.mastersGroup.status.set(text)
@@ -741,6 +802,10 @@ class DesignSpaceEditor:
     def callbackInstancesDblClick(self, sender):
         print "callbackInstancesDblClick"
     
+    def setInstanceFolderName(self, value):
+        self.instanceFolderName = value
+        self.validate()
+                
     def updateAxesColumns(self):
         # present the axis names above all the columns.
         names = []
