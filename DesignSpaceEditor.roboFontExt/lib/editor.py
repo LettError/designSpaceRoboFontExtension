@@ -6,7 +6,6 @@
 import os, time
 from AppKit import NSToolbarFlexibleSpaceItemIdentifier, NSURL, NSImageCell, NSImageAlignTop, NSScaleNone, NSImageFrameNone, NSImage, NSObject
 import designSpaceDocument
-from designSpaceDocument import *
 from mojo.extensions import getExtensionDefault, setExtensionDefault, ExtensionBundle
 from defcon import Font
 from defconAppKit.windows.progressWindow import ProgressWindow
@@ -400,12 +399,12 @@ class KeyedAxisDescriptor(NSObject):
         return self.maximum
 
 
-class KeyedDocReader(BaseDocReader):
+class KeyedDocReader(designSpaceDocument.BaseDocReader):
     axisDescriptorClass = KeyedAxisDescriptor
     sourceDescriptorClass = KeyedSourceDescriptor
     instanceDescriptorClass = KeyedInstanceDescriptor
     
-class KeyedDocWriter(BaseDocWriter):
+class KeyedDocWriter(designSpaceDocument.BaseDocWriter):
     axisDescriptorClass = KeyedAxisDescriptor
     sourceDescriptorClass = KeyedSourceDescriptor
     instanceDescriptorClass = KeyedInstanceDescriptor
@@ -876,7 +875,7 @@ class DesignSpaceEditor:
         self.instancesItem.getNSTableView().reloadData()
         
     def read(self, designSpacePath):
-        self.doc = DesignSpaceDocument(KeyedDocReader, KeyedDocWriter)
+        self.doc = designSpaceDocument.DesignSpaceDocument(KeyedDocReader, KeyedDocWriter)
         if designSpacePath is not None:
             self.doc.read(designSpacePath)
         self.axesItem.set(self.doc.axes)
