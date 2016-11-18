@@ -25,6 +25,7 @@ reload(settings)
 
 
 checkSymbol = u"✓"
+defaultSymbol = u"🔹"
 
 # NSOBject Hack, please remove before release.
 def ClassNameIncrementer(clsName, bases, dct):
@@ -78,6 +79,20 @@ class KeyedSourceDescriptor(NSObject):
         self.axisOrder = []
         return self
     
+    def makeDefault(self, state):
+        # make this master the default
+        # set the flags
+        if state:
+            self.copyInfo = True
+            self.copyGroups = True
+            self.copyFeatures = True
+            self.copyLib = True
+        else:
+            self.copyInfo = False
+            self.copyGroups = False
+            self.copyFeatures = False
+            self.copyLib = False
+            
     def setName(self):
         # make a name attribute based on the location
         # this will overwrite things that the source file might already contain.
@@ -86,18 +101,6 @@ class KeyedSourceDescriptor(NSObject):
             name.append("%s_%3.3f"%(k, v))
         self.name = "_".join(name)
     
-    def copyThisStuff(self, state=True):
-        if state:
-            self.copyLib = True
-            self.copyInfo = True
-            self.copyGroups = True
-            self.copyFeatures = True
-        else:
-            self.copyLib = False
-            self.copyInfo = False
-            self.copyGroups = False
-            self.copyFeatures = False
-        
     def setAxisOrder(self, names):
         self.axisOrder = names
     
@@ -106,7 +109,7 @@ class KeyedSourceDescriptor(NSObject):
         # might be intended to be the default font in this system.
         # we could consider making this a separate flag?
         if self.copyInfo:
-            return "*"
+            return defaultSymbol
         return ""
         
     def sourceUFONameKey(self):
@@ -198,7 +201,23 @@ class KeyedInstanceDescriptor(NSObject):
         self.kerning = True
         self.info = True
         return self
-
+    
+    def copy(self):
+        # construct and return a duplicate of this instance
+        # umme, what to do with duplicate paths? these things could then overwrite!?
+        copy = KeyedInstanceDescriptor()
+        copy.familyName = self.familyName
+        copy.styleName = self.styleName
+        copy.postScriptFontName = self.postScriptFontName
+        copy.styleMapFamilyName = self.styleMapFamilyName
+        copy.glyphs.update(self.glyphs)
+        copy.axisOrder = self.axisOrder
+        copy.info = self.info
+        copy.location = self.location
+        copy.setName()
+        copy.makeUFOPathFromNames()
+        return copy
+        
     def setName(self):
         # make a name attribute based on the location
         name = ['instance', self.familyName, self.styleName]
@@ -367,7 +386,7 @@ class KeyedAxisDescriptor(NSObject):
     def labelNameKey(self):
         if self.registeredTagKey():
             return "-"
-        return self.labelNames.get("en", "edit")
+        return self.labelNames.get("en", "newAxisLabelName")
         
     def axisNameKey(self):
         return self.name
@@ -423,10 +442,16 @@ class DesignSpaceEditor:
                 'imageNamed': "toolbarScriptOpen",
             },
             {
-                'itemIdentifier': "addOPenFonts",
+                'itemIdentifier': "addOpenFonts",
                 'label': 'Add Open Fonts',
                 'callback': self.callbackAddOpenFonts,
                 'imageNamed': "toolbarScriptOpen",
+            },
+            {
+                'itemIdentifier': "generate",
+                'label': 'Generate',
+                'callback': self.callbackGenerate,
+                'imageNamed': "prefToolbarMisc",
             },
             {
                 'itemIdentifier': NSToolbarFlexibleSpaceItemIdentifier,
@@ -499,7 +524,7 @@ class DesignSpaceEditor:
         instanceColDescriptions = [
                 {   'title': '',
                     'key':'instanceHasFileKey',
-                    'width':fileIconWidth,
+                    'width':2*fileIconWidth,
                     'editable':False,
                 },
                 {   'title': 'UFO',
@@ -600,6 +625,7 @@ class DesignSpaceEditor:
         buttonMargin = 2
         buttonHeight = 20
         openButtonSize = (48,buttonMargin+1,50,buttonHeight)
+        defaultButtonSize = (100,buttonMargin+1,100,buttonHeight)
         statusTextSize = (165, buttonMargin+4,-10,buttonHeight)
         addButtonSize = (102,buttonMargin+1,50,buttonHeight)
         axisToolDescriptions = [
@@ -628,18 +654,28 @@ class DesignSpaceEditor:
             segmentDescriptions=masterToolDescriptions,
             selectionStyle="momentary",
             callback=self.callbackMasterTools)
-        self.mastersGroup.status = TextBox(statusTextSize, "About the masters", sizeStyle="small")
         self.mastersGroup.openButton = Button(
             openButtonSize, "Open",
             callback=self.callbackOpenMaster,
             sizeStyle="small")
         self.mastersGroup.openButton.enable(False)
+        self.mastersGroup.makeDefaultButton = Button(
+            defaultButtonSize, "Make Default",
+            callback=self.callbackMakeDefaultMaster,
+            sizeStyle="small")
+        self.mastersGroup.makeDefaultButton.enable(False)
         
         self.instancesGroup = Group((0,0,0,0))
         self.instancesItem = List((0, toolbarHeight, -0, -0), [],
             columnDescriptions=instanceColDescriptions,
             selectionCallback=self.callbackInstanceSelection,
         )
+        self.instancesGroup.duplicateButton = Button(
+            defaultButtonSize, "Duplicate",
+            callback=self.callbackDuplicateInstance,
+            sizeStyle="small")
+        self.instancesGroup.duplicateButton.enable(False)
+
         instancesToolDescriptions = [
             {'title': "+", 'width': 20,},
             {'title': "-", 'width': 20},
@@ -656,7 +692,6 @@ class DesignSpaceEditor:
             callback=self.callbackOpenInstance,
             sizeStyle="small")
         self.instancesGroup.openButton.enable(False)
-        self.instancesGroup.status = TextBox(statusTextSize, "", sizeStyle="small")
         
         self.glyphsGroup = Group((0,0,0,0))
         self.glyphsItem = List((0, toolbarHeight, -0, -0), [],
@@ -681,7 +716,6 @@ class DesignSpaceEditor:
         self.w.accordionView = AccordionView((0, 0, -0, -0), descriptions)
         self.updateAxesColumns()
         self.enableInstanceList()
-        self.reportMasterPathStatus()
         self.w.open()
         if self.designSpacePath is not None:
             self.w.getNSWindow().setRepresentedURL_(NSURL.fileURLWithPath_(self.designSpacePath))
@@ -732,6 +766,8 @@ class DesignSpaceEditor:
                 if self.designSpacePath is not None:
                     if os.path.dirname(master.path)!=os.path.dirname(self.designSpacePath):
                         report.append("\tPlease move to the same folder as this document.")
+                if master.defaultMasterKey():
+                    report.append("\t\tThis master is the default.")
         
         # instances
         if self.instanceFolderName is None:
@@ -759,17 +795,12 @@ class DesignSpaceEditor:
     def applySettingsCallback(self, sender):
         # callback for the settings window
         self.updateFromSettings()
+        self.updateInstanceNames()
         self.validate()
         
     def toolbarSettings(self, sender):
         settings.Settings(self.w, self.applySettingsCallback)
             
-    def setMasterStatus(self, text):
-        self.mastersGroup.status.set(text)
-    
-    def setInstancesStatus(self, text):
-        self.instancesGroup.status.set(text)
-        
     def openSelectedItem(self, sender):
         selection = sender.getSelection()
         if selection:
@@ -796,8 +827,13 @@ class DesignSpaceEditor:
                 progress.update()
             progress.close()            
     
+    def callbackGenerate(self, sender):
+        from mutatorMath.ufo import build
+        if self.designSpacePath is not None:
+            build(self.designSpacePath)
+        
     def callbackBecameMain(self, sender):
-        pass
+        self.validate()
                 
     def callbackInstancesDblClick(self, sender):
         print "callbackInstancesDblClick"
@@ -818,7 +854,7 @@ class DesignSpaceEditor:
         # clear the old names
         
         columns = self.mastersItem.getNSTableView().tableColumns()
-        sourceColumnTitleOffset = 4
+        sourceColumnTitleOffset = 5
         for col in range(sourceColumnTitleOffset, len(columns)):
             column = columns[col]
             try:
@@ -875,36 +911,31 @@ class DesignSpaceEditor:
                 resultCallback=self.finalizeSave)
         else:
             self.finalizeSave(self.designSpacePath)
-
-    def finalizeSave(self, path=None):
-        for item in self.doc.sources:
-            item.copyThisStuff(False)
-        if self.doc.sources:
-            self.doc.sources[0].copyThisStuff(True)
-        self.designSpacePath = path
+    
+    def updateInstanceNames(self):
         # so we have the path for this document
         # we need to make sure the instances are all in the right place
-        docFolder = os.path.dirname(path)
+        docFolder = os.path.dirname(self.designSpacePath)
         for item in self.instancesItem:
             item.setPathRelativeTo(docFolder, self.instanceFolderName)
             item.setName()
+
+    def finalizeSave(self, path=None):
+        self.designSpacePath = path
+        # so we have the path for this document
+        # we need to make sure the instances are all in the right place
+        self.updateInstanceNames()
+        # docFolder = os.path.dirname(path)
+        # for item in self.instancesItem:
+        #     item.setPathRelativeTo(docFolder, self.instanceFolderName)
+        #     item.setName()
         for item in self.mastersItem:
             item.setName()
-        # dump all the paths
-        #self.dumpFilePaths()
         self.doc.write(self.designSpacePath)
         self.w.getNSWindow().setRepresentedURL_(NSURL.fileURLWithPath_(self.designSpacePath))
         self.w.setTitle(os.path.basename(self.designSpacePath))
         self.validate()
     
-    def dumpFilePaths(self):
-        print 'master'
-        for item in self.doc.sources:
-            print item.sourceUFONameKey(), item.path
-        print '\ninstance'
-        for item in self.doc.instances:
-            print item.instanceUFONameKey(), item.path
-            
     def updateLocations(self):
         # update all the displayed locations, we might have more or fewer axes
         defaults = {}
@@ -1053,6 +1084,14 @@ class DesignSpaceEditor:
         self.enableInstanceList()
         self.validate()
     
+    def callbackMakeDefaultMaster(self, sender):
+        selectedMaster = self.mastersItem[self.mastersItem.getSelection()[0]]
+        for master in self.mastersItem:
+            master.makeDefault(False)
+        selectedMaster.makeDefault(True)
+        self.mastersItem.set(self.doc.sources)
+        self.validate()
+        
     def callbackAddOpenFonts(self, sender):
         # add the open fonts
         weHave = [s.path for s in self.doc.sources]
@@ -1071,17 +1110,6 @@ class DesignSpaceEditor:
             self.instancesItem.enable(False)
             self.instancesGroup.tools.enable(False)
             
-    def reportMasterPathStatus(self):
-        # check if the masters are from the same directory.
-        paths = {}
-        for item in self.mastersItem:
-            itemDir = os.path.dirname(item.path)
-            paths[itemDir] = True
-        if len(paths)==1:
-            self.setMasterStatus("All masters in the same folder.")
-        else:
-            self.setMasterStatus("Masters from mixed folders.")
-    
     def finalizeDeleteMaster(self, result):
         if result != 1:
             return
@@ -1095,7 +1123,6 @@ class DesignSpaceEditor:
         self.doc.sources = keepThese
         self.mastersItem.set(self.doc.sources)
         self.enableInstanceList()
-        self.reportMasterPathStatus()
         self.validate()
     
     def addSourceFromFont(self, font):
@@ -1108,6 +1135,10 @@ class DesignSpaceEditor:
         sourceDescriptor.styleName = font.info.styleName
         sourceDescriptor.location = {}
         sourceDescriptor.location.update(defaults)
+        if len(self.mastersItem)==0:
+            # this is the first master we're adding
+            # make this the default so we have one.
+            sourceDescriptor.makeDefault(True)
         self.doc.addSource(sourceDescriptor)
         self.mastersItem.set(self.doc.sources)
         sourceDescriptor.setName()
@@ -1127,24 +1158,37 @@ class DesignSpaceEditor:
             # sourceDescriptor.setName()
         self.updateAxesColumns()
         self.enableInstanceList()
-        self.reportMasterPathStatus()
         self.validate()
 
     def callbackMasterSelection(self, sender):
+        if len(sender.getSelection()) == 1:
+            self.mastersGroup.makeDefaultButton.enable(True)
+        else:
+            self.mastersGroup.makeDefaultButton.enable(False)
         for i in sender.getSelection():
             selectedItem = self.doc.sources[i]
-            self.setMasterStatus(selectedItem.path)
             if selectedItem.sourceHasFileKey():
                 self.mastersGroup.openButton.enable(True)
                 return
         self.mastersGroup.openButton.enable(False)
-
+    
+    def callbackDuplicateInstance(self, sender):
+        # duplicate the selected instance
+        copies = []
+        for i in self.instancesItem.getSelection():
+            copies.append(self.instancesItem[i].copy())
+        for item in copies:
+            self.doc.instances.append(item)
+        self.instancesItem.set(self.doc.instances)
+        
     def callbackInstanceSelection(self, sender):
+        if len(sender.getSelection())>0:
+            self.instancesGroup.duplicateButton.enable(True)
+        else:
+            self.instancesGroup.duplicateButton.enable(False)
         for i in sender.getSelection():
             selectedItem = self.doc.instances[i]
-            self.setInstancesStatus(selectedItem.path)
             if selectedItem.instanceHasFileKey():
-                self.setMasterStatus("Add some UFOs.")
                 self.instancesGroup.openButton.enable(True)
                 return
         self.instancesGroup.openButton.enable(False)
