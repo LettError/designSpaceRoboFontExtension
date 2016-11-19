@@ -4,6 +4,8 @@
 
 
 import os, time
+
+import weakref
 from AppKit import NSToolbarFlexibleSpaceItemIdentifier, NSURL, NSImageCell, NSImageAlignTop, NSScaleNone, NSImageFrameNone, NSImage, NSObject
 import designSpaceDocument
 
@@ -703,7 +705,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.glyphsGroup.l = self.glyphsItem
     
         self.reportGroup = Group((0,0,0,0))
-        self.reportGroup.text = TextBox((5,5,-5,-5), 'hehe')
+        self.reportGroup.text = EditText((0,toolbarHeight,-0,-0), 'hehe')
         
         descriptions = [
            dict(label="Axes", view=self.axesGroup, size=138, collapsed=False, canResize=False),
@@ -724,6 +726,9 @@ class DesignSpaceEditor(BaseWindowController):
 
         self.w.bind("became main", self.callbackBecameMain)
         self.w.bind("close", self.callbackCleanup)
+        
+        self.w.vanillaWrapper = weakref.ref(self)
+
         self.setUpBaseWindowBehavior()
             
     def callbackCleanup(self, sender=None):
@@ -943,6 +948,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.doc.write(self.designSpacePath)
         self.w.getNSWindow().setRepresentedURL_(NSURL.fileURLWithPath_(self.designSpacePath))
         self.w.setTitle(os.path.basename(self.designSpacePath))
+        self.instancesItem.set(self.doc.instances)
         self.validate()
     
     def updateLocations(self):
