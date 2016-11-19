@@ -6,6 +6,9 @@
 import os, time
 from AppKit import NSToolbarFlexibleSpaceItemIdentifier, NSURL, NSImageCell, NSImageAlignTop, NSScaleNone, NSImageFrameNone, NSImage, NSObject
 import designSpaceDocument
+
+from defconAppKit.windows.baseWindow import BaseWindowController
+
 from mojo.extensions import getExtensionDefault, setExtensionDefault, ExtensionBundle
 from defcon import Font
 from defconAppKit.windows.progressWindow import ProgressWindow
@@ -416,14 +419,14 @@ def newImageListCell():
     return cell
 
 
-class DesignSpaceEditor:
+class DesignSpaceEditor(BaseWindowController):
     def __init__(self, designSpacePath=None):
 
         self.settingsIdentifier = "%s.%s" % (settings.settingsIdentifier, "general")
         self.updateFromSettings()
         #extensionSettings = getExtensionDefault(self.settingsIdentifier, dict())
         #self.instanceFolderName = extensionSettings.get('instanceFolderName', "instances")
-
+        
         self.designSpacePath = designSpacePath
         self.doc = None
         self._newInstanceCounter = 1
@@ -718,8 +721,14 @@ class DesignSpaceEditor:
         self.w.open()
         if self.designSpacePath is not None:
             self.w.getNSWindow().setRepresentedURL_(NSURL.fileURLWithPath_(self.designSpacePath))
-        self.w.bind("became main", self.callbackBecameMain)
 
+        self.w.bind("became main", self.callbackBecameMain)
+        self.w.bind("close", self.callbackCleanup)
+        self.setUpBaseWindowBehavior()
+            
+    def callbackCleanup(self, sender=None):
+        self.w.document = None
+            
     def _getDefaultValue(self, identifier, key):
         data = getExtensionDefault(identifier, dict())
         return data.get(key, defaultOptions[key])
@@ -835,6 +844,7 @@ class DesignSpaceEditor:
         self.validate()
                 
     def callbackInstancesDblClick(self, sender):
+        # would like to generate and open these thank you.
         print "callbackInstancesDblClick"
     
     def setInstanceFolderName(self, value):
@@ -1193,9 +1203,4 @@ class DesignSpaceEditor:
         self.instancesGroup.openButton.enable(False)
                 
 if __name__ == "__main__":
-    pass
-    #path = u"/Users/erik/code/superpolator3/TestData/designspace_import/Untitled.designspace"
-    #DesignSpaceEditor(path)
-
-    # start an empty document
-    DesignSpaceEditor()
+    OpenWindow(DesignSpaceEditor)
