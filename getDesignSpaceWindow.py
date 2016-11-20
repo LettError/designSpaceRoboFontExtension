@@ -2,9 +2,6 @@
 from AppKit import *
 from mojo.UI import *
 from mojo.roboFont import CurrentFont, CurrentGlyph, AllFonts, OpenWindow
-import addSomeGlyphsWindow
-reload(addSomeGlyphsWindow)
-from addSomeGlyphsWindow import AddSomeGlyphsWindow 
 
 def getDesignSpaceDocuments():
     """ Try to find designspace windows."""
