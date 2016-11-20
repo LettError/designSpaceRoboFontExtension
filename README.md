@@ -45,10 +45,9 @@ An **experimental** RoboFont extension to create and edit designspace files. If 
 
 ## Notes
 * This extension uses the [DesignSpaceDocument](https://github.com/LettError/designSpaceDocument) reader and writer.
+* The editor does not support **anisotropic** designspace locations (variable fonts don't either). If you open a file with an anisotropic coordinate (for instance exported from Superpolator) only the horizontal value will be used.
+* The editor does
 
 ## Todo
-* Add generate button that calls the regular MutatorMath build. 
-* Investigate the feasability of storing some preferences.
 * Separate validation for MutatorMath and Varlib use.
-* The name of the folder where to save the instances would be a nice pref.
 * Maybe a teensy preview.

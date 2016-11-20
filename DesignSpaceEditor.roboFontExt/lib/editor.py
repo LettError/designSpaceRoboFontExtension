@@ -46,9 +46,6 @@ def ClassNameIncrementer(clsName, bases, dct):
    return type(clsName, bases, dct)
 # /NSOBject Hack, please remove before release.
 
-
-
-
 class KeyedGlyphDescriptor(NSObject):
     #__metaclass__ = ClassNameIncrementer
     def __new__(cls):
@@ -842,8 +839,11 @@ class DesignSpaceEditor(BaseWindowController):
     
     def callbackGenerate(self, sender):
         from mutatorMath.ufo import build
-        if self.designSpacePath is not None:
-            build(self.designSpacePath)
+        if self.designSpacePath is None:
+            return
+        progress = ProgressWindow(u"Generating instance UFO’s…", 10, parentWindow=self.w)
+        build(self.designSpacePath)
+        progress.close()            
         
     def callbackBecameMain(self, sender):
         self.validate()
@@ -929,6 +929,8 @@ class DesignSpaceEditor(BaseWindowController):
     def updateInstanceNames(self):
         # so we have the path for this document
         # we need to make sure the instances are all in the right place
+        if self.designSpacePath is None:
+            return
         docFolder = os.path.dirname(self.designSpacePath)
         for item in self.instancesItem:
             item.setPathRelativeTo(docFolder, self.instanceFolderName)
@@ -1209,4 +1211,5 @@ class DesignSpaceEditor(BaseWindowController):
         self.instancesGroup.openButton.enable(False)
                 
 if __name__ == "__main__":
-    OpenWindow(DesignSpaceEditor)
+    path = "/Users/erik/Jobs/2017 Golly/51 Variabletest/system.designspace"
+    OpenWindow(DesignSpaceEditor, path)
