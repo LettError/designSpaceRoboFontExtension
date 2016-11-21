@@ -53,7 +53,6 @@ def renameAxis(oldName, newName, location):
     # rename the axis name in a location
     # validate if the newName is not already in this location
     if newName in location:
-        #print "can't rename to existing axis name", oldName, "->", newName, location.keys()
         return location
     if not oldName in location:
         return location
@@ -1163,11 +1162,9 @@ class DesignSpaceEditor(BaseWindowController):
     
     def callbackGetNamesFromSources(self, sender):
         # open the source fonts and load the family and stylenames
-        print "callbackGetNamesFromSources"
         for i in self.mastersItem.getSelection():
             selectedItem = self.doc.sources[i]
             if selectedItem.sourceHasFileKey():
-                print "opening", selectedItem.path
                 f = OpenFont(selectedItem.path, showUI=False)
                 selectedItem.familyName = f.info.familyName
                 selectedItem.styleName = f.info.styleName

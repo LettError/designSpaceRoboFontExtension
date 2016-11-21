@@ -24,6 +24,7 @@ An **experimental** RoboFont extension to create and edit designspace files. If 
 * Minimum value, maximum value are the boundaries of the axis.
 * Default is the default value on the axis for new instances.
 * For unregistered axes you'll be able to add a *labelname*. This name is intended for user-facing UI labeling. It will use `xml:lang="en"` for these entries. This field is not yet fully supported in the varlib tools.
+* You can rename the axis name in the list, but you can't change it to an existing name.
 
 ## Masters
 * Use the `+` button to add masters: a file dialog will appear and you can select a UFO.
@@ -32,6 +33,8 @@ An **experimental** RoboFont extension to create and edit designspace files. If 
 * Select a single master to see its file path.
 * In the toolbar, use the `Add Open Fonts` button to add all open fonts at once. 
 * If the masters can be found then a `✓` appears next to the name.
+* Use the `Make Default` button to make the selected master the default: it sets the **lib**, **groups** and **info** flags for this master. The 🔹indicates the current default.
+* Use the `Load Names` button to load the **family name** and **style name** from the UFO.
 
 ## Instances
 * After adding two or more masters you can add instances using the `+` button.
@@ -39,6 +42,7 @@ An **experimental** RoboFont extension to create and edit designspace files. If 
 * Add a family name and a style name for the instance.
 * Add axis values.
 * A proposed UFO name will appear. This can't be edited at the moment.
+* Use the `Duplicate` button to duplicate a selected instance.
 
 ## Report
 * This panel shows a very basic validation report of what needs to be done and where the UFOs are, etc.
