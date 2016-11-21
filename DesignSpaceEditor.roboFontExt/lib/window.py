@@ -627,8 +627,9 @@ class DesignSpaceEditor(BaseWindowController):
         self.axesGroup.l = self.axesItem
         buttonMargin = 2
         buttonHeight = 20
-        openButtonSize = (48,buttonMargin+1,50,buttonHeight)
-        defaultButtonSize = (100,buttonMargin+1,100,buttonHeight)
+        firstButtonSize = (48,buttonMargin+1,50,buttonHeight)
+        secondButtonSize = (100,buttonMargin+1,100,buttonHeight)
+        thirdButtonSize = (202,buttonMargin+1,100,buttonHeight)
         statusTextSize = (165, buttonMargin+4,-10,buttonHeight)
         addButtonSize = (102,buttonMargin+1,50,buttonHeight)
         axisToolDescriptions = [
@@ -658,15 +659,21 @@ class DesignSpaceEditor(BaseWindowController):
             selectionStyle="momentary",
             callback=self.callbackMasterTools)
         self.mastersGroup.openButton = Button(
-            openButtonSize, "Open",
+            firstButtonSize, "Open",
             callback=self.callbackOpenMaster,
             sizeStyle="small")
         self.mastersGroup.openButton.enable(False)
         self.mastersGroup.makeDefaultButton = Button(
-            defaultButtonSize, "Make Default",
+            secondButtonSize, "Make Default",
             callback=self.callbackMakeDefaultMaster,
             sizeStyle="small")
         self.mastersGroup.makeDefaultButton.enable(False)
+        self.mastersGroup.loadNamesFromSourceButton = Button(
+            thirdButtonSize, "Load Names",
+            callback=self.callbackGetNamesFromSources,
+            sizeStyle="small")
+        self.mastersGroup.loadNamesFromSourceButton.enable(False)
+        
         
         self.instancesGroup = Group((0,0,0,0))
         self.instancesItem = List((0, toolbarHeight, -0, -0), [],
@@ -674,7 +681,7 @@ class DesignSpaceEditor(BaseWindowController):
             selectionCallback=self.callbackInstanceSelection,
         )
         self.instancesGroup.duplicateButton = Button(
-            defaultButtonSize, "Duplicate",
+            secondButtonSize, "Duplicate",
             callback=self.callbackDuplicateInstance,
             sizeStyle="small")
         self.instancesGroup.duplicateButton.enable(False)
@@ -691,7 +698,7 @@ class DesignSpaceEditor(BaseWindowController):
             callback=self.callbackInstanceTools)
         self.instancesGroup.l = self.instancesItem
         self.instancesGroup.openButton = Button(
-            openButtonSize, "Open",
+            firstButtonSize, "Open",
             callback=self.callbackOpenInstance,
             sizeStyle="small")
         self.instancesGroup.openButton.enable(False)
@@ -844,8 +851,13 @@ class DesignSpaceEditor(BaseWindowController):
         if self.designSpacePath is None:
             return
         progress = ProgressWindow(u"Generating instance UFO’s…", 10, parentWindow=self.w)
-        build(self.designSpacePath)
-        progress.close()            
+        try:
+            build(self.designSpacePath)
+        except:
+            import traceback
+            traceback.print_exc()
+        finally:
+            progress.close()            
         
     def callbackBecameMain(self, sender):
         self.validate()
@@ -1110,6 +1122,20 @@ class DesignSpaceEditor(BaseWindowController):
         selectedMaster.makeDefault(True)
         self.mastersItem.set(self.doc.sources)
         self.validate()
+    
+    def callbackGetNamesFromSources(self, sender):
+        # open the source fonts and load the family and stylenames
+        print "callbackGetNamesFromSources"
+        for i in self.mastersItem.getSelection():
+            selectedItem = self.doc.sources[i]
+            if selectedItem.sourceHasFileKey():
+                print "opening", selectedItem.path
+                f = OpenFont(selectedItem.path, showUI=False)
+                selectedItem.familyName = f.info.familyName
+                selectedItem.styleName = f.info.styleName
+                f.close()
+        self.mastersItem.set(self.doc.sources)
+        self.validate()
         
     def callbackAddOpenFonts(self, sender):
         # add the open fonts
@@ -1188,9 +1214,11 @@ class DesignSpaceEditor(BaseWindowController):
             selectedItem = self.doc.sources[i]
             if selectedItem.sourceHasFileKey():
                 self.mastersGroup.openButton.enable(True)
+                self.mastersGroup.loadNamesFromSourceButton.enable(True)
                 return
         self.mastersGroup.openButton.enable(False)
-    
+        self.mastersGroup.loadNamesFromSourceButton.enable(False)
+                
     def callbackDuplicateInstance(self, sender):
         # duplicate the selected instance
         copies = []
@@ -1213,4 +1241,6 @@ class DesignSpaceEditor(BaseWindowController):
         self.instancesGroup.openButton.enable(False)
                 
 if __name__ == "__main__":
-    OpenWindow(DesignSpaceEditor)
+    results = getFile(messageText=u"Select a DesignSpace file:", allowsMultipleSelection=True, fileTypes=["designspace"])
+    for path in results:
+        DesignSpaceEditor(path)
