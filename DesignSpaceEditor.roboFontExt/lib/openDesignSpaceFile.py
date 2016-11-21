@@ -7,5 +7,4 @@ if __name__ == "__main__":
     results = getFile(messageText="Open a designspace document:", allowsMultipleSelection=True, fileTypes=['designspace'])
     if results is not None:
         for path in results:
-            OpenWindow(DesignSpaceEditor, path)
-            #DesignSpaceEditor(path)
+            DesignSpaceEditor(path)

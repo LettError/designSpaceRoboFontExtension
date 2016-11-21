@@ -1,32 +1,20 @@
 # coding=utf-8
-
-
-
-
 import os, time
-
 import weakref
 from AppKit import NSToolbarFlexibleSpaceItemIdentifier, NSURL, NSImageCell, NSImageAlignTop, NSScaleNone, NSImageFrameNone, NSImage, NSObject
 import designSpaceDocument
-
 from defconAppKit.windows.baseWindow import BaseWindowController
-
 from mojo.extensions import getExtensionDefault, setExtensionDefault, ExtensionBundle
 from defcon import Font
 from defconAppKit.windows.progressWindow import ProgressWindow
 from vanilla import *
 from vanilla.dialogs import getFile, putFile, askYesNo
-
 from mojo.UI import AccordionView
 from mojo.roboFont import *
 
 from vanilla import *
 import settings
 reload(settings)
-
-#import descriptors
-
-
 
 checkSymbol = u"✓"
 defaultSymbol = u"🔹"
@@ -59,7 +47,25 @@ class KeyedGlyphDescriptor(NSObject):
     
     def workingKey(self):
         return len(self.patterns)==1
-        
+
+
+def renameAxis(oldName, newName, location):
+    # rename the axis name in a location
+    # validate if the newName is not already in this location
+    if newName in location:
+        #print "can't rename to existing axis name", oldName, "->", newName, location.keys()
+        return location
+    if not oldName in location:
+        return location
+    newLocation = {}
+    for name, value in location.items():
+        if name == oldName:
+            newLocation[newName] = value
+            continue
+        newLocation[name] = value
+    return newLocation
+
+    
 class KeyedSourceDescriptor(NSObject):
     #__metaclass__ = ClassNameIncrementer
     def __new__(cls):
@@ -80,6 +86,9 @@ class KeyedSourceDescriptor(NSObject):
         self.axisOrder = []
         return self
     
+    def renameAxis(self, oldName, newName):
+        self.location = renameAxis(oldName, newName, self.location)
+        
     def makeDefault(self, state):
         # make this master the default
         # set the flags
@@ -204,6 +213,16 @@ class KeyedInstanceDescriptor(NSObject):
         self.kerning = True
         self.info = True
         return self
+
+    def renameAxis(self, oldName, newName):
+        self.location = renameAxis(oldName, newName, self.location)
+        newAxisOrder = []
+        for name in self.axisOrder:
+            if name == oldName:
+                newAxisOrder.append(newName)
+            else:
+                newAxisOrder.append(name)
+        self.axisorder = newAxisOrder
     
     def copy(self):
         # construct and return a duplicate of this instance
@@ -346,7 +365,12 @@ class KeyedAxisDescriptor(NSObject):
         self.maximum = None
         self.default = None
         self.map = []
+        self.controller = None    # weakref to controller
         return self
+
+    def renameAxis(self, oldName, newName):
+        if self.name == oldName:
+            self.name = newName
     
     def registeredTagKey(self):
         for name, tag in self.registeredTags:
@@ -356,10 +380,12 @@ class KeyedAxisDescriptor(NSObject):
         
     def setValue_forUndefinedKey_(self, value=None, key=None):
         if key == "axisNameKey":
-            for name, tag in self.registeredTags:
-                if name == value:
-                    self.tag = tag
-            self.name = value
+            self.controller().callbackRenameAxes(self.name, value)
+            # for name, tag in self.registeredTags:
+            #     if name == value:
+            #         self.tag = tag
+            # # call window callback here to let it take care of the renaming
+            # self.name = value
         elif key == "axisTagKey":
             if len(value)!=4:
                 return
@@ -739,7 +765,21 @@ class DesignSpaceEditor(BaseWindowController):
             
     def callbackCleanup(self, sender=None):
         self.w.document = None
-            
+    
+    def callbackRenameAxes(self, oldName, newName):
+        # validate the new name, make sure we don't duplicate an existing name
+        for axis in self.doc.axes:
+            if newName == axis.name:
+                return
+        for source in self.doc.sources:
+            source.renameAxis(oldName, newName)
+        for instance in self.doc.instances:
+            instance.renameAxis(oldName, newName)
+        for axis in self.doc.axes:
+            axis.renameAxis(oldName, newName)
+        self.updateInstanceNames()
+        self.validate()
+        
     def _getDefaultValue(self, identifier, key):
         data = getExtensionDefault(identifier, dict())
         return data.get(key, defaultOptions[key])
@@ -861,11 +901,7 @@ class DesignSpaceEditor(BaseWindowController):
         
     def callbackBecameMain(self, sender):
         self.validate()
-                
-    def callbackInstancesDblClick(self, sender):
-        # would like to generate and open these thank you.
-        print "callbackInstancesDblClick"
-    
+                    
     def setInstanceFolderName(self, value):
         self.instanceFolderName = value
         self.validate()
@@ -880,7 +916,6 @@ class DesignSpaceEditor(BaseWindowController):
         for descriptor in self.doc.sources:
             descriptor.setAxisOrder(names)
         # clear the old names
-        
         columns = self.mastersItem.getNSTableView().tableColumns()
         sourceColumnTitleOffset = 5
         for col in range(sourceColumnTitleOffset, len(columns)):
@@ -907,6 +942,8 @@ class DesignSpaceEditor(BaseWindowController):
         self.doc = designSpaceDocument.DesignSpaceDocument(KeyedDocReader, KeyedDocWriter)
         if designSpacePath is not None:
             self.doc.read(designSpacePath)
+        for item in self.doc.axes:
+            item.controller = weakref.ref(self)
         self.axesItem.set(self.doc.axes)
         self.mastersItem.set(self.doc.sources)
         self.instancesItem.set(self.doc.instances)
@@ -931,7 +968,7 @@ class DesignSpaceEditor(BaseWindowController):
         if self.designSpacePath is None:
             # get a filepath first
             saveToDir = self.getSaveDirFromMasters()    # near the masters
-            putFile(messageText="Save this designspace document",
+            putFile(messageText="Save designspace:",
                 directory=saveToDir,
                 canCreateDirectories=True,
                 fileTypes=['designspace'],
@@ -1004,6 +1041,7 @@ class DesignSpaceEditor(BaseWindowController):
             # add axis button
             if len(self.doc.axes)<5:
                 axisDescriptor = KeyedAxisDescriptor()
+                axisDescriptor.controller = weakref.ref(self)
                 axisDescriptor.name = "newAxis"
                 axisDescriptor.tag = "nwxs"
                 axisDescriptor.minimum = 0
@@ -1241,6 +1279,28 @@ class DesignSpaceEditor(BaseWindowController):
         self.instancesGroup.openButton.enable(False)
                 
 if __name__ == "__main__":
+    # tests
+    assert renameAxis("aaa", "bbb", dict(aaa=1)) == dict(bbb=1)
+    assert renameAxis("ccc", "bbb", dict(aaa=1)) == dict(aaa=1)
+
+    sD = KeyedSourceDescriptor()
+    sD.location = dict(aaa=1, bbb=2)
+    sD.renameAxis("aaa", "ddd")
+    assert sD.location == dict(ddd=1, bbb=2)
+
+    kI = KeyedInstanceDescriptor()
+    kI.location = dict(aaa=1, bbb=2)
+    kI.renameAxis("aaa", "ddd")
+    assert kI.location == dict(ddd=1, bbb=2)
+    kI.renameAxis("ddd", "bbb")
+    assert kI.location == dict(ddd=1, bbb=2)
+
+    aD = KeyedAxisDescriptor()
+    aD.name = "aaa"
+    aD.renameAxis("aaa", "bbb")
+    assert aD.name == "bbb"
+    
     results = getFile(messageText=u"Select a DesignSpace file:", allowsMultipleSelection=True, fileTypes=["designspace"])
-    for path in results:
-        DesignSpaceEditor(path)
+    if results is not None:
+       for path in results:
+           DesignSpaceEditor(path)
