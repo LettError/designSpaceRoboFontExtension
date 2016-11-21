@@ -100,6 +100,8 @@ class KeyedSourceDescriptor(NSObject):
         name = ['source', self.familyName, self.styleName]
         for k, v in self.location.items():
             name.append("%s_%3.3f"%(k, v))
+        if None in name:
+            return
         self.name = "_".join(name)
     
     def setAxisOrder(self, names):
@@ -1211,5 +1213,4 @@ class DesignSpaceEditor(BaseWindowController):
         self.instancesGroup.openButton.enable(False)
                 
 if __name__ == "__main__":
-    path = "/Users/erik/Jobs/2017 Golly/51 Variabletest/system.designspace"
-    OpenWindow(DesignSpaceEditor, path)
+    OpenWindow(DesignSpaceEditor)

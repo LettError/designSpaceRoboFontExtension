@@ -1,3 +1,3 @@
 # new designspace document
-from editor import DesignSpaceEditor
+from window import DesignSpaceEditor
 OpenWindow(DesignSpaceEditor)
