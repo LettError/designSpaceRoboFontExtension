@@ -2,7 +2,7 @@
 
 ![Icon](designSpaceFileIcon.png)
 
-An **experimental** RoboFont extension to create and edit designspace files. If you want a **preview**, **measuring tools**, more than **5 axes** and a **nice graphic** representation of the design space, have a look at [Superpolator](http://new.superpolator.com/home/order/).
+An **experimental** RoboFont extension to create and edit designspace files. If you want a **preview**, **measuring tools**, more than **5 axes** and a **nice graphic** representation of the design space, have a look at [Superpolator](http://new.superpolator.com/home/order/). For a specification of the **designspace** format go [here](https://github.com/LettError/designSpaceDocument).
 
 * Open, edit and save existing designspace files.
 * Start new designspace files.
