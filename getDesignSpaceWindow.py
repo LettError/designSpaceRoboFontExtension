@@ -16,15 +16,26 @@ def getDesignSpaceDocuments():
             designSpaces.append(vanillaWrapper)
     return designSpaces
 
-print getDesignSpaceDocuments()
-
 # see if we can find a designspace for the current UFO
-f = CurrentFont()
-if f is not None:
-    for doc in getDesignSpaceDocuments():
-        for sourceDescriptor in doc.doc.sources:
-            if sourceDescriptor.path == f.path:
-                print "yeah", doc
-                # nu wat?
-                
+def CurrentDesignSpace():
+    docs = getDesignSpaceDocuments()
+    # can we find the designspace that belongs to the currentfont?
+    f = CurrentFont()
+    if f is not None:
+        for doc in docs:
+            for sourceDescriptor in doc.doc.sources:
+                if sourceDescriptor.path == f.path:
+                    return doc.doc
+    # if we have no currentfont, can we find the designspace that is the first?
+    if docs:
+        return docs[0].doc
+    # we have no open fonts, no open docs
+    return None
     
+if __name__ == "__main__":
+    result = CurrentDesignSpace()
+    if result is not None:
+        for font, location in result.getFonts():
+            print location, font
+        
+        

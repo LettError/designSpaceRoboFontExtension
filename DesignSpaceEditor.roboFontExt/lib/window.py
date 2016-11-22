@@ -14,7 +14,7 @@ from mojo.roboFont import *
 
 from vanilla import *
 import settings
-reload(settings)
+#reload(settings)
 
 checkSymbol = u"✓"
 defaultSymbol = u"🔹"
