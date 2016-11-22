@@ -341,6 +341,11 @@ class KeyedInstanceDescriptor(NSObject):
         return self.familyName
     def instanceStyleNameKey(self):
         return self.styleName
+
+def intOrFloat(num):
+    if int(num) == num:
+        return "%d" % num
+    return "%f" % num
     
 class KeyedAxisDescriptor(NSObject):
     #__metaclass__ = ClassNameIncrementer
@@ -380,11 +385,6 @@ class KeyedAxisDescriptor(NSObject):
     def setValue_forUndefinedKey_(self, value=None, key=None):
         if key == "axisNameKey":
             self.controller().callbackRenameAxes(self.name, value)
-            # for name, tag in self.registeredTags:
-            #     if name == value:
-            #         self.tag = tag
-            # # call window callback here to let it take care of the renaming
-            # self.name = value
         elif key == "axisTagKey":
             if len(value)!=4:
                 return
@@ -410,11 +410,31 @@ class KeyedAxisDescriptor(NSObject):
         elif key == "labelNameKey":
             if not self.registeredTagKey():
                 self.labelNames[self.defaultLabelNameLanguageTag] = value
+        elif key == "mapKey":
+            # interpret the string of numbers as 
+            # <input1>, <output1>, <input2>, <output2>,...
+            # empty string, indicates a wish for an empty list
+            if value is None or value == "-":
+                self.map = []
+                return
+            try:
+                newMapValues = []
+                values = [float(p.strip()) for p in value.split(",")]
+                if len(values)%2 != 0:
+                    # needs to be paired values
+                    return
+                for i in range(0, len(values), 2):
+                    inputValue = values[i]
+                    outputValue = values[i+1]
+                    newMapValues.append((inputValue, outputValue))
+                self.map = newMapValues
+            except:
+                pass
     
     def labelNameKey(self):
         if self.registeredTagKey():
             return "-"
-        return self.labelNames.get("en", "newAxisLabelName")
+        return self.labelNames.get("en", "New Axis Label Name")
         
     def axisNameKey(self):
         return self.name
@@ -426,6 +446,14 @@ class KeyedAxisDescriptor(NSObject):
         return self.default
     def axisMaximumKey(self):
         return self.maximum
+    def mapKey(self):
+        t = []
+        if not self.map:
+            return "-"
+        for inputValue, outputValue in self.map:
+            t.append(intOrFloat(inputValue))
+            t.append(intOrFloat(outputValue))
+        return ", ".join(t)
 
 
 class KeyedDocReader(designSpaceDocument.BaseDocReader):
@@ -446,6 +474,12 @@ def newImageListCell():
 
 
 class DesignSpaceEditor(BaseWindowController):
+    preferredAxes = [
+        ("weight", "wght", 0, 1000, 0),
+        ("width", "wdth", 0, 1000, 0),
+        ("optical", "opsz", 3, 1000, 16),
+        ]
+
     def __init__(self, designSpacePath=None):
 
         self.settingsIdentifier = "%s.%s" % (settings.settingsIdentifier, "general")
@@ -631,6 +665,11 @@ class DesignSpaceEditor(BaseWindowController):
                 {   'title': 'Labelname',
                     'key':'labelNameKey',
                     'width':150,
+                    'editable':True,
+                },
+                {   'title': 'Map',
+                    'key':'mapKey',
+                    'width':250,
                     'editable':True,
                 },
             ]
@@ -991,10 +1030,6 @@ class DesignSpaceEditor(BaseWindowController):
         # so we have the path for this document
         # we need to make sure the instances are all in the right place
         self.updateInstanceNames()
-        # docFolder = os.path.dirname(path)
-        # for item in self.instancesItem:
-        #     item.setPathRelativeTo(docFolder, self.instanceFolderName)
-        #     item.setName()
         for item in self.mastersItem:
             item.setName()
         self.doc.write(self.designSpacePath)
@@ -1041,8 +1076,8 @@ class DesignSpaceEditor(BaseWindowController):
             if len(self.doc.axes)<5:
                 axisDescriptor = KeyedAxisDescriptor()
                 axisDescriptor.controller = weakref.ref(self)
-                axisDescriptor.name = "newAxis"
-                axisDescriptor.tag = "nwxs"
+                axisDescriptor.name = "newAxis%d"%len(self.doc.axes)
+                axisDescriptor.tag = "nwx%d"%len(self.doc.axes)
                 axisDescriptor.minimum = 0
                 axisDescriptor.maximum = 1000
                 axisDescriptor.default = 0
@@ -1227,15 +1262,6 @@ class DesignSpaceEditor(BaseWindowController):
         for path in paths:
             font = OpenFont(path, showUI=False)
             self.addSourceFromFont(font)
-            # sourceDescriptor = KeyedSourceDescriptor()
-            # sourceDescriptor.path = path
-            # sourceDescriptor.familyName = font.info.familyName
-            # sourceDescriptor.styleName = font.info.styleName
-            # sourceDescriptor.location = {}
-            # sourceDescriptor.location.update(defaults)
-            # self.doc.addSource(sourceDescriptor)
-            # self.mastersItem.set(self.doc.sources)
-            # sourceDescriptor.setName()
         self.updateAxesColumns()
         self.enableInstanceList()
         self.validate()
