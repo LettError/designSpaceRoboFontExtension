@@ -482,7 +482,7 @@ class DesignSpaceEditor(BaseWindowController):
 
     def __init__(self, designSpacePath=None):
 
-        self.settingsIdentifier = "%s.%s" % (settings.settingsIdentifier, "general")
+        self.settingsIdentifier = "%s.%s" % (designSpaceEditorSettings.settingsIdentifier, "general")
         self.updateFromSettings()
         #extensionSettings = getExtensionDefault(self.settingsIdentifier, dict())
         #self.instanceFolderName = extensionSettings.get('instanceFolderName', "instances")
@@ -896,7 +896,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.validate()
         
     def toolbarSettings(self, sender):
-        settings.Settings(self.w, self.applySettingsCallback)
+        designSpaceEditorSettings.Settings(self.w, self.applySettingsCallback)
             
     def openSelectedItem(self, sender):
         selection = sender.getSelection()
