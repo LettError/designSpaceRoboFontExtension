@@ -13,8 +13,8 @@ from mojo.UI import AccordionView
 from mojo.roboFont import *
 
 from vanilla import *
-import settings
-#reload(settings)
+import designSpaceEditorSettings
+reload(designSpaceEditorSettings)
 
 checkSymbol = u"✓"
 defaultSymbol = u"🔹"

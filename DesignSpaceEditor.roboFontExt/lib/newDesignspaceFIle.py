@@ -1,3 +1,3 @@
 # new designspace document
-from window import DesignSpaceEditor
+from designSpaceEditorwindow import DesignSpaceEditor
 DesignSpaceEditor()

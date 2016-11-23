@@ -4,8 +4,6 @@ from vanilla import *
 
 defaultOptions = {
     "instanceFolderName": "instances",
-    #"exportInFolders": False,
-    #"keepFileNames": False,
 }
 
 settingsIdentifier = "com.letterror.designspaceeditor"

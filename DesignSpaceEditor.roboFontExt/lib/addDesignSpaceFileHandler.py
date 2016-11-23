@@ -1,6 +1,6 @@
 
 from mojo.events import addObserver
-from window import DesignSpaceEditor
+from designSpaceEditorwindow import DesignSpaceEditor
 
 import os
 # install the designspaceeditor as a tool for this filetype,
