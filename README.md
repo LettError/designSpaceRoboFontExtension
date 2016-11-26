@@ -75,3 +75,8 @@ but ¯\\\_(ツ)__/¯.
 
 ## Todo
 * Separate validation for MutatorMath and Varlib use.
+
+## History
+
+1.0 Initial commit
+1.1 Fixes a mistake with packaging.
