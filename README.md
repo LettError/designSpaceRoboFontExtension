@@ -19,6 +19,9 @@ An **experimental** RoboFont extension to create and edit designspace files. If 
 1. Define instances and whatever else you need to do.
 1. Save. 
 
+Yes, I know you can write the xml by hand, 
+but ¯\\\_(ツ)__/¯.
+
 ![Screenshot](screen.png)
 
 ## Toolbar
@@ -69,6 +72,7 @@ An **experimental** RoboFont extension to create and edit designspace files. If 
 * This extension uses the [DesignSpaceDocument](https://github.com/LettError/designSpaceDocument) reader and writer.
 * The editor does not support **anisotropic** designspace locations (variable fonts don't either). If you open a file with an anisotropic coordinate (for instance exported from Superpolator) only the horizontal value will be used.
 * The `Generate` button in the toolbar might not work in older RoboFont versions. 
+* If you open a designspace exported from **Superpolator** that contains rules, the specific glyph masters will not be editable in this version.
 
 ## Todo
 * Separate validation for MutatorMath and Varlib use.
