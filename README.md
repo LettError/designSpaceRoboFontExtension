@@ -24,6 +24,11 @@ but ¯\\\_(ツ)__/¯.
 
 ![Screenshot](screen.png)
 
+## Notes
+* This extension uses the [DesignSpaceDocument](https://github.com/LettError/designSpaceDocument) reader and writer.
+* The editor does not support **anisotropic** designspace locations (variable fonts don't either). If you open a file with an anisotropic coordinate (for instance exported from Superpolator) only the horizontal value will be used.
+* The `Generate` button in the toolbar will not work in older RoboFont (<1.8b) versions. 
+* If you open a designspace exported from **Superpolator** that contains rules, the specific glyph masters will not be editable in this version.
 ## Toolbar
 
 * `Save` saves the file.
@@ -68,12 +73,5 @@ but ¯\\\_(ツ)__/¯.
 ## Report
 * This panel shows a very basic validation report of what needs to be done and where the UFOs are, etc.
 
-## Notes
-* This extension uses the [DesignSpaceDocument](https://github.com/LettError/designSpaceDocument) reader and writer.
-* The editor does not support **anisotropic** designspace locations (variable fonts don't either). If you open a file with an anisotropic coordinate (for instance exported from Superpolator) only the horizontal value will be used.
-* The `Generate` button in the toolbar might not work in older RoboFont versions. 
-* If you open a designspace exported from **Superpolator** that contains rules, the specific glyph masters will not be editable in this version.
-
 ## Todo
 * Separate validation for MutatorMath and Varlib use.
-* Maybe a teensy preview.
