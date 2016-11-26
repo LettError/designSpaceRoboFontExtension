@@ -78,5 +78,5 @@ but ¯\\\_(ツ)__/¯.
 
 ## History
 
-1.0 Initial commit
-1.1 Fixes a mistake with packaging.
+* 1.0 Initial commit
+* 1.1 Fixes a mistake with packaging.
