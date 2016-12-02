@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, division, absolute_import
+
+import logging
 import os
 import xml.etree.ElementTree as ET
+from mutatorMath.objects.location import biasFromLocations, Location
 
 """
     designSpaceDocument
@@ -13,6 +16,7 @@ import xml.etree.ElementTree as ET
 """
 
 __all__ = [ 'DesignSpaceDocumentError', 'BaseDocReader', 'DesignSpaceDocument', 'SourceDescriptor', 'InstanceDescriptor', 'AxisDescriptor', 'BaseDocReader', 'BaseDocWriter']
+
 
 class DesignSpaceDocumentError(Exception):
     def __init__(self, msg, obj=None):
@@ -100,6 +104,23 @@ class InstanceDescriptor(SimpleDescriptor):
         self.info = True
 
 
+def tagForAxisName(name):
+    # try to find or make a tag name for this axis name
+    names = {
+        'weight':   ('wght', dict(en = 'Weight')),
+        'width':    ('wdth', dict(en = 'Width')),
+        'optical':  ('opsz', dict(en = 'Optical Size')),
+        'slant':    ('slnt', dict(en = 'Slant')),
+        'italic':   ('ital', dict(en = 'Italic')),
+    }
+    if name.lower() in names:
+        return names[name.lower()]
+    if len(name) < 4:
+        tag = name + "*"*(4-len(name))
+    else:
+        tag = name[:4]
+    return tag, dict(en = name)
+
 class AxisDescriptor(SimpleDescriptor):
     """Simple container for the axis data"""
     flavor = "axis"
@@ -132,6 +153,10 @@ class BaseDocWriter(object):
     axisDescriptorClass = AxisDescriptor
     sourceDescriptorClass = SourceDescriptor
     instanceDescriptorClass = InstanceDescriptor
+
+    @classmethod
+    def getAxisDecriptor(cls):
+        return cls.axisDescriptorClass()
 
     def __init__(self, documentPath, documentObject):
         self.path = documentPath
@@ -335,6 +360,7 @@ class BaseDocReader(object):
         self.sources = []
         self.instances = []
         self.axisDefaults = {}
+        self._strictAxisNames = True
 
     def read(self):
         self.readAxes()
@@ -382,6 +408,8 @@ class BaseDocReader(object):
                     axisObject.labelNames[lang] = labelName
             self.documentObject.axes.append(axisObject)
             self.axisDefaults[axisObject.name] = axisObject.default
+        if not axes:
+            self._strictAxisNames = False
 
     def readSources(self):
         for sourceElement in self.root.findall(".sources/source"):
@@ -435,7 +463,11 @@ class BaseDocReader(object):
         loc = {}
         for dimensionElement in locationElement.findall(".dimension"):
             dimName = dimensionElement.attrib.get("name")
-            if dimName not in self.axisDefaults:
+            if self._strictAxisNames and dimName not in self.axisDefaults:
+                # In case the document contains axis definitions,
+                # then we should only read the axes we know about. 
+                # However, if the document does not contain axes,
+                # then we need to create them after reading.
                 continue
             xValue = yValue = None
             try:
@@ -581,11 +613,14 @@ class BaseDocReader(object):
 class DesignSpaceDocument(object):
     """ Read, write data from the designspace file"""
     def __init__(self, readerClass=None, writerClass=None, fontClass=None):
+        self.logger = logging.getLogger("DesignSpaceDocumentLog")
         self.path = None
         self.formatVersion = None
         self.sources = []
         self.instances = []
         self.axes = []
+        self.default = None         # name of the default master
+        self.defaultLoc = None
         #
         if readerClass is not None:
             self.readerClass = readerClass
@@ -636,14 +671,196 @@ class DesignSpaceDocument(object):
                     fonts.append((f, sourceDescriptor.location))
         return fonts
 
+    def newAxisDescriptor(self):
+        # Ask the writer class to make us a new axisDescriptor
+        return self.writerClass.getAxisDecriptor()
+
     def getAxisOrder(self):
         names = []
         for axisDescriptor in self.axes:
             names.append(axisDescriptor.name)
         return names
 
+    def getAxis(self, name):
+        for axisDescriptor in self.axes:
+            if axisDescriptor.name == name:
+                return axisDescriptor
+        return None
+
+    def check(self):
+        """
+            After reading we need to make sure we have a valid designspace. 
+            This means making repairs if things are missing
+                - check if we have axes and deduce them from the masters if they're missing
+                - that can include axes referenced in masters, instances, glyphs. 
+                - if no default is assigned, use mutatormath to find out. 
+                - record the default in the designspace
+                - report all the changes in a log
+                - save a "repaired" version of the doc
+        """
+        self.checkAxes()
+        self.checkDefault()
+
+    def checkDefault(self):
+        """ Check the sources for a copyInfo flag."""
+        flaggedDefaultCandidate = None
+        for sourceDescriptor in self.sources:
+            names = set()
+            if sourceDescriptor.copyInfo:
+                # we choose you!
+                flaggedDefaultCandidate = sourceDescriptor
+        masterLocations = [src.location for src in self.sources]
+        mutatorBias = biasFromLocations(masterLocations, preferOrigin=False)
+        c = [src for src in self.sources if src.location==mutatorBias]
+        if c:
+            mutatorDefaultCandidate = c[0]
+        else:
+            mutatorDefaultCandidate = None
+        # what are we going to do?
+        if flaggedDefaultCandidate is not None:
+            if mutatorDefaultCandidate is not None:
+                if mutatorDefaultCandidate.name != flaggedDefaultCandidate.name:
+                    # warn if we have a conflict
+                    self.logger.info("Note: conflicting default masters:\n\tUsing %s as default\n\tMutator found %s"%(flaggedDefaultCandidate.name, mutatorDefaultCandidate.name))
+            self.default = flaggedDefaultCandidate
+            self.defaultLoc = self.default.location
+        else:
+            # we have no flagged default candidate
+            # let's use the one from mutator
+            if flaggedDefaultCandidate is None and mutatorDefaultCandidate is not None:
+                # we didn't have a flag, use the one selected by mutator
+                self.default = mutatorDefaultCandidate
+                self.defaultLoc = self.default.location
+        self.default.copyInfo = True
+
+
+    def checkAxes(self, overwrite=False):
+        """
+            If we don't have axes in the document, make some, report
+            Should we include the instance locations when determining the axis extrema?
+        """
+        axisValues = {}
+        # find all the axes
+        locations = []
+        for sourceDescriptor in self.sources:
+            locations.append(sourceDescriptor.location)
+        for instanceDescriptor in self.instances:
+            locations.append(instanceDescriptor.location)
+            for name, glyphData in instanceDescriptor.glyphs.items():
+                loc = glyphData.get("instanceLocation")
+                if loc is not None:
+                    locations.append(loc)
+                for m in glyphData.get('masters', []):
+                    locations.append(m['location'])
+        for loc in locations:
+            for name, value in loc.items():
+                if not name in axisValues:
+                    axisValues[name] = []
+                if type(value)==tuple:
+                    for v in value:
+                        axisValues[name].append(v)
+                else:
+                    axisValues[name].append(value)
+        have = self.getAxisOrder()
+        for name, values in axisValues.items():
+            if name in have and overwrite:
+                # we're making a new axis
+                a = self.getAxis(name)
+            else:
+                # we need to make this axis
+                a = self.newAxisDescriptor()
+                self.addAxis(a)
+            a.name = name
+            a.minimum = min(values)
+            a.maximum = max(values)
+            a.default = a.minimum
+            a.tag, a.labelNames = tagForAxisName(a.name)
+            self.logger.info("CheckAxes: added a missing axis %s, %3.3f %3.3f", a.name, a.minimum, a.maximum)
+
+
+    def normalizeLocation(self, location):
+        # scale this location based on the axes
+        # accept only values for the axes that we have definitions for
+        # only normalise if we're valid?
+        # normalise anisotropic cooordinates to isotropic.
+        # copied from fontTools.varlib.models.normalizeLocation
+        new = {}
+        for axis in self.axes:
+            if not axis.name in location:
+                # skipping this dimension it seems
+                continue
+            v = location.get(axis.name, axis.default)
+            if type(v)==tuple:
+                v = v[0]
+            if v == axis.default:
+                v = 0.0
+            elif v < axis.default:
+                if axis.default == axis.minimum:
+                    v = 0.0
+                else:
+                    v = (max(v, axis.minimum) - axis.default) / (axis.default - axis.minimum)
+            else:
+                if axis.default == axis.maximum:
+                    v = 0.0
+                else:
+                    v = (min(v, axis.maximum) - axis.default) / (axis.maximum - axis.default)
+            new[axis.name] = v
+        return new
+
+    def normalize(self):
+        # scale all the locations of all masters and instances to the -1 - 0 - 1 value.
+        # we need the axis data to do the scaling, so we do those last.
+        # masters
+        for item in self.sources:
+            item.location = self.normalizeLocation(item.location)
+        # instances
+        for item in self.instances:
+            # glyph masters for this instance
+            for name, glyphData in item.glyphs.items():
+                glyphData['instanceLocation'] = self.normalizeLocation(glyphData['instanceLocation'])
+                for glyphMaster in glyphData['masters']:
+                    glyphMaster['location'] = self.normalizeLocation(glyphMaster['location'])
+            item.location = self.normalizeLocation(item.location)
+        # now the axes
+        for axis in self.axes:
+            # scale the map first
+            newMap = []
+            for inputValue, outputValue in axis.map:
+                newOutputValue = self.normalizeLocation({axis.name: outputValue}).get(axis.name)
+                newMap.append((inputValue, newOutputValue))
+            if newMap:
+                axis.map = newMap
+            # finally the axis values
+            minimum = self.normalizeLocation({axis.name:axis.minimum}).get(axis.name)
+            maximum = self.normalizeLocation({axis.name:axis.maximum}).get(axis.name)
+            default = self.normalizeLocation({axis.name:axis.default}).get(axis.name)
+            # and set them in the axis.minimum
+            axis.minimum = minimum
+            axis.maximum = maximum
+            axis.default = default
+
+
 
 if __name__ == "__main__":
+
+    def __removeAxesFromDesignSpace(path):
+        # only for testing, so we can make an invalid designspace file
+        # without making the designSpaceDocument also support it.
+        f = open(path, 'r')
+        d = f.read()
+        f.close()
+        start = d.find("<axes>")
+        end = d.find("</axes>")+len("</axes>")
+        n = d[0:start] + d[end:]
+        f = open(path, 'w')
+        f.write(n)
+        f.close()
+
+    # print(tagForAxisName('weight'))
+    # print(tagForAxisName('width'))
+    # print(tagForAxisName('Optical'))
+    # print(tagForAxisName('Poids'))
+    # print(tagForAxisName('wt'))
 
     def test():
         """
@@ -711,6 +928,11 @@ if __name__ == "__main__":
         >>> i2.glyphs['arrow'] = glyphData
         >>> i2.glyphs['arrow2'] = dict(mute=False)
         >>> doc.addInstance(i2)
+        >>> # now we have sounrces and instances, but no axes yet. 
+        >>> doc.check()
+        >>> doc.getAxisOrder()
+        ['spooky', 'weight', 'width']
+        >>> doc.axes = []   # clear the axes
         >>> # write some axes
         >>> a1 = AxisDescriptor()
         >>> a1.minimum = 0
@@ -769,9 +991,221 @@ if __name__ == "__main__":
         ...     axes[axis.tag].append(axis.serialize())
         >>> for v in axes.values():
         ...     a, b = v
-        ...     assert a == b        
+        ...     assert a == b
+
         """
 
+    def testNormalise():
+        """
+        >>> doc = DesignSpaceDocument()
+        >>> # write some axes
+        >>> a1 = AxisDescriptor()
+        >>> a1.minimum = -1000
+        >>> a1.maximum = 1000
+        >>> a1.default = 0
+        >>> a1.name = "aaa"
+        >>> doc.addAxis(a1)
+
+        >>> doc.normalizeLocation(dict(aaa=0))
+        {'aaa': 0.0}
+        >>> doc.normalizeLocation(dict(aaa=1000))
+        {'aaa': 1.0}
+        >>> # clipping beyond max values:
+        >>> doc.normalizeLocation(dict(aaa=1001))
+        {'aaa': 1.0}
+        >>> doc.normalizeLocation(dict(aaa=500))
+        {'aaa': 0.5}
+        >>> doc.normalizeLocation(dict(aaa=-1000))
+        {'aaa': -1.0}
+        >>> doc.normalizeLocation(dict(aaa=-1001))
+        {'aaa': -1.0}
+        >>> # anisotropic coordinates normalise to isotropic
+        >>> doc.normalizeLocation(dict(aaa=(1000,-1000)))
+        {'aaa': 1.0}
+        >>> doc.normalize()
+        >>> r = []
+        >>> for axis in doc.axes:
+        ...     r.append((axis.name, axis.minimum, axis.default, axis.maximum))
+        >>> r.sort()
+        >>> r
+        [('aaa', -1.0, 0.0, 1.0)]
+
+        >>> doc = DesignSpaceDocument()
+        >>> # write some axes
+        >>> a2 = AxisDescriptor()
+        >>> a2.minimum = 100
+        >>> a2.maximum = 1000
+        >>> a2.default = 100
+        >>> a2.name = "bbb"
+        >>> doc.addAxis(a2)
+        >>> doc.normalizeLocation(dict(bbb=0))
+        {'bbb': 0.0}
+        >>> doc.normalizeLocation(dict(bbb=1000))
+        {'bbb': 1.0}
+        >>> # clipping beyond max values:
+        >>> doc.normalizeLocation(dict(bbb=1001))
+        {'bbb': 1.0}
+        >>> doc.normalizeLocation(dict(bbb=500))
+        {'bbb': 0.4444444444444444}
+        >>> doc.normalizeLocation(dict(bbb=-1000))
+        {'bbb': 0.0}
+        >>> doc.normalizeLocation(dict(bbb=-1001))
+        {'bbb': 0.0}
+        >>> # anisotropic coordinates normalise to isotropic
+        >>> doc.normalizeLocation(dict(bbb=(1000,-1000)))
+        {'bbb': 1.0}
+        >>> doc.normalizeLocation(dict(bbb=1001))
+        {'bbb': 1.0}
+        >>> doc.normalize()
+        >>> r = []
+        >>> for axis in doc.axes:
+        ...     r.append((axis.name, axis.minimum, axis.default, axis.maximum))
+        >>> r.sort()
+        >>> r
+        [('bbb', 0.0, 0.0, 1.0)]
+
+        >>> doc = DesignSpaceDocument()
+        >>> # write some axes
+        >>> a3 = AxisDescriptor()
+        >>> a3.minimum = -1000
+        >>> a3.maximum = 0
+        >>> a3.default = 0
+        >>> a3.name = "ccc"
+        >>> doc.addAxis(a3)
+        >>> doc.normalizeLocation(dict(ccc=0))
+        {'ccc': 0.0}
+        >>> doc.normalizeLocation(dict(ccc=1))
+        {'ccc': 0.0}
+        >>> doc.normalizeLocation(dict(ccc=-1000))
+        {'ccc': -1.0}
+        >>> doc.normalizeLocation(dict(ccc=-1001))
+        {'ccc': -1.0}
+
+        >>> doc.normalize()
+        >>> r = []
+        >>> for axis in doc.axes:
+        ...     r.append((axis.name, axis.minimum, axis.default, axis.maximum))
+        >>> r.sort()
+        >>> r
+        [('ccc', -1.0, 0.0, 0.0)]
+
+        >>> doc = DesignSpaceDocument()
+        >>> # write some axes
+        >>> a4 = AxisDescriptor()
+        >>> a4.minimum = 0
+        >>> a4.maximum = 1000
+        >>> a4.default = 0
+        >>> a4.name = "ddd"
+        >>> a4.map = [(0,100), (300, 500), (600, 500), (1000,900)]
+        >>> doc.addAxis(a4)
+        >>> doc.normalize()
+        >>> r = []
+        >>> for axis in doc.axes:
+        ...     r.append((axis.name, axis.map))
+        >>> r.sort()
+        >>> r
+        [('ddd', [(0, 0.1), (300, 0.5), (600, 0.5), (1000, 0.9)])]
+
+
+        """
+
+    def testCheck():
+        """
+        >>> # check if the checks are checking
+        >>> testDocPath = os.path.join(os.getcwd(), "testCheck.designspace")
+        >>> masterPath1 = os.path.join(os.getcwd(), "masters", "masterTest1.ufo")
+        >>> masterPath2 = os.path.join(os.getcwd(), "masters", "masterTest2.ufo")
+        >>> instancePath1 = os.path.join(os.getcwd(), "instances", "instanceTest1.ufo")
+        >>> instancePath2 = os.path.join(os.getcwd(), "instances", "instanceTest2.ufo")
+        
+        >>> # no default selected
+        >>> doc = DesignSpaceDocument()
+        >>> # add master 1
+        >>> s1 = SourceDescriptor()
+        >>> s1.path = masterPath1
+        >>> s1.name = "master.ufo1"
+        >>> s1.location = dict(snap=0, pop=10)
+        >>> s1.familyName = "MasterFamilyName"
+        >>> s1.styleName = "MasterStyleNameOne"
+        >>> doc.addSource(s1)
+        >>> # add master 2
+        >>> s2 = SourceDescriptor()
+        >>> s2.path = masterPath2
+        >>> s2.name = "master.ufo2"
+        >>> s2.location = dict(snap=1000, pop=20)
+        >>> s2.familyName = "MasterFamilyName"
+        >>> s2.styleName = "MasterStyleNameTwo"
+        >>> doc.addSource(s2)
+        >>> doc.checkAxes()
+        >>> doc.getAxisOrder()
+        ['snap', 'pop']
+        >>> assert doc.default == None
+        >>> doc.checkDefault()
+        >>> doc.default.name
+        'master.ufo1'
+
+        >>> # default selected
+        >>> doc = DesignSpaceDocument()
+        >>> # add master 1
+        >>> s1 = SourceDescriptor()
+        >>> s1.path = masterPath1
+        >>> s1.name = "master.ufo1"
+        >>> s1.location = dict(snap=0, pop=10)
+        >>> s1.familyName = "MasterFamilyName"
+        >>> s1.styleName = "MasterStyleNameOne"
+        >>> doc.addSource(s1)
+        >>> # add master 2
+        >>> s2 = SourceDescriptor()
+        >>> s2.path = masterPath2
+        >>> s2.name = "master.ufo2"
+        >>> s2.copyInfo = True
+        >>> s2.location = dict(snap=1000, pop=20)
+        >>> s2.familyName = "MasterFamilyName"
+        >>> s2.styleName = "MasterStyleNameTwo"
+        >>> doc.addSource(s2)
+        >>> doc.checkAxes()
+        >>> doc.getAxisOrder()
+        ['snap', 'pop']
+        >>> assert doc.default == None
+        >>> doc.checkDefault()
+        >>> doc.default.name
+        'master.ufo2'
+
+        >>> # generate a doc without axes, save and read again
+        >>> doc = DesignSpaceDocument()
+        >>> # add master 1
+        >>> s1 = SourceDescriptor()
+        >>> s1.path = masterPath1
+        >>> s1.name = "master.ufo1"
+        >>> s1.location = dict(snap=0, pop=10)
+        >>> s1.familyName = "MasterFamilyName"
+        >>> s1.styleName = "MasterStyleNameOne"
+        >>> doc.addSource(s1)
+        >>> # add master 2
+        >>> s2 = SourceDescriptor()
+        >>> s2.path = masterPath2
+        >>> s2.name = "master.ufo2"
+        >>> s2.location = dict(snap=1000, pop=20)
+        >>> s2.familyName = "MasterFamilyName"
+        >>> s2.styleName = "MasterStyleNameTwo"
+        >>> doc.addSource(s2)
+        >>> doc.checkAxes()
+        >>> doc.write(testDocPath)
+        >>> __removeAxesFromDesignSpace(testDocPath)
+
+        >>> new = DesignSpaceDocument()
+        >>> new.read(testDocPath)
+        >>> new.axes
+        []
+        >>> new.checkAxes()
+        >>> len(new.axes)
+        2
+        >>> new.write(testDocPath)
+
+        """
+
+    p = "testCheck.designspace"
+    __removeAxesFromDesignSpace(p)
     def _test():
         import doctest
         doctest.testmod()

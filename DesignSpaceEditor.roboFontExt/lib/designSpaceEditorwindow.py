@@ -693,6 +693,7 @@ class DesignSpaceEditor(BaseWindowController):
         buttonHeight = 20
         firstButtonSize = (48,buttonMargin+1,50,buttonHeight)
         secondButtonSize = (100,buttonMargin+1,100,buttonHeight)
+        first_and_secondButtonSize = (48,buttonMargin+1,150,buttonHeight)
         thirdButtonSize = (202,buttonMargin+1,100,buttonHeight)
         statusTextSize = (165, buttonMargin+4,-10,buttonHeight)
         addButtonSize = (102,buttonMargin+1,50,buttonHeight)
@@ -705,6 +706,10 @@ class DesignSpaceEditor(BaseWindowController):
             segmentDescriptions=axisToolDescriptions,
             selectionStyle="momentary",
             callback=self.callbackAxisTools)
+        self.axesGroup.axesFromMastersButton = Button(
+            first_and_secondButtonSize, u"Deduce from Masters",
+            callback=self.callbackAxesFromSources,
+            sizeStyle="small")
         
         self.mastersGroup = Group((0,0,0,0))
         masterToolDescriptions = [
@@ -980,6 +985,8 @@ class DesignSpaceEditor(BaseWindowController):
         self.doc = designSpaceDocument.DesignSpaceDocument(KeyedDocReader, KeyedDocWriter)
         if designSpacePath is not None:
             self.doc.read(designSpacePath)
+        if len(self.doc.axes)==0:
+            self.doc.checkAxes()
         for item in self.doc.axes:
             item.controller = weakref.ref(self)
         self.axesItem.set(self.doc.axes)
@@ -1180,7 +1187,30 @@ class DesignSpaceEditor(BaseWindowController):
                 informativeText="There is no undo.",
                 parentWindow=self.w,
                 resultCallback=self.finalizeDeleteMaster)
+    
+    def callbackAxesFromSources(self, sender):
+        # if we have no axes:
+        # get the axes from the masters
+        # if we have axes:
+        # show a dialog first.
+        if len(self.doc.axes)==0:
+            self.finalizeAxesFromMasters(1)
+        else:
+            text = "Do you want to deduce the axes from the masters and overwrite the existing ones?"
+            result = askYesNo(messageText=text,
+                informativeText="There is no undo.",
+                parentWindow=self.w,
+                resultCallback=self.finalizeAxesFromMasters)
 
+    def finalizeAxesFromMasters(self, result):
+        if result != 1:
+            return
+        self.doc.checkAxes(overwrite=True)
+        self.axesItem.set(self.doc.axes)
+        self.validate()
+        for item in self.doc.axes:
+            item.controller = weakref.ref(self)
+        
     def callbackOpenMaster(self, sender):
         self.openSelectedItem(self.mastersItem)
         self.updateAxesColumns()
