@@ -80,6 +80,66 @@ class SourceDescriptor(SimpleDescriptor):
         self.styleName = None
 
 
+class RuleDescriptor(SimpleDescriptor):
+    """<!-- optional: list of substitution rules -->
+    <rules>
+        <rule name="vertical.bars" enabled="true">
+            <sub name="cent" byname="cent.alt"/>
+            <sub name="dollar" byname="dollar.alt"/>
+            <condition tag="wght" minimum ="250.000000" maximum ="750.000000"/>
+            <condition tag="wdth" minimum ="100"/>
+            <condition tag="opsz" minimum="10" maximum="40"/>
+        </rule>
+    </rules>
+
+    Discussion:
+    use axis names rather than tags - then we can evaluate the rule without having to look up the axes.
+    remove the subs from the rule.
+    remove 'enabled' attr form rule
+
+
+    """
+    _attrs = ['name', 'conditions', 'subs']   # what do we need here
+    def __init__(self):
+        self.name = None
+        self.conditions = []    # list of dict(tag='aaaa', minimum=0, maximum=1000)
+        self.subs = []          # list of substitutions stored as tuples of glyphnames ("a", "a.alt")
+
+def evaluateRule(rule, location):
+    """ Test if rule is True at location """
+    for cd in rule.conditions:
+        if not cd['name'] in location:
+            #print("skipping", cd['name'])
+            continue
+        #print(cd['minimum'] <= location[cd['name']] <= cd['maximum'])
+        if not cd['minimum'] <= location[cd['name']] <= cd['maximum']:
+            return False
+    return True
+
+def processRules(rules, location, glyphNames):
+    """ Apply these rules at this location to these glyphnames.minimum
+        - rule order matters
+    """
+    newNames = []
+    for rule in rules:
+        if evaluateRule(rule, location):
+            for name in glyphNames:
+                swap = False
+                for a, b in rule.subs:
+                    if name == a:
+                        swap = True
+                        break
+                if swap:
+                    newNames.append(b)
+                else:
+                    newNames.append(name)
+            glyphNames = newNames
+            newNames = []
+    return glyphNames
+
+
+
+
 class InstanceDescriptor(SimpleDescriptor):
     """Simple container for data related to the instance"""
     flavor = "instance"
@@ -121,6 +181,7 @@ def tagForAxisName(name):
         tag = name[:4]
     return tag, dict(en = name)
 
+
 class AxisDescriptor(SimpleDescriptor):
     """Simple container for the axis data"""
     flavor = "axis"
@@ -150,6 +211,7 @@ class AxisDescriptor(SimpleDescriptor):
 
 class BaseDocWriter(object):
     _whiteSpace = "    "
+    ruleDescriptorClass = RuleDescriptor
     axisDescriptorClass = AxisDescriptor
     sourceDescriptorClass = SourceDescriptor
     instanceDescriptorClass = InstanceDescriptor
@@ -158,16 +220,30 @@ class BaseDocWriter(object):
     def getAxisDecriptor(cls):
         return cls.axisDescriptorClass()
 
+    @classmethod
+    def getSourceDescriptor(cls):
+        return cls.sourceDescriptorClass()
+
+    @classmethod
+    def getInstanceDescriptor(cls):
+        return cls.instanceDescriptorClass()
+
+    @classmethod
+    def getRuleDescriptor(cls):
+        return cls.ruleDescriptorClass()
+
     def __init__(self, documentPath, documentObject):
         self.path = documentPath
         self.documentObject = documentObject
         self.toolVersion = 3
         self.root = ET.Element("designspace")
         self.root.attrib['format'] = "%d" % self.toolVersion
-        self.root.append(ET.Element("axes"))
-        self.root.append(ET.Element("sources"))
-        self.root.append(ET.Element("instances"))
+        #self.root.append(ET.Element("axes"))
+        #self.root.append(ET.Element("rules"))
+        #self.root.append(ET.Element("sources"))
+        #self.root.append(ET.Element("instances"))
         self.axes = []
+        self.rules = []
 
     def newDefaultLocation(self):
         loc = {}
@@ -176,10 +252,23 @@ class BaseDocWriter(object):
         return loc
 
     def write(self, pretty=True):
+        if self.documentObject.axes:
+            self.root.append(ET.Element("axes"))
         for axisObject in self.documentObject.axes:
             self._addAxis(axisObject)
+
+        if self.documentObject.rules:
+            self.root.append(ET.Element("rules"))
+        for ruleObject in self.documentObject.rules:
+            self._addRule(ruleObject)
+
+        if self.documentObject.sources:
+            self.root.append(ET.Element("sources"))
         for sourceObject in self.documentObject.sources:
             self._addSource(sourceObject)
+
+        if self.documentObject.instances:
+            self.root.append(ET.Element("instances"))
         for instanceObject in self.documentObject.instances:
             self._addInstance(instanceObject)
         if pretty:
@@ -212,6 +301,23 @@ class BaseDocWriter(object):
         if int(num) == num:
             return "%d" % num
         return "%f" % num
+
+    def _addRule(self, ruleObject):
+        self.rules.append(ruleObject)
+        ruleElement  = ET.Element('rule')
+        ruleElement.attrib['name'] = ruleObject.name
+        for cond in ruleObject.conditions:
+            conditionElement = ET.Element('condition')
+            conditionElement.attrib['name'] = cond.get('name')
+            conditionElement.attrib['minimum'] = self.intOrFloat(cond.get('minimum'))
+            conditionElement.attrib['maximum'] = self.intOrFloat(cond.get('maximum'))
+            ruleElement.append(conditionElement)
+        for sub in ruleObject.subs:
+            subElement = ET.Element('sub')
+            subElement.attrib['name'] = sub[0]
+            subElement.attrib['with'] = sub[1]
+            ruleElement.append(subElement)
+        self.root.findall('.rules')[0].append(ruleElement)
 
     def _addAxis(self, axisObject):
         self.axes.append(axisObject)
@@ -345,6 +451,7 @@ class BaseDocWriter(object):
 
 
 class BaseDocReader(object):
+    ruleDescriptorClass = RuleDescriptor
     axisDescriptorClass = AxisDescriptor
     sourceDescriptorClass = SourceDescriptor
     instanceDescriptorClass = InstanceDescriptor
@@ -357,6 +464,7 @@ class BaseDocReader(object):
         self.root = tree.getroot()
         self.documentObject.formatVersion = int(self.root.attrib.get("format", 0))
         self.axes = []
+        self.rules = []
         self.sources = []
         self.instances = []
         self.axisDefaults = {}
@@ -364,6 +472,7 @@ class BaseDocReader(object):
 
     def read(self):
         self.readAxes()
+        self.readRules()
         self.readSources()
         self.readInstances()
 
@@ -379,6 +488,25 @@ class BaseDocReader(object):
             loc[axisDescriptor.name] = axisDescriptor.default
         return loc
 
+    def readRules(self):
+        # read the rules
+        rules = []
+        for ruleElement in self.root.findall(".rules/rule"):
+            ruleObject = self.ruleDescriptorClass()
+            ruleObject.name = ruleElement.attrib.get("name")
+            for conditionElement in ruleElement.findall('.condition'):
+                cd = {}
+                cd['minimum'] = float(conditionElement.attrib.get("minimum"))
+                cd['maximum'] = float(conditionElement.attrib.get("maximum"))
+                cd['name'] = conditionElement.attrib.get("name")
+                ruleObject.conditions.append(cd)
+            for subElement in ruleElement.findall('.sub'):
+                a = subElement.attrib['name']
+                b = subElement.attrib['with']
+                ruleObject.subs.append((a,b))
+            rules.append(ruleObject)
+        self.documentObject.rules = rules
+
     def readAxes(self):
         # read the axes elements, including the warp map.
         axes = []
@@ -390,6 +518,7 @@ class BaseDocReader(object):
             # we need to check if there is an attribute named "initial"
             if axisElement.attrib.get("default") is None:
                 if axisElement.attrib.get("initial") is not None:
+                    # stop doing this, 
                     axisObject.default = float(axisElement.attrib.get("initial"))
                 else:
                     axisObject.default = axisObject.minimum
@@ -619,6 +748,7 @@ class DesignSpaceDocument(object):
         self.sources = []
         self.instances = []
         self.axes = []
+        self.rules = []
         self.default = None         # name of the default master
         self.defaultLoc = None
         #
@@ -654,6 +784,9 @@ class DesignSpaceDocument(object):
     def addAxis(self, axisDescriptor):
         self.axes.append(axisDescriptor)
 
+    def addRule(self, ruleDescriptor):
+        self.rules.append(ruleDescriptor)
+
     def newDefaultLocation(self):
         loc = {}
         for axisDescriptor in self.axes:
@@ -674,6 +807,10 @@ class DesignSpaceDocument(object):
     def newAxisDescriptor(self):
         # Ask the writer class to make us a new axisDescriptor
         return self.writerClass.getAxisDecriptor()
+
+    def newSourceDescriptor(self):
+        # Ask the writer class to make us a new sourceDescriptor
+        return self.writerClass.getSourceDecriptor()
 
     def getAxisOrder(self):
         names = []
@@ -838,7 +975,14 @@ class DesignSpaceDocument(object):
             axis.minimum = minimum
             axis.maximum = maximum
             axis.default = default
-
+        # now the rules
+        for rule in self.rules:
+            newConditions = []
+            for cond in rule.conditions:
+                minimum = self.normalizeLocation({cond['name']:cond['minimum']}).get(cond['name'])
+                maximum = self.normalizeLocation({cond['name']:cond['maximum']}).get(cond['name'])
+                newConditions.append(dict(name=cond['name'], minimum=minimum, maximum=maximum))
+            rule.conditions = newConditions
 
 
 if __name__ == "__main__":
@@ -962,6 +1106,13 @@ if __name__ == "__main__":
         >>> a3.tag = "spok"
         >>> a3.map = [(0.0, 10.0), (401.0, 66.0), (1000.0, 990.0)]
         >>> #doc.addAxis(a3)    # uncomment this line to test the effects of default axes values
+        >>> # write some rules
+        >>> r1 = RuleDescriptor()
+        >>> r1.name = "named.rule.1"
+        >>> r1.conditions.append(dict(name='aaaa', minimum=0, maximum=1))
+        >>> r1.conditions.append(dict(name='bbbb', minimum=2, maximum=3))
+        >>> r1.subs.append(("a", "a.alt"))
+        >>> doc.addRule(r1)
         >>> # write the document
         >>> doc.write(testDocPath)
         >>> assert os.path.exists(testDocPath)
@@ -1004,6 +1155,7 @@ if __name__ == "__main__":
         >>> a1.maximum = 1000
         >>> a1.default = 0
         >>> a1.name = "aaa"
+        >>> a1.tag = "aaaa"
         >>> doc.addAxis(a1)
 
         >>> doc.normalizeLocation(dict(aaa=0))
@@ -1088,6 +1240,33 @@ if __name__ == "__main__":
         >>> r.sort()
         >>> r
         [('ccc', -1.0, 0.0, 0.0)]
+
+
+        >>> doc = DesignSpaceDocument()
+        >>> # write some axes
+        >>> a3 = AxisDescriptor()
+        >>> a3.minimum = 2000
+        >>> a3.maximum = 3000
+        >>> a3.default = 2000
+        >>> a3.name = "ccc"
+        >>> doc.addAxis(a3)
+        >>> doc.normalizeLocation(dict(ccc=0))
+        {'ccc': 0.0}
+        >>> doc.normalizeLocation(dict(ccc=1))
+        {'ccc': 0.0}
+        >>> doc.normalizeLocation(dict(ccc=-1000))
+        {'ccc': 0.0}
+        >>> doc.normalizeLocation(dict(ccc=-1001))
+        {'ccc': 0.0}
+
+        >>> doc.normalize()
+        >>> r = []
+        >>> for axis in doc.axes:
+        ...     r.append((axis.name, axis.minimum, axis.default, axis.maximum))
+        >>> r.sort()
+        >>> r
+        [('ccc', 0.0, 0.0, 1.0)]
+
 
         >>> doc = DesignSpaceDocument()
         >>> # write some axes
@@ -1201,6 +1380,82 @@ if __name__ == "__main__":
         >>> len(new.axes)
         2
         >>> new.write(testDocPath)
+
+        """
+
+    def testRules():
+        """
+        >>> import os
+        >>> testDocPath = os.path.join(os.getcwd(), "testRules.designspace")
+        >>> testDocPath2 = os.path.join(os.getcwd(), "testRules_roundtrip.designspace")
+        >>> doc = DesignSpaceDocument()
+        >>> # write some axes
+        >>> r1 = RuleDescriptor()
+        >>> r1.name = "named.rule.1"
+        >>> r1.conditions.append(dict(name='aaaa', minimum=0, maximum=1000))
+        >>> r1.conditions.append(dict(name='bbbb', minimum=0, maximum=3000))
+        >>> r1.subs.append(("a", "a.alt"))
+        >>>
+        >>> doc.addRule(r1)
+        >>> assert len(doc.rules) == 1
+        >>> assert len(doc.rules[0].conditions) == 2
+        >>> evaluateRule(r1, dict(aaaa = 500, bbbb = 0))
+        True
+        >>> evaluateRule(r1, dict(aaaa = 0, bbbb = 0))
+        True
+        >>> evaluateRule(r1, dict(aaaa = 1000, bbbb = 0))
+        True
+        >>> evaluateRule(r1, dict(aaaa = 1000, bbbb = -100))
+        False
+        >>> evaluateRule(r1, dict(aaaa = 1000.0001, bbbb = 0))
+        False
+        >>> evaluateRule(r1, dict(aaaa = -0.0001, bbbb = 0))
+        False
+        >>> evaluateRule(r1, dict(aaaa = -100, bbbb = 0))
+        False
+        >>> processRules([r1], dict(aaaa = 500), ["a", "b", "c"])
+        ['a.alt', 'b', 'c']
+        >>> processRules([r1], dict(aaaa = 500), ["a.alt", "b", "c"])
+        ['a.alt', 'b', 'c']
+        >>> processRules([r1], dict(aaaa = 2000), ["a", "b", "c"])
+        ['a', 'b', 'c']
+
+        >>> a1 = AxisDescriptor()
+        >>> a1.minimum = 0
+        >>> a1.maximum = 1000
+        >>> a1.default = 0
+        >>> a1.name = "aaaa"
+        >>> a1.tag = "aaaa"
+        >>> b1 = AxisDescriptor()
+        >>> b1.minimum = 2000
+        >>> b1.maximum = 3000
+        >>> b1.default = 2000
+        >>> b1.name = "bbbb"
+        >>> b1.tag = "bbbb"
+        >>> doc.addAxis(a1)
+        >>> doc.addAxis(b1)
+
+        >>> doc.rules[0].conditions
+        [{'minimum': 0, 'maximum': 1000, 'name': 'aaaa'}, {'minimum': 0, 'maximum': 3000, 'name': 'bbbb'}]
+
+        >>> doc.rules[0].subs
+        [('a', 'a.alt')]
+
+        >>> doc.normalize()
+        >>> doc.rules[0].name
+        'named.rule.1'
+        >>> doc.rules[0].conditions
+        [{'minimum': 0.0, 'maximum': 1.0, 'name': 'aaaa'}, {'minimum': 0.0, 'maximum': 1.0, 'name': 'bbbb'}]
+
+        >>> doc.write(testDocPath)
+        >>> new = DesignSpaceDocument()
+
+        >>> new.read(testDocPath)
+        >>> len(new.axes)
+        2
+        >>> len(new.rules)
+        1
+        >>> new.write(testDocPath2)
 
         """
 
