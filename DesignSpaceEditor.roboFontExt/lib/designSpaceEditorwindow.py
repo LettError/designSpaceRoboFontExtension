@@ -1,7 +1,7 @@
 # coding=utf-8
 import os, time
 import weakref
-from AppKit import NSToolbarFlexibleSpaceItemIdentifier, NSURL, NSImageCell, NSImageAlignTop, NSScaleNone, NSImageFrameNone, NSImage, NSObject
+from AppKit import NSToolbarFlexibleSpaceItemIdentifier, NSURL, NSImageCell, NSImageAlignTop, NSScaleNone, NSImageFrameNone, NSImage, NSObject, NSNumberFormatter, NSNumberFormatterDecimalStyle, NSBeep
 from defconAppKit.windows.baseWindow import BaseWindowController
 from mojo.extensions import getExtensionDefault, setExtensionDefault, ExtensionBundle
 from defcon import Font
@@ -93,6 +93,12 @@ class KeyedRuleDescriptor(NSObject):
     def nameKey(self):
         return self.name
 
+    def setValue_forUndefinedKey_(self, value=None, key=None):
+        print("KeyedRuleDescriptor", value, key)
+        if key == "nameKey":
+            # rename this axis
+            if len(value)>0:
+                self.name = value
 
 class KeyedSourceDescriptor(NSObject):
     __metaclass__ = ClassNameIncrementer
@@ -523,12 +529,18 @@ class DesignSpaceEditor(BaseWindowController):
         self._newInstanceCounter = 1
         self._newRuleCounter = 1
         self._selectedRule = None
+        self._settingConditionsFlag = False
+        self._settingGlyphsFlag = False
         if self.designSpacePath is None:
             fileNameTitle = "Untitled.designspace"
         else:
             fileNameTitle = os.path.basename(self.designSpacePath)
-        self.w = Window((940, 700), fileNameTitle, minSize=(200,400))
+        self.w = Window((940, 700), fileNameTitle, minSize=(740,400))
         self._updatingTheAxesNames = False
+        _numberFormatter = NSNumberFormatter.alloc().init()
+        #_numberFormatter.setNumberStyle_(NSNumberFormatterDecimalStyle)
+        #_numberFormatter.setFormat_("0.0000;0;-0.0000")
+
         toolbarItems = [
             {
                 'itemIdentifier': "toolbarSave",
@@ -594,26 +606,31 @@ class DesignSpaceEditor(BaseWindowController):
                     'key':'sourceAxis_1',
                     'width':axisValueWidth,
                     'editable':True,
+                    'formatter': _numberFormatter,
                 },
                 {   'title': 'Axis 2',
                     'key':'sourceAxis_2',
                     'width':axisValueWidth,
                     'editable':True,
+                    'formatter': _numberFormatter,
                 },
                 {   'title': 'Axis 3',
                     'key':'sourceAxis_3',
                     'width':axisValueWidth,
                     'editable':True,
+                    'formatter': _numberFormatter,
                 },
                 {   'title': 'Axis 4',
                     'key':'sourceAxis_4',
                     'width':axisValueWidth,
                     'editable':True,
+                    'formatter': _numberFormatter,
                 },
                 {   'title': 'Axis 5',
                     'key':'sourceAxis_5',
                     'width':axisValueWidth,
                     'editable':True,
+                    'formatter': _numberFormatter,
                 },
         ]
         instanceColDescriptions = [
@@ -642,26 +659,31 @@ class DesignSpaceEditor(BaseWindowController):
                     'key':'instanceAxis_1',
                     'width':axisValueWidth,
                     'editable':True,
+                    'formatter': _numberFormatter,
                 },
                 {   'title': 'Axis 2',
                     'key':'instanceAxis_2',
                     'width':axisValueWidth,
                     'editable':True,
+                    'formatter': _numberFormatter,
                 },
                 {   'title': 'Axis 3',
                     'key':'instanceAxis_3',
                     'width':axisValueWidth,
                     'editable':True,
+                    'formatter': _numberFormatter,
                 },
                 {   'title': 'Axis 4',
                     'key':'instanceAxis_4',
                     'width':axisValueWidth,
                     'editable':True,
+                    'formatter': _numberFormatter,
                 },
                 {   'title': 'Axis 5',
                     'key':'instanceAxis_5',
                     'width':axisValueWidth,
                     'editable':True,
+                    'formatter': _numberFormatter,
                 },
             ]
         axisNameColumnWidth = 100
@@ -685,16 +707,19 @@ class DesignSpaceEditor(BaseWindowController):
                     'key':'axisMinimumKey',
                     'width':100,
                     'editable':True,
+                    'formatter': _numberFormatter,
                 },
                 {   'title': 'Default',
                     'key':'axisDefaultKey',
                     'width':100,
                     'editable':True,
+                    'formatter': _numberFormatter,
                 },
                 {   'title': 'Maximum',
                     'key':'axisMaximumKey',
                     'width':100,
                     'editable':True,
+                    'formatter': _numberFormatter,
                 },
                 {   'title': 'Labelname',
                     'key':'labelNameKey',
@@ -821,7 +846,7 @@ class DesignSpaceEditor(BaseWindowController):
                 {   'title': 'Name',
                     'key':'nameKey',
                     #'width':40,
-                    'editable':False,
+                    'editable':True,
                 },
             ]
         ruleConditionColDescriptions = [
@@ -834,23 +859,25 @@ class DesignSpaceEditor(BaseWindowController):
                     'key':'minimum',
                     'width':axisValueWidth,
                     'editable':True,
+                    'formatter': _numberFormatter,
                 },
                 {   'title': 'Maximum',
                     'key':'maximum',
                     'width':axisValueWidth,
                     'editable':True,
+                    'formatter': _numberFormatter,
                 },
             ]
         ruleGlyphsColDescriptions = [
                 {   'title': 'Look for',
                     'key':'name',
                     #'width':40,
-                    'editable':False,
+                    'editable':True,
                 },
                 {   'title': 'Replace with',
                     'key':'with',
                     #'width':40,
-                    'editable':False,
+                    'editable':True,
                 },
             ]
         
@@ -859,13 +886,17 @@ class DesignSpaceEditor(BaseWindowController):
         self.rulesNames = List((0,toolbarHeight, 200,-0), [],
             columnDescriptions=ruleNameColDescriptions,
             selectionCallback=self.callbackRuleNameSelection,
+            drawFocusRing = False,
         )
         self.rulesConditions = List((200+listMargin,toolbarHeight, axisNameColumnWidth+2*axisValueWidth+20,-0), [],
             columnDescriptions=ruleConditionColDescriptions,
-            editCallback = self.callbackEditRuleCondition
+            editCallback = self.callbackEditRuleCondition,
+            drawFocusRing = False,
         )
         self.rulesGlyphs = List((485+listMargin,toolbarHeight, 2*axisValueWidth,-0), [],
             columnDescriptions=ruleGlyphsColDescriptions,
+            editCallback = self.callbackEditRuleGlyphs,
+            drawFocusRing = False,
         )
         self.rulesGroup.names = self.rulesNames
         self.rulesGroup.conditions = self.rulesConditions
@@ -916,8 +947,11 @@ class DesignSpaceEditor(BaseWindowController):
             source.renameAxis(oldName, newName)
         for instance in self.doc.instances:
             instance.renameAxis(oldName, newName)
+        for rule in self.doc.rules:
+            rule.renameAxis(oldName, newName)
         for axis in self.doc.axes:
             axis.renameAxis(oldName, newName)
+        self.rulesGroup.names.setSelection([])
         self.updateInstanceNames()
         self.validate()
         
@@ -1177,34 +1211,73 @@ class DesignSpaceEditor(BaseWindowController):
             if axisName not in descriptor.location:
                 descriptor.location[axisName] = defaultValue
     
-    def callbackEditRuleCondition(self, sender=None):
-        if self._selectedRule is not None:
-            print("callbackEditRuleCondition editing", sender)
-        else:
-            print("callbackEditRuleCondition not editing", sender)
+    def callbackEditRuleGlyphs(self, sender = None):
+        if not self._selectedRule:
+            return
+        if self._settingGlyphsFlag:
+            # not actually editing the list, we can skip
+            return
+        newGlyphs = []
+        for item in self.rulesGroup.glyphs:
+            newGlyphs.append((item['name'],item['with']))
+        self._selectedRule.subs = newGlyphs
+        
+    def callbackEditRuleCondition(self, sender = None):
+        if self._settingConditionsFlag:
+            # not actually editing the list, we can skip
+            #print("callbackEditRuleCondition not editing", sender)
+            return
+        print("callbackEditRuleCondition editing", sender)
+        newConditions = []
+        for item in self.rulesGroup.conditions:
+            cd = {}
+            cd['name'] = item['name']
+            v = item.get('minimum')
+            if v is not None:
+                cd['minimum'] = float(item['minimum'])
+            else:
+                return
+            v = item.get('maximum')
+            if v is not None:
+                cd['maximum'] = float(item['maximum'])
+            else:
+                return
+            newConditions.append(cd)
+        self._selectedRule.conditions = newConditions
         
     def callbackRuleNameSelection(self, sender):
         selection = sender.getSelection()
+        self._selectedRule = None
         if len(selection)>1 or len(selection) == 0:
-            self._selectedRule = None
+            self._settingConditionsFlag = True
             self.rulesGroup.conditions.set([])
+            self._settingConditionsFlag = False
+            self._settingGlyphsFlag = True
             self.rulesGroup.glyphs.set([])
+            self._settingGlyphsFlag = False
             self.rulesGroup.conditions.enable(False)
             self.rulesGroup.glyphs.enable(False)
         else:
             self._selectedRule = self.rulesGroup.names[selection[0]]
+            self._settingConditionsFlag = True
             self.rulesGroup.conditions.set(self._selectedRule.conditions)
+            self._settingConditionsFlag = False
             self.rulesGroup.conditions.enable(True)
             self.rulesGroup.glyphs.enable(True)
+            self._settingGlyphsFlag = True
             names = []
             for a, b in self._selectedRule.subs:
                 names.append({'name':a, 'with':b})
             self.rulesGroup.glyphs.set(names)
-        
+            self._settingGlyphsFlag = False
+
     def callbackRulesTools(self, sender):
         if sender.get() == 0:
             newRuleDescriptor = KeyedRuleDescriptor()
             newRuleDescriptor.name = "Unnamed Rule %d"%self._newRuleCounter
+            newRuleDescriptor.conditions = []
+            for axis in self.doc.axes:
+                newRuleDescriptor.conditions.append(dict(name=axis.name, minimum=axis.minimum, maximum=axis.maximum))                    
             self._newRuleCounter += 1
             self.doc.addRule(newRuleDescriptor)
             self.rulesGroup.names.set(self.doc.rules)
