@@ -2,7 +2,6 @@
 import os, time
 import weakref
 from AppKit import NSToolbarFlexibleSpaceItemIdentifier, NSURL, NSImageCell, NSImageAlignTop, NSScaleNone, NSImageFrameNone, NSImage, NSObject
-import designSpaceDocument
 from defconAppKit.windows.baseWindow import BaseWindowController
 from mojo.extensions import getExtensionDefault, setExtensionDefault, ExtensionBundle
 from defcon import Font
@@ -12,7 +11,15 @@ from vanilla.dialogs import getFile, putFile, askYesNo
 from mojo.UI import AccordionView
 from mojo.roboFont import *
 
+import logging
+
 from vanilla import *
+
+import designSpaceDocument
+reload(designSpaceDocument)
+import ufoProcessor
+reload(ufoProcessor)
+
 import designSpaceEditorSettings
 reload(designSpaceEditorSettings)
 
@@ -35,7 +42,7 @@ def ClassNameIncrementer(clsName, bases, dct):
 # /NSOBject Hack, please remove before release.
 
 class KeyedGlyphDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    __metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.glyphName = None
@@ -64,9 +71,31 @@ def renameAxis(oldName, newName, location):
         newLocation[name] = value
     return newLocation
 
+
+class KeyedRuleDescriptor(NSObject):
+    __metaclass__ = ClassNameIncrementer
+    def __new__(cls):
+        self = cls.alloc().init()
+        self.name = None
+        self.conditions = []
+        self.subs = []
+        return self
+
+    def renameAxis(self, oldName, newName):
+        renamedConditions = []
+        for cd in self.conditions:
+            if cd['name'] == oldName:
+                renamedConditions.append(dict(name=newName, minimum=cd['minimum'], maximum=cd['maximum']))
+            else:
+                renamedConditions.append(cd)
+        self.conditions = renamedConditions
     
+    def nameKey(self):
+        return self.name
+
+
 class KeyedSourceDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    __metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -195,7 +224,7 @@ class KeyedSourceDescriptor(NSObject):
                 NSBeep()
     
 class KeyedInstanceDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    __metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -348,7 +377,7 @@ def intOrFloat(num):
     return "%f" % num
     
 class KeyedAxisDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    __metaclass__ = ClassNameIncrementer
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
         ("italic", "ital"),
@@ -457,11 +486,13 @@ class KeyedAxisDescriptor(NSObject):
 
 
 class KeyedDocReader(designSpaceDocument.BaseDocReader):
+    ruleDescriptorClass = KeyedRuleDescriptor
     axisDescriptorClass = KeyedAxisDescriptor
     sourceDescriptorClass = KeyedSourceDescriptor
     instanceDescriptorClass = KeyedInstanceDescriptor
     
 class KeyedDocWriter(designSpaceDocument.BaseDocWriter):
+    ruleDescriptorClass = KeyedRuleDescriptor
     axisDescriptorClass = KeyedAxisDescriptor
     sourceDescriptorClass = KeyedSourceDescriptor
     instanceDescriptorClass = KeyedInstanceDescriptor
@@ -490,6 +521,8 @@ class DesignSpaceEditor(BaseWindowController):
         self.designSpacePath = designSpacePath
         self.doc = None
         self._newInstanceCounter = 1
+        self._newRuleCounter = 1
+        self._selectedRule = None
         if self.designSpacePath is None:
             fileNameTitle = "Untitled.designspace"
         else:
@@ -631,6 +664,7 @@ class DesignSpaceEditor(BaseWindowController):
                     'editable':True,
                 },
             ]
+        axisNameColumnWidth = 100
         axisColDescriptions = [
                 {   'title': u"®",
                     'key':'registeredTagKey',
@@ -639,7 +673,7 @@ class DesignSpaceEditor(BaseWindowController):
                 },
                 {   'title': 'Name',
                     'key':'axisNameKey',
-                    'width':100,
+                    'width':axisNameColumnWidth,
                     'editable':True,
                 },
                 {   'title': 'Tag',
@@ -679,9 +713,14 @@ class DesignSpaceEditor(BaseWindowController):
                     'width':40,
                     'editable':False,
                 },
-                {   'title': 'Glyphname',
+                {   'title': 'Name',
                     'key':'glyphNameKey',
-                    'width':40,
+                    'width':150,
+                    'editable':False,
+                },
+                {   'title': 'Unicode',
+                    'key':'unicodeKey',
+                    'width':50,
                     'editable':False,
                 },
         ]
@@ -743,7 +782,6 @@ class DesignSpaceEditor(BaseWindowController):
             sizeStyle="small")
         self.mastersGroup.loadNamesFromSourceButton.enable(False)
         
-        
         self.instancesGroup = Group((0,0,0,0))
         self.instancesItem = List((0, toolbarHeight, -0, -0), [],
             columnDescriptions=instanceColDescriptions,
@@ -774,11 +812,70 @@ class DesignSpaceEditor(BaseWindowController):
         
         self.glyphsGroup = Group((0,0,0,0))
         self.glyphsItem = List((0, toolbarHeight, -0, -0), [],
-            #columnDescriptions=glyphsColDescriptions,
+            columnDescriptions=glyphsColDescriptions,
             #selectionCallback=self.callbackInstanceSelection,
         )
         self.glyphsGroup.l = self.glyphsItem
-    
+        
+        ruleNameColDescriptions = [
+                {   'title': 'Name',
+                    'key':'nameKey',
+                    #'width':40,
+                    'editable':False,
+                },
+            ]
+        ruleConditionColDescriptions = [
+                {   'title': 'Axis',
+                    'key':'name',
+                    'width':axisNameColumnWidth,
+                    'editable':False,
+                },
+                {   'title': 'Minimum',
+                    'key':'minimum',
+                    'width':axisValueWidth,
+                    'editable':True,
+                },
+                {   'title': 'Maximum',
+                    'key':'maximum',
+                    'width':axisValueWidth,
+                    'editable':True,
+                },
+            ]
+        ruleGlyphsColDescriptions = [
+                {   'title': 'Look for',
+                    'key':'name',
+                    #'width':40,
+                    'editable':False,
+                },
+                {   'title': 'Replace with',
+                    'key':'with',
+                    #'width':40,
+                    'editable':False,
+                },
+            ]
+        
+        listMargin = 5
+        self.rulesGroup = Group((0,0,0,0))
+        self.rulesNames = List((0,toolbarHeight, 200,-0), [],
+            columnDescriptions=ruleNameColDescriptions,
+            selectionCallback=self.callbackRuleNameSelection,
+        )
+        self.rulesConditions = List((200+listMargin,toolbarHeight, axisNameColumnWidth+2*axisValueWidth+20,-0), [],
+            columnDescriptions=ruleConditionColDescriptions,
+            editCallback = self.callbackEditRuleCondition
+        )
+        self.rulesGlyphs = List((485+listMargin,toolbarHeight, 2*axisValueWidth,-0), [],
+            columnDescriptions=ruleGlyphsColDescriptions,
+        )
+        self.rulesGroup.names = self.rulesNames
+        self.rulesGroup.conditions = self.rulesConditions
+        self.rulesGroup.glyphs = self.rulesGlyphs
+        self.rulesGroup.tools = SegmentedButton(
+            (buttonMargin, buttonMargin,100,buttonHeight),
+            segmentDescriptions=instancesToolDescriptions,
+            selectionStyle="momentary",
+            callback=self.callbackRulesTools)
+        
         self.reportGroup = Group((0,0,0,0))
         self.reportGroup.text = EditText((0,toolbarHeight,-0,-0), 'hehe')
         
@@ -786,9 +883,10 @@ class DesignSpaceEditor(BaseWindowController):
            dict(label="Axes", view=self.axesGroup, size=138, collapsed=False, canResize=False),
            dict(label="Masters", view=self.mastersGroup, size=135, collapsed=False, canResize=True),
            dict(label="Instances", view=self.instancesGroup, size=135, collapsed=False, canResize=True),
-           dict(label="Report", view=self.reportGroup, size=170, collapsed=False, canResize=True),
-           # this panel will show glyphs and compatibiility.
+           dict(label="Rules", view=self.rulesGroup, size=135, collapsed=False, canResize=True),
+           dict(label="Report", view=self.reportGroup, size=170, collapsed=True, canResize=True),
            #dict(label="Glyphs", view=self.glyphsGroup, size=250, collapsed=False, canResize=True),
+           # this panel will show glyphs and compatibiility.
         ]
 
         self.read(self.designSpacePath)
@@ -934,8 +1032,17 @@ class DesignSpaceEditor(BaseWindowController):
         if self.designSpacePath is None:
             return
         progress = ProgressWindow(u"Generating instance UFO’s…", 10, parentWindow=self.w)
+        # build with mutatormath
+        # try:
+        #     build(self.designSpacePath)
+        # except:
+        #     import traceback
+        #     traceback.print_exc()
+        # finally:
+        #     progress.close()
+        # build with ufoProcessor       
         try:
-            build(self.designSpacePath)
+            self.doc.generateUFO()
         except:
             import traceback
             traceback.print_exc()
@@ -982,7 +1089,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.instancesItem.getNSTableView().reloadData()
         
     def read(self, designSpacePath):
-        self.doc = designSpaceDocument.DesignSpaceDocument(KeyedDocReader, KeyedDocWriter)
+        self.doc = ufoProcessor.DesignSpaceProcessor(KeyedDocReader, KeyedDocWriter)
         if designSpacePath is not None:
             self.doc.read(designSpacePath)
         if len(self.doc.axes)==0:
@@ -992,6 +1099,9 @@ class DesignSpaceEditor(BaseWindowController):
         self.axesItem.set(self.doc.axes)
         self.mastersItem.set(self.doc.sources)
         self.instancesItem.set(self.doc.instances)
+        self.rulesGroup.names.set(self.doc.rules)
+        for r in self.doc.rules:
+            print r.subs
         self.validate()
 
     def getSaveDirFromMasters(self):
@@ -1067,6 +1177,67 @@ class DesignSpaceEditor(BaseWindowController):
             if axisName not in descriptor.location:
                 descriptor.location[axisName] = defaultValue
     
+    def callbackEditRuleCondition(self, sender=None):
+        if self._selectedRule is not None:
+            print("callbackEditRuleCondition editing", sender)
+        else:
+            print("callbackEditRuleCondition not editing", sender)
+        
+    def callbackRuleNameSelection(self, sender):
+        selection = sender.getSelection()
+        if len(selection)>1 or len(selection) == 0:
+            self._selectedRule = None
+            self.rulesGroup.conditions.set([])
+            self.rulesGroup.glyphs.set([])
+            self.rulesGroup.conditions.enable(False)
+            self.rulesGroup.glyphs.enable(False)
+        else:
+            self._selectedRule = self.rulesGroup.names[selection[0]]
+            self.rulesGroup.conditions.set(self._selectedRule.conditions)
+            self.rulesGroup.conditions.enable(True)
+            self.rulesGroup.glyphs.enable(True)
+            names = []
+            for a, b in self._selectedRule.subs:
+                names.append({'name':a, 'with':b})
+            self.rulesGroup.glyphs.set(names)
+        
+    def callbackRulesTools(self, sender):
+        if sender.get() == 0:
+            newRuleDescriptor = KeyedRuleDescriptor()
+            newRuleDescriptor.name = "Unnamed Rule %d"%self._newRuleCounter
+            self._newRuleCounter += 1
+            self.doc.addRule(newRuleDescriptor)
+            self.rulesGroup.names.set(self.doc.rules)
+        else:
+            selection = self.rulesGroup.names.getSelection()
+            if not selection:
+                # no selected rules, nothing to delete
+                return
+            if len(selection) == 1:
+                text = "Do you want to delete this rule?"
+            else:
+                text = "Do you want to delete %d rules?"%len(selection)
+            result = askYesNo(messageText=text, informativeText="There is no undo.", parentWindow=self.w, resultCallback=self.finallyDeleteRule)
+        #self.validate()
+    
+    def finallyDeleteRule(self, result):
+        print("finallyDeleteRule", result)
+        if result != 1:
+            return
+        removeThese = []
+        for index in self.rulesGroup.names.getSelection():
+            removeThese.append(id(self.rulesGroup.names[index]))
+        keepThese = []
+        for item in self.doc.rules:
+            if id(item) not in removeThese:
+                keepThese.append(item)
+        self.doc.rules = keepThese
+        #self.updateAxesColumns()
+        #self.updateLocations()
+        self.rulesGroup.names.set(self.doc.rules)
+        #self.validate()
+        self.rulesGroup.names.setSelection([])
+
     def callbackAxesListEdit(self, sender):
         if self._updatingTheAxesNames == False:
             if sender.getSelection():

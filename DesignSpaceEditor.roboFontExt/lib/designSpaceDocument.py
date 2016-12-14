@@ -504,6 +504,7 @@ class BaseDocReader(object):
                 a = subElement.attrib['name']
                 b = subElement.attrib['with']
                 ruleObject.subs.append((a,b))
+                print(a,b)
             rules.append(ruleObject)
         self.documentObject.rules = rules
 
