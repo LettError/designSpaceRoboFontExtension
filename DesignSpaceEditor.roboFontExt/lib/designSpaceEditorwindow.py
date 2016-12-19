@@ -42,7 +42,7 @@ def ClassNameIncrementer(clsName, bases, dct):
 # /NSOBject Hack, please remove before release.
 
 class KeyedGlyphDescriptor(NSObject):
-    __metaclass__ = ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.glyphName = None
@@ -73,7 +73,7 @@ def renameAxis(oldName, newName, location):
 
 
 class KeyedRuleDescriptor(NSObject):
-    __metaclass__ = ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.name = None
@@ -81,27 +81,28 @@ class KeyedRuleDescriptor(NSObject):
         self.subs = []
         return self
 
-    def renameAxis(self, oldName, newName):
+    def renameAxis(self, oldName, newName=None):
         renamedConditions = []
         for cd in self.conditions:
             if cd['name'] == oldName:
                 renamedConditions.append(dict(name=newName, minimum=cd['minimum'], maximum=cd['maximum']))
             else:
-                renamedConditions.append(cd)
+                if newName is not None:
+                    renamedConditions.append(cd)
         self.conditions = renamedConditions
     
     def nameKey(self):
         return self.name
 
     def setValue_forUndefinedKey_(self, value=None, key=None):
-        print("KeyedRuleDescriptor", value, key)
+        #print("KeyedRuleDescriptor", value, key)
         if key == "nameKey":
             # rename this axis
             if len(value)>0:
                 self.name = value
 
 class KeyedSourceDescriptor(NSObject):
-    __metaclass__ = ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -230,7 +231,7 @@ class KeyedSourceDescriptor(NSObject):
                 NSBeep()
     
 class KeyedInstanceDescriptor(NSObject):
-    __metaclass__ = ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -383,7 +384,7 @@ def intOrFloat(num):
     return "%f" % num
     
 class KeyedAxisDescriptor(NSObject):
-    __metaclass__ = ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
         ("italic", "ital"),
@@ -957,8 +958,8 @@ class DesignSpaceEditor(BaseWindowController):
             rule.renameAxis(oldName, newName)
         for axis in self.doc.axes:
             axis.renameAxis(oldName, newName)
-        self.rulesGroup.names.setSelection([])
         self._setRulesGroupConditions()
+        self.updateRules()
         self.updateInstanceNames()
         self.validate()
     
@@ -1035,6 +1036,27 @@ class DesignSpaceEditor(BaseWindowController):
                 report.append("\t%s"%instance.path)
         
         # rules XXXX
+        axisData = {}
+        axisNames = []
+        for axis in self.doc.axes:
+            axisData[axis.name] = (axis.minimum, axis.maximum)
+            axisNames.append(axis.name)
+        if len(self.doc.rules)==0:
+            report.append("No rules defined.")
+        else:
+            report.append("Rules:")
+            for rule in self.doc.rules:
+                for cd in rule.conditions:
+                    conditionAxis = cd['name']
+                    if conditionAxis not in axisNames:
+                        report.append("\tCondition iun rule %s references unknown axis %s"%(rule.name, cd['name']))
+                    if conditionAxis in axisData:
+                        axisMin, axisMax = axisData[conditionAxis]
+                        if cd.get('minimum') is None:
+                            report.append("\tCondition in rule %s has no minimum on axis %s, will use %3.3f from axis"%(rule.name, conditionAxis, axisMin))
+                        elif cd.get('maximum') is None:
+                            report.append("\tCondition in rule %s has no maximum on axis %s, will use %3.3f from axis"%(rule.name, conditionAxis, axisMax))
+                                
         
         self.reportGroup.text.set("\n".join(report))
     
@@ -1150,8 +1172,8 @@ class DesignSpaceEditor(BaseWindowController):
         self.mastersItem.set(self.doc.sources)
         self.instancesItem.set(self.doc.instances)
         self.rulesGroup.names.set(self.doc.rules)
-        for r in self.doc.rules:
-            print r.subs
+        #for r in self.doc.rules:
+        #    print r.subs
         self.validate()
 
     def getSaveDirFromMasters(self):
@@ -1215,6 +1237,9 @@ class DesignSpaceEditor(BaseWindowController):
             self._updateLocation(instanceDescriptor, defaults)
         for sourceDescriptor in self.doc.sources:
             self._updateLocation(sourceDescriptor, defaults)
+        for ruleDescriptor in self.doc.rules:
+            self._updateConditions(ruleDescriptor, defaults)
+        self.updateRules()                
             
     def _updateLocation(self, descriptor, defaults):
         remove = []
@@ -1262,11 +1287,11 @@ class DesignSpaceEditor(BaseWindowController):
             newConditions.append(cd)
         self._selectedRule.conditions = newConditions
         
-        for cd in self._selectedRule.conditions:
-            print("setting conditions in _selectedRule", cd)
+        #for cd in self._selectedRule.conditions:
+        #    print("setting conditions in _selectedRule", cd)
 
-        for r in self.doc.rules:
-            print('debug', r.name, r.conditions)
+        #for r in self.doc.rules:
+        #    print('debug', r.name, r.conditions)
     
     def _setRulesGroupConditions(self, clear=False):
         # the condition might have None as value
@@ -1297,7 +1322,7 @@ class DesignSpaceEditor(BaseWindowController):
                 new['minimum'] = ''
                 new['maximum'] = ''
                 conditions.append(new)
-        print('debug', '_setRulesGroupConditions', conditions, axisNames)
+        #print('debug', '_setRulesGroupConditions', conditions, axisNames)
         self.rulesGroup.conditions.set(conditions)
 
     def callbackRuleNameSelection(self, sender):
@@ -1315,7 +1340,7 @@ class DesignSpaceEditor(BaseWindowController):
             self.rulesGroup.glyphTools.enable(False)
         else:
             self._selectedRule = self.rulesGroup.names[selection[0]]
-            print("self._selectedRule", self._selectedRule)
+            #print("self._selectedRule", self._selectedRule)
             self.rulesGroup.conditions.enable(True)
             self._settingConditionsFlag = True
             self._setRulesGroupConditions()
@@ -1337,8 +1362,8 @@ class DesignSpaceEditor(BaseWindowController):
             # + button
             if not self._selectedRule:
                 return
-            print("callbackRuleGlyphTools before add", self._selectedRule.subs)
-            self._appendGlyphNameToRuleGlyphList(("<glyph>", "<glyph>"))
+            #print("callbackRuleGlyphTools before add", self._selectedRule.subs)
+            self._appendGlyphNameToRuleGlyphList(("#name", "#name"))
             #self._selectedRule.subs.append(("<glyph>", "<glyph>"))
             self._setGlyphNamesToList()
         else:
@@ -1357,19 +1382,13 @@ class DesignSpaceEditor(BaseWindowController):
         # and make sure the last one remains empty and editable
         if self._selectedRule is None:
             return
-        if self._selectedRule.subs[-1] == ("", ""):
-            self._selectedRule.subs.insert(names, -1)
-        else:
-            self._selectedRule.subs.append(names)
-            self._selectedRule.subs.append(("", ""))
+        self._selectedRule.subs.append(names)
+        self.rulesGroup.names.set(self.doc.rules)
             
     def _checkRuleGlyphListHasEditableEmpty(self):
         if self._selectedRule is None:
             return
-        if self._selectedRule.subs[-1] != ("", ""):
-            # add a filler at the end so we can always edit a next one
-            # does that work?
-            self._selectedRule.subs.append(("", ""))
+        self.rulesGroup.names.set(self.doc.rules)
 
     def callbackRulesTools(self, sender):
         if sender.get() == 0:
@@ -1392,10 +1411,9 @@ class DesignSpaceEditor(BaseWindowController):
             else:
                 text = "Do you want to delete %d rules?"%len(selection)
             result = askYesNo(messageText=text, informativeText="There is no undo.", parentWindow=self.w, resultCallback=self.finallyDeleteRule)
-        #self.validate()
     
     def finallyDeleteRule(self, result):
-        print("finallyDeleteRule", result)
+        #print("finallyDeleteRule", result)
         if result != 1:
             return
         removeThese = []
@@ -1406,12 +1424,25 @@ class DesignSpaceEditor(BaseWindowController):
             if id(item) not in removeThese:
                 keepThese.append(item)
         self.doc.rules = keepThese
-        #self.updateAxesColumns()
-        #self.updateLocations()
+        self.updateRules()
+        #self.rulesGroup.names.set(self.doc.rules)
+        #self.rulesGroup.names.setSelection([])
+    
+    def _updateConditions(self, ruleDescriptor, defaults):
+        # this is called when the axes have changed. More, fewer
+        # so check the conditions and update them
+        keepThese = []
+        for cd in ruleDescriptor.conditions:
+            if cd.get('name') in defaults:
+                # we're good
+                keepThese.append(cd)
+        ruleDescriptor.conditions = keepThese
+        
+    def updateRules(self):
+        # update the presentation of the rules
         self.rulesGroup.names.set(self.doc.rules)
-        #self.validate()
         self.rulesGroup.names.setSelection([])
-
+        
     def callbackAxesListEdit(self, sender):
         if self._updatingTheAxesNames == False:
             if sender.getSelection():
@@ -1462,6 +1493,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.doc.axes = keepThese
         self.updateAxesColumns()
         self.updateLocations()
+        self.updateRules()
         self.axesItem.set(self.doc.axes)
         self.validate()
     
