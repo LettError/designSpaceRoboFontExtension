@@ -869,12 +869,12 @@ class DesignSpaceEditor(BaseWindowController):
                 },
             ]
         ruleGlyphsColDescriptions = [
-                {   'title': 'Look for',
+                {   'title': 'Swap',
                     'key':'name',
                     #'width':40,
                     'editable':True,
                 },
-                {   'title': 'Replace with',
+                {   'title': 'with',
                     'key':'with',
                     #'width':40,
                     'editable':True,
@@ -893,7 +893,8 @@ class DesignSpaceEditor(BaseWindowController):
             editCallback = self.callbackEditRuleCondition,
             drawFocusRing = False,
         )
-        self.rulesGlyphs = List((485+listMargin,toolbarHeight, 2*axisValueWidth,-0), [],
+        ruleGlyphListLeftMargin = 485+listMargin
+        self.rulesGlyphs = List((ruleGlyphListLeftMargin,toolbarHeight, 2*axisValueWidth,-0), [],
             columnDescriptions=ruleGlyphsColDescriptions,
             editCallback = self.callbackEditRuleGlyphs,
             drawFocusRing = False,
@@ -906,6 +907,11 @@ class DesignSpaceEditor(BaseWindowController):
             segmentDescriptions=instancesToolDescriptions,
             selectionStyle="momentary",
             callback=self.callbackRulesTools)
+        self.rulesGroup.glyphTools = SegmentedButton(
+            (ruleGlyphListLeftMargin, buttonMargin,100,buttonHeight),
+            segmentDescriptions=instancesToolDescriptions,
+            selectionStyle="momentary",
+            callback=self.callbackRuleGlyphTools)
         
         self.reportGroup = Group((0,0,0,0))
         self.reportGroup.text = EditText((0,toolbarHeight,-0,-0), 'hehe')
@@ -952,8 +958,16 @@ class DesignSpaceEditor(BaseWindowController):
         for axis in self.doc.axes:
             axis.renameAxis(oldName, newName)
         self.rulesGroup.names.setSelection([])
+        self._setRulesGroupConditions()
         self.updateInstanceNames()
         self.validate()
+    
+    def _getAxisNames(self):
+        # return a list of current axis names
+        names = []
+        for axis in self.doc.axes:
+            names.append(axis.name)
+        return names
         
     def _getDefaultValue(self, identifier, key):
         data = getExtensionDefault(identifier, dict())
@@ -1019,6 +1033,8 @@ class DesignSpaceEditor(BaseWindowController):
             report.append("Instances:")
             for instance in self.doc.instances:
                 report.append("\t%s"%instance.path)
+        
+        # rules XXXX
         
         self.reportGroup.text.set("\n".join(report))
     
@@ -1221,58 +1237,143 @@ class DesignSpaceEditor(BaseWindowController):
         for item in self.rulesGroup.glyphs:
             newGlyphs.append((item['name'],item['with']))
         self._selectedRule.subs = newGlyphs
+        self._checkRuleGlyphListHasEditableEmpty()
         
     def callbackEditRuleCondition(self, sender = None):
         if self._settingConditionsFlag:
             # not actually editing the list, we can skip
             #print("callbackEditRuleCondition not editing", sender)
             return
-        print("callbackEditRuleCondition editing", sender)
+        #print("callbackEditRuleCondition editing", sender)
         newConditions = []
         for item in self.rulesGroup.conditions:
             cd = {}
             cd['name'] = item['name']
             v = item.get('minimum')
-            if v is not None:
+            if v is not None and v is not "":
                 cd['minimum'] = float(item['minimum'])
             else:
-                return
+                cd['minimum'] = None
             v = item.get('maximum')
-            if v is not None:
+            if v is not None and v is not "":
                 cd['maximum'] = float(item['maximum'])
             else:
-                return
+                cd['maximum'] = None
             newConditions.append(cd)
         self._selectedRule.conditions = newConditions
         
+        for cd in self._selectedRule.conditions:
+            print("setting conditions in _selectedRule", cd)
+
+        for r in self.doc.rules:
+            print('debug', r.name, r.conditions)
+    
+    def _setRulesGroupConditions(self, clear=False):
+        # the condition might have None as value
+        # but the list needs ""
+        # translate here.
+        conditions = []
+        done = []
+        axisNames = self._getAxisNames()
+        if not self._selectedRule:
+            return
+        if not clear:
+            for cd in self._selectedRule.conditions:
+                new = dict(name=cd['name'])
+                if cd.get('minimum') is None:
+                    new['minimum'] = ''
+                else:
+                    new['minimum'] = cd['minimum']
+                if cd.get('maximum') is None:
+                    new['maximum'] = ''
+                else:
+                    new['maximum'] = cd['maximum']
+                conditions.append(new)
+                done.append(cd['name'])
+        for name in axisNames:
+            new = {}
+            if name not in done:
+                new['name'] = name
+                new['minimum'] = ''
+                new['maximum'] = ''
+                conditions.append(new)
+        print('debug', '_setRulesGroupConditions', conditions, axisNames)
+        self.rulesGroup.conditions.set(conditions)
+
     def callbackRuleNameSelection(self, sender):
         selection = sender.getSelection()
         self._selectedRule = None
         if len(selection)>1 or len(selection) == 0:
             self._settingConditionsFlag = True
-            self.rulesGroup.conditions.set([])
+            self._setRulesGroupConditions(clear=True)
             self._settingConditionsFlag = False
             self._settingGlyphsFlag = True
             self.rulesGroup.glyphs.set([])
             self._settingGlyphsFlag = False
             self.rulesGroup.conditions.enable(False)
             self.rulesGroup.glyphs.enable(False)
+            self.rulesGroup.glyphTools.enable(False)
         else:
             self._selectedRule = self.rulesGroup.names[selection[0]]
-            self._settingConditionsFlag = True
-            self.rulesGroup.conditions.set(self._selectedRule.conditions)
-            self._settingConditionsFlag = False
+            print("self._selectedRule", self._selectedRule)
             self.rulesGroup.conditions.enable(True)
+            self._settingConditionsFlag = True
+            self._setRulesGroupConditions()
+            self._settingConditionsFlag = False
             self.rulesGroup.glyphs.enable(True)
             self._settingGlyphsFlag = True
-            names = []
-            for a, b in self._selectedRule.subs:
-                names.append({'name':a, 'with':b})
-            self.rulesGroup.glyphs.set(names)
+            self._setGlyphNamesToList()
             self._settingGlyphsFlag = False
+            self.rulesGroup.glyphTools.enable(True)
+    
+    def _setGlyphNamesToList(self):
+        names = []
+        for a, b in self._selectedRule.subs:
+            names.append({'name':a, 'with':b})
+        self.rulesGroup.glyphs.set(names)
+
+    def callbackRuleGlyphTools(self, sender):
+        if sender.get() == 0:
+            # + button
+            if not self._selectedRule:
+                return
+            print("callbackRuleGlyphTools before add", self._selectedRule.subs)
+            self._appendGlyphNameToRuleGlyphList(("<glyph>", "<glyph>"))
+            #self._selectedRule.subs.append(("<glyph>", "<glyph>"))
+            self._setGlyphNamesToList()
+        else:
+            if not self._selectedRule:
+                return
+        selected = self.rulesGlyphs.getSelection()
+        keepThese = []
+        for i, pair in enumerate(self._selectedRule.subs):
+            if i not in selected:
+                keepThese.append(pair)
+        self._selectedRule.subs = keepThese
+        self._checkRuleGlyphListHasEditableEmpty()
+        self._setGlyphNamesToList()
+    
+    def _appendGlyphNameToRuleGlyphList(self, names):
+        # and make sure the last one remains empty and editable
+        if self._selectedRule is None:
+            return
+        if self._selectedRule.subs[-1] == ("", ""):
+            self._selectedRule.subs.insert(names, -1)
+        else:
+            self._selectedRule.subs.append(names)
+            self._selectedRule.subs.append(("", ""))
+            
+    def _checkRuleGlyphListHasEditableEmpty(self):
+        if self._selectedRule is None:
+            return
+        if self._selectedRule.subs[-1] != ("", ""):
+            # add a filler at the end so we can always edit a next one
+            # does that work?
+            self._selectedRule.subs.append(("", ""))
 
     def callbackRulesTools(self, sender):
         if sender.get() == 0:
+            # + button
             newRuleDescriptor = KeyedRuleDescriptor()
             newRuleDescriptor.name = "Unnamed Rule %d"%self._newRuleCounter
             newRuleDescriptor.conditions = []

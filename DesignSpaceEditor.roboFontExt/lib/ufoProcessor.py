@@ -23,7 +23,8 @@ from mutatorMath.objects.mutator import buildMutator
 from mutatorMath.objects.location import biasFromLocations, Location
 import os
 
-print("ufoProcessor reloads")
+#print("ufoProcessor reloads")
+
 """
 
     Swap the contents of two glyphs.
@@ -279,7 +280,11 @@ class DesignSpaceProcessor(DesignSpaceDocument):
                 # mute this glyph, skip
                 continue
             glyphInstanceLocation = Location(glyphData.get("instanceLocation", instanceDescriptor.location))
-            glyphInstanceUnicode = glyphData.get("unicodeValue", font[glyphName].unicode)
+            try:
+                uniValue = glyphMutator[()][0].unicodes[0]
+            except IndexError:
+                uniValue = None
+            glyphInstanceUnicode = glyphData.get("unicodeValue", uniValue)
             note = glyphData.get("note")
             if note:
                 font[glyphName] = note
@@ -313,6 +318,7 @@ class DesignSpaceProcessor(DesignSpaceDocument):
                 font[glyphName].clear()
                 glyphInstanceObject.drawPoints(pPen)
             font[glyphName].width = glyphInstanceObject.width
+            font[glyphName].unicode = glyphInstanceUnicode
         if doRules:
             resultNames = processRules(self.rules, loc, self.glyphNames)
             for oldName, newName in zip(self.glyphNames, resultNames):
@@ -407,6 +413,7 @@ if __name__ == "__main__":
             p.closePath()
             g.move((0,s+step))
             g.width = s
+            g.unicode = 200 + step
             step += 50
         for n, w in [('wide', 800), ('narrow', 100)]:
             font.newGlyph(n)
@@ -418,6 +425,24 @@ if __name__ == "__main__":
             p.lineTo((0,font.info.ascender))
             p.closePath()
             g.width = w
+        font.newGlyph("wide.component")
+        g = font["wide.component"]
+        comp = g.instantiateComponent()
+        comp.baseGlyph = "wide"
+        comp.offset = (0,0)
+        g.appendComponent(comp)
+        g.width = font['wide'].width
+        font.newGlyph("narrow.component")
+        g = font["narrow.component"]
+        comp = g.instantiateComponent()
+        comp.baseGlyph = "narrow"
+        comp.offset = (0,0)
+        g.appendComponent(comp)
+        g.width = font['narrow'].width
+        uniValue = 200
+        for g in font:
+            g.unicode = uniValue
+            uniValue += 1
 
 
     def fillInfo(font):
@@ -526,7 +551,15 @@ if __name__ == "__main__":
         new = Font(dstPath)
         assert new.kerning.get(("narrow", "narrow")) == old.kerning.get(("wide","wide"))
         assert new.kerning.get(("wide", "wide")) == old.kerning.get(("narrow","narrow"))
-        assert old['narrow'].unicode == new['wide'].unicode
+        # after the swap these widths should be the same
+        assert old['narrow'].width == new['wide'].width
+        assert old['wide'].width == new['narrow'].width
+        # The following test may be a bit counterintuitive:
+        # the rule swaps the glyphs, but we do not want glyphs that are not
+        # specifically affected by the rule to *appear* any different.
+        # So, components have to be remapped. 
+        assert new['wide.component'].components[0].baseGlyph == "narrow"
+        assert new['narrow.component'].components[0].baseGlyph == "wide"
 
     selfTest = True
     if selfTest:
