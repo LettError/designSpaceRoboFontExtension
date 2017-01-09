@@ -1119,7 +1119,10 @@ class DesignSpaceEditor(BaseWindowController):
             import traceback
             traceback.print_exc()
         finally:
-            progress.close()            
+            progress.close()
+        if self.doc.problems:
+            self.reportGroup.text.set("\n".join(self.doc.problems))
+            
         
     def callbackBecameMain(self, sender):
         self.validate()
