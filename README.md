@@ -60,6 +60,7 @@ but ¯\\\_(ツ)__/¯.
 * If the UFO for a master can be found then a `✓` appears next to the name.
 * Use the `Make Default` button to make the selected master the default: it sets the **lib**, **groups** and **info** flags for this master. The 🔹indicates the current default.
 * Use the `Load Names` button to load the **family name** and **style name** from the UFO.
+* The relative pathname to the master UFO is editable as text (so you need to know what you're doing!)
 
 ## Instances
 * After adding two or more masters you can add instances using the `+` button.
@@ -69,6 +70,10 @@ but ¯\\\_(ツ)__/¯.
 * A proposed UFO name will appear. This can't be edited at the moment.
 * Use the `Duplicate` button to duplicate a selected instance.
 * If the UFO for an instance can be found then a `✓` appears next to the name. If it exists you can use the `open` button to open it in RoboFont.
+* The relative pathname to the instance UFO is editable as text (so you need to know what you're doing!)
+
+## Rules
+The rules panel is experimental. It is possible to define and edit rules and conditions. But these are not actually supported anywhere. [More discussion of the rules elements here.](https://github.com/LettError/designSpaceDocument#rules)
 
 ## Report
 * This panel shows a very basic validation report of what needs to be done and where the UFOs are, etc.
@@ -80,3 +85,4 @@ but ¯\\\_(ツ)__/¯.
 
 * 1.0 Initial commit
 * 1.1 Fixes a mistake with packaging.
+* 1.3.2 UFO paths are editable. 

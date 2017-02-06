@@ -155,8 +155,8 @@ class DesignSpaceProcessor(DesignSpaceDocument):
         # makes the instances
         # option to execute the rules
         #self.checkAxes()
-        self.checkDefault()
         self.loadFonts()
+        self.checkDefault()
         for instanceDescriptor in self.instances:
             if instanceDescriptor.path is None:
                 continue
@@ -208,14 +208,14 @@ class DesignSpaceProcessor(DesignSpaceDocument):
 
     def loadFonts(self):
         # Load the fonts and find the default candidate based on the info flag
+        names = set()
         for sourceDescriptor in self.sources:
-            names = set()
             if not sourceDescriptor.name in self.fonts:
                 self.fonts[sourceDescriptor.name] = self._instantiateFont(sourceDescriptor.path)
             names = names | set(self.fonts[sourceDescriptor.name].keys())
         self.glyphNames = list(names)
 
-    def makeInstance(self, instanceDescriptor, doRules=False):
+    def makeInstance(self, instanceDescriptor, doRules=False, glyphNames=None):
         """ Generate a font object for this instance """
         font = self._instantiateFont(None)
         self._preppedAxes = self._prepAxesForBender()
@@ -248,7 +248,11 @@ class DesignSpaceProcessor(DesignSpaceDocument):
                 elif isinstance(featuresText, unicode):
                     font.features.text = featuresText
         # glyphs
-        for glyphName in self.glyphNames:
+        if glyphNames:
+            selectedGlyphNames = glyphNames
+        else:
+            selectedGlyphNames = self.glyphNames
+        for glyphName in selectedGlyphNames:
             glyphMutator = self.getGlyphMutator(glyphName)
             if glyphName in instanceDescriptor.glyphs.keys():
                 # reminder: this is what the glyphData can look like
@@ -330,6 +334,8 @@ class DesignSpaceProcessor(DesignSpaceDocument):
             for oldName, newName in zip(self.glyphNames, resultNames):
                 if oldName != newName:
                     swapGlyphNames(font, oldName, newName)
+        # store designspace location in the font.lib
+        font.lib['designspace'] = instanceDescriptor.location.items()
         return font
 
     def _instantiateFont(self, path):

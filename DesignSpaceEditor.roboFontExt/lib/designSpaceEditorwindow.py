@@ -1,7 +1,7 @@
 # coding=utf-8
 import os, time
 import weakref
-from AppKit import NSToolbarFlexibleSpaceItemIdentifier, NSURL, NSImageCell, NSImageAlignTop, NSScaleNone, NSImageFrameNone, NSImage, NSObject, NSNumberFormatter, NSNumberFormatterDecimalStyle, NSBeep
+from AppKit import NSToolbarFlexibleSpaceItemIdentifier, NSURL, NSImageCell, NSImageAlignTop, NSScaleNone, NSImageFrameNone, NSImage, NSObject, NSNumberFormatter, NSNumberFormatterDecimalStyle, NSBeep, NSImageNameRevealFreestandingTemplate, NSSmallSquareBezelStyle
 from defconAppKit.windows.baseWindow import BaseWindowController
 from mojo.extensions import getExtensionDefault, setExtensionDefault, ExtensionBundle
 from defcon import Font
@@ -26,23 +26,41 @@ reload(designSpaceEditorSettings)
 checkSymbol = u"✓"
 defaultSymbol = u"🔹"
 
+"""
+
+
+
+    Paths
+    the document reader and writer need an absolute path
+    when a source is added, this is an absolute path, why?
+    
+    write to document: ufo paths are written relative to the document path
+    
+    assumption: .designspace document is always at the same or a higher level than the ufos.
+    adobe: .designspace document can be higher up.
+    
+    what to do?
+    step 1: keep the string of the filename attribute so that if there are no changes to the
+    ufo, we can write the document identical to how it was read.
+    step 2: on reading, calculate the absolute paths for the sources and instances
+
+"""
 # NSOBject Hack, please remove before release.
-def ClassNameIncrementer(clsName, bases, dct):
-   import objc
-   orgName = clsName
-   counter = 0
-   while 1:
-       try:
-           objc.lookUpClass(clsName)
-       except objc.nosuchclass_error:
-           break
-       counter += 1
-       clsName = orgName + str(counter)
-   return type(clsName, bases, dct)
-# /NSOBject Hack, please remove before release.
+# def ClassNameIncrementer(clsName, bases, dct):
+#    import objc
+#    orgName = clsName
+#    counter = 0
+#    while 1:
+#        try:
+#            objc.lookUpClass(clsName)
+#        except objc.nosuchclass_error:
+#            break
+#        counter += 1
+#        clsName = orgName + str(counter)
+#    return type(clsName, bases, dct)
 
 class KeyedGlyphDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    #__metaclass__= ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.glyphName = None
@@ -95,7 +113,6 @@ class KeyedRuleDescriptor(NSObject):
         return self.name
 
     def setValue_forUndefinedKey_(self, value=None, key=None):
-        #print("KeyedRuleDescriptor", value, key)
         if key == "nameKey":
             # rename this axis
             if len(value)>0:
@@ -106,6 +123,7 @@ class KeyedSourceDescriptor(NSObject):
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
+        self.filename = None    # the filename as it appears in the document
         self.path = None
         self.name = None
         self.location = None
@@ -158,9 +176,23 @@ class KeyedSourceDescriptor(NSObject):
         if self.copyInfo:
             return defaultSymbol
         return ""
+
+    def setDocumentFolder(self, docFolder):
+        # let the descriptor know what the document folder is
+        # so that the descriptor can do some validation if the paths
+        self.dir = docFolder
+    
+    def makePath(self):
+        # using the document folder and the file name
+        # we should be able to make an absolute path
+        if self.filename is not None and self.dir is not None:
+            self.path = os.path.abspath(os.path.join(self.dir, self.filename))
         
     def sourceUFONameKey(self):
-        return os.path.basename(self.path)
+        if self.filename is not None:
+            if self.dir is not None:
+                return self.filename
+        return "[pending save]"
         
     def sourceHasFileKey(self):
         if os.path.exists(self.path):
@@ -197,8 +229,11 @@ class KeyedSourceDescriptor(NSObject):
     def setValue_forUndefinedKey_(self, value=None, key=None):
         if key == "sourceFamilyNameKey":
             self.familyName = value
+        elif key == "sourceUFONameKey":
+            self.filename = value
+            self.makePath()
         elif key == "sourceStyleNameKey":
-            self.stylename = value
+            self.styleName = value
         elif key == "sourceAxis_1":
             axisName = self.axisOrder[0]
             try:
@@ -235,6 +270,7 @@ class KeyedInstanceDescriptor(NSObject):
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
+        self.filename = None    # the filename as it appears in the document
         self.path = None
         self.name = None
         self.location = None
@@ -270,9 +306,10 @@ class KeyedInstanceDescriptor(NSObject):
         copy.glyphs.update(self.glyphs)
         copy.axisOrder = self.axisOrder
         copy.info = self.info
+        copy.filename = self.filename
         copy.location = self.location
-        copy.setName()
-        copy.makeUFOPathFromNames()
+        copy.name = self.name
+        #copy.setName()
         return copy
         
     def setName(self):
@@ -287,7 +324,7 @@ class KeyedInstanceDescriptor(NSObject):
 
     def instanceHasFileKey(self):
         if self.path is None:
-            return ""
+            return u""
         if os.path.exists(self.path):
             return checkSymbol
         return u""
@@ -314,34 +351,35 @@ class KeyedInstanceDescriptor(NSObject):
         return self.getAxisValue(4)
 
     def instanceUFONameKey(self):
-        if self.path is None:
-            self.makeUFOPathFromNames()
-        return os.path.basename(self.path)
+        if self.filename is not None:
+            if self.dir is not None:
+                return self.filename
+        return "[pending save]"
     
+    def setDocumentFolder(self, docFolder):
+        # let the descriptor know what the document folder is
+        # so that the descriptor can do some validation if the paths
+        self.dir = docFolder
+    
+    def makePath(self):
+        # using the document folder and the file name
+        # we should be able to make an absolute path
+        if self.filename is not None and self.dir is not None:
+            self.path = os.path.abspath(os.path.join(self.dir, self.filename))
+        
     def setPathRelativeTo(self, docFolder, instancesFolderName):
         self.dir = os.path.join(docFolder, instancesFolderName)
-        self.makeUFOPathFromNames()
-
-    def makeUFOPathFromNames(self):
-        if self.familyName is not None and self.styleName is not None:
-            fileName = "%s-%s.ufo"%(self.familyName, self.styleName)
-            self.postScriptFontName = "%s-%s"%(self.familyName, self.styleName)
-        else:
-            fileName = "NewFamily-NewStyle.ufo"
-            self.postScriptFontName = "NewFamily-NewStyle"
-        if self.dir is None:
-            saveDir = ""
-        else:
-            saveDir = self.dir
-        self.path = os.path.join(saveDir, fileName)
+        self.path = os.path.join(self.dir, fileName)
 
     def setValue_forUndefinedKey_(self, value=None, key=None):
         if key == "instanceFamilyNameKey":
             self.familyName = value
-            self.makeUFOPathFromNames()
+        elif key == "instanceUFONameKey":
+            # manual text edit to the path
+            self.filename = value
+            self.makePath()
         elif key == "instanceStyleNameKey":
             self.styleName = value
-            self.makeUFOPathFromNames()
         elif key == "instanceAxis_1":
             axisName = self.axisOrder[0]
             try:
@@ -519,12 +557,8 @@ class DesignSpaceEditor(BaseWindowController):
         ]
 
     def __init__(self, designSpacePath=None):
-
         self.settingsIdentifier = "%s.%s" % (designSpaceEditorSettings.settingsIdentifier, "general")
-        self.updateFromSettings()
-        #extensionSettings = getExtensionDefault(self.settingsIdentifier, dict())
-        #self.instanceFolderName = extensionSettings.get('instanceFolderName', "instances")
-        
+        self.updateFromSettings()        
         self.designSpacePath = designSpacePath
         self.doc = None
         self._newInstanceCounter = 1
@@ -591,7 +625,7 @@ class DesignSpaceEditor(BaseWindowController):
                 {   'title': 'UFO',
                     'key':'sourceUFONameKey',
                     'width':ufoNameWidth,
-                    'editable':False,
+                    'editable':True,
                 },
                 {   'title': 'Family Name',
                     'key': 'sourceFamilyNameKey',
@@ -643,7 +677,7 @@ class DesignSpaceEditor(BaseWindowController):
                 {   'title': 'UFO',
                     'key': 'instanceUFONameKey',
                     'width':ufoNameWidth,
-                    'editable':False,
+                    'editable':True,
                 },
                 {   'title': 'Family Name',
                     'key': 'instanceFamilyNameKey',
@@ -756,10 +790,11 @@ class DesignSpaceEditor(BaseWindowController):
         self.axesGroup.l = self.axesItem
         buttonMargin = 2
         buttonHeight = 20
-        firstButtonSize = (48,buttonMargin+1,50,buttonHeight)
-        secondButtonSize = (100,buttonMargin+1,100,buttonHeight)
-        first_and_secondButtonSize = (48,buttonMargin+1,150,buttonHeight)
-        thirdButtonSize = (202,buttonMargin+1,100,buttonHeight)
+        linkButtonSize = (48, buttonMargin+1, 30, buttonHeight)
+        firstButtonSize = (78,buttonMargin+1,50,buttonHeight)
+        secondButtonSize = (130,buttonMargin+1,100,buttonHeight)
+        first_and_secondButtonSize = (78,buttonMargin+1,150,buttonHeight)
+        thirdButtonSize = (232,buttonMargin+1,100,buttonHeight)
         statusTextSize = (165, buttonMargin+4,-10,buttonHeight)
         addButtonSize = (102,buttonMargin+1,50,buttonHeight)
         axisToolDescriptions = [
@@ -939,7 +974,6 @@ class DesignSpaceEditor(BaseWindowController):
         self.w.bind("close", self.callbackCleanup)
         
         self.w.vanillaWrapper = weakref.ref(self)
-
         self.setUpBaseWindowBehavior()
             
     def callbackCleanup(self, sender=None):
@@ -960,7 +994,8 @@ class DesignSpaceEditor(BaseWindowController):
             axis.renameAxis(oldName, newName)
         self._setRulesGroupConditions()
         self.updateRules()
-        self.updateInstanceNames()
+        #self.updateDocumentPath()
+        self.updatePaths()
         self.validate()
     
     def _getAxisNames(self):
@@ -983,7 +1018,6 @@ class DesignSpaceEditor(BaseWindowController):
         
         # document and path
         if self.designSpacePath is None:
-            #report.append("This document has not been saved yet.")
             if len(self.doc.sources)>0:
                 masterFolder = self.getSaveDirFromMasters()
                 report.append("Make sure to save this document in %s."%masterFolder)
@@ -1003,8 +1037,6 @@ class DesignSpaceEditor(BaseWindowController):
                     report.append("\t\"%s\" is a non-standard axis name."%axis.name)
                     for k, v in axis.labelNames.items():
                         report.append("\t\tlabel name %s: \"%s\""%(k,v))
-
-                
         # masters
         if len(self.doc.sources)==0:
             report.append("Add two or more UFOs.")
@@ -1067,7 +1099,7 @@ class DesignSpaceEditor(BaseWindowController):
     def applySettingsCallback(self, sender):
         # callback for the settings window
         self.updateFromSettings()
-        self.updateInstanceNames()
+        self.updatePaths()
         self.validate()
         
     def toolbarSettings(self, sender):
@@ -1104,15 +1136,6 @@ class DesignSpaceEditor(BaseWindowController):
         if self.designSpacePath is None:
             return
         progress = ProgressWindow(u"Generating instance UFO’s…", 10, parentWindow=self.w)
-        # build with mutatormath
-        # try:
-        #     build(self.designSpacePath)
-        # except:
-        #     import traceback
-        #     traceback.print_exc()
-        # finally:
-        #     progress.close()
-        # build with ufoProcessor       
         try:
             self.doc.generateUFO()
         except:
@@ -1123,7 +1146,6 @@ class DesignSpaceEditor(BaseWindowController):
         if self.doc.problems:
             self.reportGroup.text.set("\n".join(self.doc.problems))
             
-        
     def callbackBecameMain(self, sender):
         self.validate()
                     
@@ -1175,8 +1197,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.mastersItem.set(self.doc.sources)
         self.instancesItem.set(self.doc.instances)
         self.rulesGroup.names.set(self.doc.rules)
-        #for r in self.doc.rules:
-        #    print r.subs
+        self.updatePaths()
         self.validate()
 
     def getSaveDirFromMasters(self):
@@ -1207,21 +1228,49 @@ class DesignSpaceEditor(BaseWindowController):
         else:
             self.finalizeSave(self.designSpacePath)
     
-    def updateInstanceNames(self):
+    def updatePaths(self):
+        # a fresh attempt at updating all the paths in the sources and instances
+        # the item.filename is leading
+        if self.designSpacePath is None:
+            return
+        docFolder = os.path.dirname(self.designSpacePath)
+        for item in self.mastersItem:
+            item.setDocumentFolder(docFolder)
+            item.makePath()
+        for item in self.instancesItem:
+            item.setDocumentFolder(docFolder)
+            item.makePath()
+
+    def updateDocumentPath(self):
         # so we have the path for this document
         # we need to make sure the instances are all in the right place
         if self.designSpacePath is None:
             return
         docFolder = os.path.dirname(self.designSpacePath)
         for item in self.instancesItem:
-            item.setPathRelativeTo(docFolder, self.instanceFolderName)
-            item.setName()
+            item.setDocPath(docFolder)
 
     def finalizeSave(self, path=None):
         self.designSpacePath = path
         # so we have the path for this document
         # we need to make sure the instances are all in the right place
-        self.updateInstanceNames()
+        for sourceDescriptor in self.mastersItem:
+            if sourceDescriptor.filename == sourceDescriptor.path:
+                # - new unsaved document
+                # - masters added, we have no relative path
+                # - in this case the .filename and .path are the same
+                #     so we can check for this and update the .filename
+                sourceDescriptor.setDocumentFolder(self.designSpacePath)
+                sourceDescriptor.filename = os.path.relpath(sourceDescriptor.path, os.path.dirname(self.designSpacePath))
+                sourceDescriptor.makePath()
+        for instanceDescriptor in self.instancesItem:
+            if instanceDescriptor.filename == instanceDescriptor.path:
+                # - new unsaved document
+                # - instance added, we have no relative path
+                instanceDescriptor.setDocumentFolder(self.designSpacePath)
+                instanceDescriptor.filename = os.path.relpath(instanceDescriptor.filename, os.path.dirname(self.designSpacePath))
+                instanceDescriptor.makePath()
+        self.updatePaths()
         for item in self.mastersItem:
             item.setName()
         self.doc.write(self.designSpacePath)
@@ -1270,9 +1319,7 @@ class DesignSpaceEditor(BaseWindowController):
     def callbackEditRuleCondition(self, sender = None):
         if self._settingConditionsFlag:
             # not actually editing the list, we can skip
-            #print("callbackEditRuleCondition not editing", sender)
             return
-        #print("callbackEditRuleCondition editing", sender)
         newConditions = []
         for item in self.rulesGroup.conditions:
             cd = {}
@@ -1289,12 +1336,6 @@ class DesignSpaceEditor(BaseWindowController):
                 cd['maximum'] = None
             newConditions.append(cd)
         self._selectedRule.conditions = newConditions
-        
-        #for cd in self._selectedRule.conditions:
-        #    print("setting conditions in _selectedRule", cd)
-
-        #for r in self.doc.rules:
-        #    print('debug', r.name, r.conditions)
     
     def _setRulesGroupConditions(self, clear=False):
         # the condition might have None as value
@@ -1325,13 +1366,12 @@ class DesignSpaceEditor(BaseWindowController):
                 new['minimum'] = ''
                 new['maximum'] = ''
                 conditions.append(new)
-        #print('debug', '_setRulesGroupConditions', conditions, axisNames)
         self.rulesGroup.conditions.set(conditions)
 
     def callbackRuleNameSelection(self, sender):
         selection = sender.getSelection()
         self._selectedRule = None
-        if len(selection)>1 or len(selection) == 0:
+        if len(selection) > 1 or len(selection) == 0:
             self._settingConditionsFlag = True
             self._setRulesGroupConditions(clear=True)
             self._settingConditionsFlag = False
@@ -1343,7 +1383,6 @@ class DesignSpaceEditor(BaseWindowController):
             self.rulesGroup.glyphTools.enable(False)
         else:
             self._selectedRule = self.rulesGroup.names[selection[0]]
-            #print("self._selectedRule", self._selectedRule)
             self.rulesGroup.conditions.enable(True)
             self._settingConditionsFlag = True
             self._setRulesGroupConditions()
@@ -1365,7 +1404,6 @@ class DesignSpaceEditor(BaseWindowController):
             # + button
             if not self._selectedRule:
                 return
-            #print("callbackRuleGlyphTools before add", self._selectedRule.subs)
             self._appendGlyphNameToRuleGlyphList(("#name", "#name"))
             #self._selectedRule.subs.append(("<glyph>", "<glyph>"))
             self._setGlyphNamesToList()
@@ -1416,7 +1454,6 @@ class DesignSpaceEditor(BaseWindowController):
             result = askYesNo(messageText=text, informativeText="There is no undo.", parentWindow=self.w, resultCallback=self.finallyDeleteRule)
     
     def finallyDeleteRule(self, result):
-        #print("finallyDeleteRule", result)
         if result != 1:
             return
         removeThese = []
@@ -1511,9 +1548,19 @@ class DesignSpaceEditor(BaseWindowController):
             else:
                 newInstanceDescriptor.familyName = "NewFamily"
             newInstanceDescriptor.location = self.doc.newDefaultLocation()
-            newInstanceDescriptor.styleName = "NewInstance_%d"%self._newInstanceCounter
+            newInstanceDescriptor.styleName = "Style_%d"%self._newInstanceCounter
+            ufoName = "%s-%s.ufo"%(newInstanceDescriptor.familyName, newInstanceDescriptor.styleName)
             self._newInstanceCounter += 1
-            newInstanceDescriptor.path = "[pending save]"
+            if self.designSpacePath is not None:
+                # we have a path
+                newInstanceDescriptor.setDocumentFolder(os.path.dirname(self.designSpacePath))
+                newInstanceDescriptor.filename = os.path.join(self.instanceFolderName, ufoName)
+                newInstanceDescriptor.makePath()
+            else:
+                # we don't have a path
+                # we're going to make a new path to <preferred instance folder><ufoname>
+                newInstanceDescriptor.filename = os.path.join(self.instanceFolderName, ufoName)
+                newInstanceDescriptor.path = None
             self.doc.addInstance(newInstanceDescriptor)
             self.updateAxesColumns()
             self.instancesItem.set(self.doc.instances)
@@ -1542,7 +1589,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.doc.instances = keepThese
         self.instancesItem.set(self.doc.instances)
         self.validate()
-
+            
     def callbackOpenInstance(self, sender):
         self.openSelectedItem(self.instancesItem)
         
@@ -1660,13 +1707,22 @@ class DesignSpaceEditor(BaseWindowController):
         sourceDescriptor.styleName = font.info.styleName
         sourceDescriptor.location = {}
         sourceDescriptor.location.update(defaults)
+        if self.designSpacePath is not None:
+            sourceDescriptor.setDocumentFolder(self.designSpacePath)
+            sourceDescriptor.filename = os.path.relpath(font.path, os.path.dirname(self.designSpacePath))
+            sourceDescriptor.makePath()
+        else:
+            # we're adding sources to an unsaved document
+            # that means we can't make a relative path
+            # what to do? absolute path to the source?
+            sourceDescriptor.filename = font.path
+        #print("XXX", sourceDescriptor.filename, sourceDescriptor.path)
         if len(self.mastersItem)==0:
             # this is the first master we're adding
             # make this the default so we have one.
             sourceDescriptor.makeDefault(True)
         self.doc.addSource(sourceDescriptor)
         self.mastersItem.set(self.doc.sources)
-        sourceDescriptor.setName()
 
     def finalizeAddMaster(self, paths):
         for path in paths:
@@ -1674,6 +1730,7 @@ class DesignSpaceEditor(BaseWindowController):
             self.addSourceFromFont(font)
         self.updateAxesColumns()
         self.enableInstanceList()
+        self.updatePaths()
         self.validate()
 
     def callbackMasterSelection(self, sender):
@@ -1715,25 +1772,31 @@ if __name__ == "__main__":
     # tests
     assert renameAxis("aaa", "bbb", dict(aaa=1)) == dict(bbb=1)
     assert renameAxis("ccc", "bbb", dict(aaa=1)) == dict(aaa=1)
-
-    sD = KeyedSourceDescriptor()
-    sD.location = dict(aaa=1, bbb=2)
-    sD.renameAxis("aaa", "ddd")
-    assert sD.location == dict(ddd=1, bbb=2)
-
-    kI = KeyedInstanceDescriptor()
-    kI.location = dict(aaa=1, bbb=2)
-    kI.renameAxis("aaa", "ddd")
-    assert kI.location == dict(ddd=1, bbb=2)
-    kI.renameAxis("ddd", "bbb")
-    assert kI.location == dict(ddd=1, bbb=2)
-
-    aD = KeyedAxisDescriptor()
-    aD.name = "aaa"
-    aD.renameAxis("aaa", "bbb")
-    assert aD.name == "bbb"
     
-    results = getFile(messageText=u"Select a DesignSpace file:", allowsMultipleSelection=True, fileTypes=["designspace"])
-    if results is not None:
-       for path in results:
-           DesignSpaceEditor(path)
+    testWithFile = False    # set to False to test without getfile dialog
+
+    if not testWithFile:
+        # test
+        DesignSpaceEditor()
+    else:
+        sD = KeyedSourceDescriptor()
+        sD.location = dict(aaa=1, bbb=2)
+        sD.renameAxis("aaa", "ddd")
+        assert sD.location == dict(ddd=1, bbb=2)
+
+        kI = KeyedInstanceDescriptor()
+        kI.location = dict(aaa=1, bbb=2)
+        kI.renameAxis("aaa", "ddd")
+        assert kI.location == dict(ddd=1, bbb=2)
+        kI.renameAxis("ddd", "bbb")
+        assert kI.location == dict(ddd=1, bbb=2)
+
+        aD = KeyedAxisDescriptor()
+        aD.name = "aaa"
+        aD.renameAxis("aaa", "bbb")
+        assert aD.name == "bbb"
+    
+        results = getFile(messageText=u"Select a DesignSpace file:", allowsMultipleSelection=True, fileTypes=["designspace"])
+        if results is not None:
+           for path in results:
+               DesignSpaceEditor(path)
