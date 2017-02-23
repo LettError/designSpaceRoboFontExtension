@@ -51,6 +51,7 @@ but ¯\\\_(ツ)__/¯.
 <map input="200.0" output="700.0" />
 <map input="1000.0" output="990.0" />
 ```
+**Note:** when you open an old designSpaceDocument file that does not contain an `axes` element, it will create axis objects based on the names and coordinates of the masters and instances in the document. You might want to edit this afterwards.
 
 ## Masters
 * Use the `+` button to add one or more UFO masters: a file dialog will appear.
@@ -85,4 +86,5 @@ The rules panel is experimental. It is possible to define and edit rules and con
 
 * 1.0 Initial commit
 * 1.1 Fixes a mistake with packaging.
-* 1.3.2 UFO paths are editable. 
+* 1.3.2 UFO paths are editable.
+* 1.3.3 Updated designSpaceDocument.
