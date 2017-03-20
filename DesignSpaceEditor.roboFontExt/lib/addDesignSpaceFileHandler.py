@@ -17,3 +17,10 @@ class DesignSpaceOpener(object):
         fileHandler["opened"] = True
     
 DesignSpaceOpener()
+
+# install the sparks tool
+from mojo.events import installTool
+from showSparksTool import ShowSparksTool
+p = ShowSparksTool()
+installTool(p)
+
