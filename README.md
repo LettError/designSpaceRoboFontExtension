@@ -79,6 +79,9 @@ The rules panel is experimental. It is possible to define and edit rules and con
 ## Report
 * This panel shows a very basic validation report of what needs to be done and where the UFOs are, etc.
 
+## ShowSparksTool
+* This is a small interpolation visualiser for the Edit windows.
+
 ## Todo
 * Separate validation for MutatorMath and Varlib use.
 
@@ -88,3 +91,4 @@ The rules panel is experimental. It is possible to define and edit rules and con
 * 1.1 Fixes a mistake with packaging.
 * 1.3.2 UFO paths are editable.
 * 1.3.3 Updated designSpaceDocument.
+* 1.3.5 Updated designSpaceDocument. ShowSparksTool added.
