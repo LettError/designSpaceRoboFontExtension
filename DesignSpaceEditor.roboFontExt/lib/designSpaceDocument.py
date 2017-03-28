@@ -398,7 +398,9 @@ class BaseDocWriter(object):
         if sourceObject.filename is not None:
             sourceElement.attrib['filename'] = sourceObject.filename
         if sourceObject.name is not None:
-            sourceElement.attrib['name'] = sourceObject.name
+            if sourceObject.name.find("temp_master")!=0:
+                # do not save temporary source names
+                sourceElement.attrib['name'] = sourceObject.name
         if sourceObject.familyName is not None:
             sourceElement.attrib['familyname'] = sourceObject.familyName
         if sourceObject.styleName is not None:
@@ -629,6 +631,7 @@ class BaseDocReader(object):
             self.documentObject.axes.append(a)
 
     def readSources(self):
+        sourceCount = 0
         for sourceElement in self.root.findall(".sources/source"):
             filename = sourceElement.attrib.get('filename')
             if filename is not None and self.path is not None:
@@ -636,6 +639,9 @@ class BaseDocReader(object):
             else:
                 sourcePath = None
             sourceName = sourceElement.attrib.get('name')
+            if sourceName is None:
+                # add a temporary source name
+                sourceName = "temp_master.%d"%(sourceCount)
             sourceObject = self.sourceDescriptorClass()
             sourceObject.path = sourcePath        # absolute path to the ufo source
             sourceObject.filename = filename      # path as it is stored in the document
@@ -671,6 +677,7 @@ class BaseDocReader(object):
                 if kerningElement.attrib.get('mute') == '1':
                     sourceObject.muteKerning = True
             self.documentObject.sources.append(sourceObject)
+            sourceCount += 1
 
     def locationFromElement(self, element):
         elementLocation = None
@@ -1089,9 +1096,13 @@ class DesignSpaceDocument(object):
                     axisValues[name].append(value)
         have = self.getAxisOrder()
         for name, values in axisValues.items():
-            if name in have and overwrite:
-                # we're making a new axis
-                a = self.getAxis(name)
+            a = None
+            if name in have:
+                if overwrite:
+                    # we have the axis, 
+                    a = self.getAxis(name)
+                else:
+                    continue
             else:
                 # we need to make this axis
                 a = self.newAxisDescriptor()
@@ -1763,7 +1774,9 @@ if __name__ == "__main__":
         2
         >>> new.checkAxes()
         >>> len(new.axes)
-        4
+        2
+        >>> print([a.name for a in new.axes])
+        ['snap', 'pop']
         >>> new.write(testDocPath)
 
         """

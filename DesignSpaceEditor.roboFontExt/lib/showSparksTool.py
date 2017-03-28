@@ -70,6 +70,8 @@ class ShowSparksTool(EditingTool):
                 if this == f:
                     continue
                 p = DigestPointPen(this)
+                if not g.name in this:
+                    continue
                 this[g.name].drawPoints(p) 
                 self.otherDigests.append(p.getDigest())
         pathCount = 0
@@ -94,7 +96,10 @@ class ShowSparksTool(EditingTool):
                         cluster.append((pt,cmd,nextPoint))
                         nextPoint = None
                     else:
-                        self.stuff.append((cmd[0], cmd[1][-2:] ))
+                        name = cmd[0]
+                        deltaCoord = cmd[1][-2:]
+                        boxCoord = (0,0)
+                        self.stuff.append((name, deltaCoord, boxCoord))
             self.points.append(cluster)
         
         # check the anchors
@@ -110,6 +115,7 @@ class ShowSparksTool(EditingTool):
                 if not a.name in self.anchors:
                     self.anchors[a.name] = []
                 self.anchors[a.name].append(a)
+        #print self.stuff
 
             
     def draw(self, scale):
@@ -153,7 +159,6 @@ class ShowSparksTool(EditingTool):
             fill(None)
             lineJoin('round')
             line((k[0], k[1]+yOffset), (k[0], k[1]))
-
             # anchor dot
             stroke(None)
             fill(self.thisColor[0],self.thisColor[1],self.thisColor[2],0.7)

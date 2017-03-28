@@ -1271,8 +1271,8 @@ class DesignSpaceEditor(BaseWindowController):
                 instanceDescriptor.filename = os.path.relpath(instanceDescriptor.filename, os.path.dirname(self.designSpacePath))
                 instanceDescriptor.makePath()
         self.updatePaths()
-        for item in self.mastersItem:
-            item.setName()
+        #for item in self.mastersItem:
+        #    item.setName()
         self.doc.write(self.designSpacePath)
         self.w.getNSWindow().setRepresentedURL_(NSURL.fileURLWithPath_(self.designSpacePath))
         self.w.setTitle(os.path.basename(self.designSpacePath))
