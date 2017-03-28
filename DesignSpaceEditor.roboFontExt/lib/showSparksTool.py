@@ -58,6 +58,8 @@ class ShowSparksTool(EditingTool):
         self.points = []
         _allFonts = AllFonts()
         g = CurrentGlyph()
+        if g is None:
+            return
         if g != self.currentGlyph:
             self.currentGlyph = g
             self.otherDigests = []
