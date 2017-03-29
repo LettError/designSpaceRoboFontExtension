@@ -56,7 +56,7 @@ class ShowSparksTool(EditingTool):
         self.anchors = {}
         self.stuff = []
         self.points = []
-        _allFonts = AllFonts()
+        _allFonts = AllFonts()[:10]
         g = CurrentGlyph()
         if g is None:
             return

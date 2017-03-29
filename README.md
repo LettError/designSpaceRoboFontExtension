@@ -80,7 +80,16 @@ The rules panel is experimental. It is possible to define and edit rules and con
 * This panel shows a very basic validation report of what needs to be done and where the UFOs are, etc.
 
 ## ShowSparksTool
-* This is a small interpolation visualiser for the Edit windows.
+A small interpolation visualiser for the Edit window.
+
+* Shows the current glyph from **all open UFOs** (maybe that should be limited, idk.).
+* Edit Tool, so you can do all the editing with this visualiser on.
+* Does not preview interpolation, or do anything with the designspace data.
+* Does not attempt to repair problems.
+* Just draws one to one relations of the points.
+* If the number of points in one of the masters does not match the others, the lines will be red.
+
+![ShowSparksToolScreenshot](/Users/erik/code/designSpaceRoboFontExtension/ShowSparksTool.png)
 
 ## Todo
 * Separate validation for MutatorMath and Varlib use.
