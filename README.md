@@ -89,7 +89,7 @@ A small interpolation visualiser for the Edit window.
 * Just draws one to one relations of the points.
 * If the number of points in one of the masters does not match the others, the lines will be red.
 
-![ShowSparksToolScreenshot](/Users/erik/code/designSpaceRoboFontExtension/ShowSparksTool.png)
+![ShowSparksToolScreenshot](ShowSparksTool.png)
 
 ## Todo
 * Separate validation for MutatorMath and Varlib use.
