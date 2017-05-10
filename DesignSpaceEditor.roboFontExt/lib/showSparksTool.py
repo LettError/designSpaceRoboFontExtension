@@ -10,7 +10,64 @@ from mojo.drawingTools import *
 from mojo.UI import UpdateCurrentGlyphView
 from mojo.events import installTool
 
+import colorsys
 
+def getColor(steps, index, saturation=1):
+    return colorsys.hsv_to_rgb(index/(steps*1.0), saturation, 1)
+
+class SparkDigestPen(DigestPointPen):
+
+    # ['beginPath',
+    #  ((169, 126), 'line'),
+    #  ((169, 97), None),
+    #  ((163, 86), None),
+    #  ((148, 86), 'curve'),
+    #  ((132, 86), None),
+    #  ((126, 97), None),
+    #  ((126, 126), 'curve'),
+    #  ((126, 578), 'line'),
+    #  ((126, 607), None),
+    #  ((132, 618), None),
+    #  ((148, 618), 'curve'),
+    #  ((163, 618), None),
+    #  ((169, 607), None),
+    #  ((169, 578), 'curve'),
+    #  'endPath',
+    #  'beginPath',
+    #  ((292, 32), 'line'),
+    #  ((151, 58), 'line'),
+    #  ((148, 20), 'line'),
+    #  ((236, 20), None),
+    #  ((277, 62), None),
+    #  ((277, 171), 'curve'),
+    #  ((277, 569), 'line'),
+    #  ((277, 678), None),
+    #  ((235, 720), None),
+    #  ((148, 720), 'curve'),
+    #  ((60, 720), None),
+    #  ((18, 678), None),
+    #  ((18, 569), 'curve'),
+    #  ((18, 141), 'line'),
+    #  ((18, 53), None),
+    #  ((47, -6), None),
+    #  ((172, -6), 'curve'),
+    #  ((285, -40), 'line'),
+    #  'endPath']
+    def getDigest(self, center=None):
+        if center is None:
+            return tuple(self._data)
+        newData = []
+        for item in self._data:
+            if type(item)==tuple:
+                if type(item[0])==str:
+                    # component
+                    newData.append(item)
+                else:
+                    newData.append(((item[0][0]+center,item[0][1]), item[1]))
+            else:
+                newData.append(item)
+        return newData
+        
 
 import vanilla
 
@@ -43,17 +100,19 @@ class ShowSparksTool(EditingTool):
     def setup(self):
         self.okColor = (      0/255.0,      0/255.0,    255/255.0,   0.8)
         self.errorColor = (      255/255.0,      0/255.0,    0/255.0,   0.8)
+        self.markerTransparency = 0.5
+
         self.thisColor = self.okColor
         self.points = []
         self.stuff = []
-        self.anchors = {}
+        self.widths = {}
         self.currentGlyph = None
         self.otherDigests = None
         self.thisDigest = None
+        self.presentationHeight = None
             
     def findAllPoints(self):
         # line up the points on the outline
-        self.anchors = {}
         self.stuff = []
         self.points = []
         _allFonts = AllFonts()[:10]
@@ -64,18 +123,23 @@ class ShowSparksTool(EditingTool):
             self.currentGlyph = g
             self.otherDigests = []
         f = CurrentFont()
-        p = DigestPointPen(f)
+        if f.info.xHeight is not None:
+            self.presentationHeight = 0.5*f.info.xHeight
+        else:
+            self.presentationHeight = 0
+        p = SparkDigestPen(f)
         g.drawPoints(p)
-        self.thisDigest = p.getDigest()
+        centerWidth = g.width*.5
+        self.thisDigest = p.getDigest(center=0)
         if not self.otherDigests:
             for this in _allFonts:
                 if this == f:
                     continue
-                p = DigestPointPen(this)
+                p = SparkDigestPen(this)
                 if not g.name in this:
                     continue
                 this[g.name].drawPoints(p) 
-                self.otherDigests.append(p.getDigest())
+                self.otherDigests.append(p.getDigest(center=centerWidth-(this[g.name].width*.5)))
         pathCount = 0
         allDigests = [self.thisDigest]+self.otherDigests
         minLength = min([len(a) for a in allDigests])
@@ -86,7 +150,6 @@ class ShowSparksTool(EditingTool):
             self.thisColor = self.errorColor
         for i in range(minLength):
             cluster = []
-            nextPoint = None
             for cmd in [a[i] for a in allDigests]:
                 if cmd == "beginPath":
                     continue
@@ -95,8 +158,7 @@ class ShowSparksTool(EditingTool):
                 if isinstance(cmd, tuple):
                     pt, what = cmd
                     if isinstance(pt, tuple):
-                        cluster.append((pt,cmd,nextPoint))
-                        nextPoint = None
+                        cluster.append((pt,cmd,None))
                     else:
                         name = cmd[0]
                         deltaCoord = cmd[1][-2:]
@@ -104,22 +166,13 @@ class ShowSparksTool(EditingTool):
                         self.stuff.append((name, deltaCoord, boxCoord))
             self.points.append(cluster)
         
-        # check the anchors
-        for a in g.anchors:
-            if not a.name in self.anchors:
-                self.anchors[a.name] = []
-            self.anchors[a.name].append(a)
-            # check for anchors with duplicate names?
+        currentWidth = g.width
         for this in _allFonts:
-            if this == f:
-                continue
-            for a in this[g.name].anchors:
-                if not a.name in self.anchors:
-                    self.anchors[a.name] = []
-                self.anchors[a.name].append(a)
-        #print self.stuff
-
-            
+            w = this[g.name].width
+            diff = (currentWidth-w)*0.5
+            self.widths[(-diff, 0)] = 1
+            self.widths[(g.width+diff, 0)] = 1
+                            
     def draw(self, scale):
         self.findAllPoints()
         if not self.points: return
@@ -128,23 +181,29 @@ class ShowSparksTool(EditingTool):
         save()
         shift = 100
         fill(None)
+        totalClusters = len(self.points)
+        clusterIndex = 0
         for cluster in self.points:
             if len(cluster)>1:
                 for i in range(1, len(cluster)):
                     strokeWidth(scale*1)
                     dashLine(2*scale,2*scale)
-                    stroke(self.thisColor[0],self.thisColor[1],self.thisColor[2],0.7)
+                    r,g,b = getColor(totalClusters, clusterIndex)
+                    stroke(r,g,b,self.markerTransparency)
                     fill(None)
                     lineJoin('round')
+                    markerSize = scale * self.otherHandleSize
                     try:
                         line(cluster[0][0], cluster[i][0])
+                        if cluster[i][1][1] is None:
+                            markerSize = scale * self.otherHandleSize * 2
                     except:
                         pass
                     stroke(None)
-                    fill(self.thisColor[0],self.thisColor[1],self.thisColor[2],0.7)
+                    fill(r,g,b,0.6)
                     pt = cluster[i][0]
-                    d = scale * self.otherHandleSize
-                    oval(pt[0]-d, pt[1]-d, d*2, d*2)
+                    oval(pt[0]-markerSize, pt[1]-markerSize, markerSize*2, markerSize*2)
+            clusterIndex += 1
         pos = {}
         yOffset = 100
         for item in self.stuff:
@@ -152,7 +211,8 @@ class ShowSparksTool(EditingTool):
                 pos[item[1]] = []
             pos[item[1]].append(item[0])
             yOffset+=20
-        yOffset = 100
+        pointIndex = 0
+        totalPoints = len(pos)
         for k, v in pos.items():
             # line between text label and anchor dot
             strokeWidth(scale*1.5)
@@ -163,11 +223,13 @@ class ShowSparksTool(EditingTool):
             line((k[0], k[1]+yOffset), (k[0], k[1]))
             # anchor dot
             stroke(None)
-            fill(self.thisColor[0],self.thisColor[1],self.thisColor[2],0.7)
+            r,g,b = getColor(totalPoints, pointIndex)
+            fill(r, g, b, self.markerTransparency)
             d = scale * self.anchorDotSize
             anchorDotSize = 10
             oval(k[0]-d, k[1]-d, d*2, d*2)
             yOffset+=20
+            pointIndex += 1
         yOffset = 100
         for k, v in pos.items():
             # text label
@@ -183,8 +245,15 @@ class ShowSparksTool(EditingTool):
                 drawBackground=True,
                 backgroundColor=NSColor.grayColor())
             yOffset+=20
+        # draw the widths at the center of the vertical bounds of the current glyph
+        d = 10
+        stroke(self.thisColor[0],self.thisColor[1],self.thisColor[2],self.markerTransparency)
+        strokeWidth(scale*1)
+        dashLine(2*scale, 2*scale)
+        fill(None)
+        for pt in self.widths.keys():
+            line((pt[0], self.presentationHeight-30*scale), (pt[0], self.presentationHeight+30*scale))
         restore()
-        # UpdateCurrentGlyphView()
         
     def mouseDown(self, point, event): pass
         # mods = self.getModifiers()
