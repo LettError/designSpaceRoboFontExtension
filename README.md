@@ -79,18 +79,6 @@ The rules panel is experimental. It is possible to define and edit rules and con
 ## Report
 * This panel shows a very basic validation report of what needs to be done and where the UFOs are, etc.
 
-## ShowSparksTool
-A small interpolation visualiser for the Edit window.
-
-* Shows the current glyph from **all open UFOs** (maybe that should be limited, idk.).
-* Edit Tool, so you can do all the editing with this visualiser on.
-* Does not preview interpolation, or do anything with the designspace data.
-* Does not attempt to repair problems.
-* Just draws one to one relations of the points.
-* If the number of points in one of the masters does not match the others, the lines will be red.
-
-![ShowSparksToolScreenshot](ShowSparksTool.png)
-
 ## Todo
 * Separate validation for MutatorMath and Varlib use.
 
@@ -101,3 +89,4 @@ A small interpolation visualiser for the Edit window.
 * 1.3.2 UFO paths are editable.
 * 1.3.3 Updated designSpaceDocument.
 * 1.3.5 Updated designSpaceDocument. ShowSparksTool added.
+* 1.3.6 Updated designSpaceDocument. ShowSparksTool made independent.
