@@ -307,7 +307,8 @@ class KeyedInstanceDescriptor(NSObject):
         copy.axisOrder = self.axisOrder
         copy.info = self.info
         copy.filename = self.filename
-        copy.location = self.location
+        copy.location = {}
+        copy.location.update(self.location)
         copy.name = self.name
         #copy.setName()
         return copy
