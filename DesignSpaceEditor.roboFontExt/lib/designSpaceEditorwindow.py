@@ -279,6 +279,10 @@ class KeyedInstanceDescriptor(NSObject):
         self.postScriptFontName = None
         self.styleMapFamilyName = None
         self.styleMapStyleName = None
+        self.localisedStyleName = {}
+        self.localisedFamilyName = {}
+        self.localisedStyleMapStyleName = {}
+        self.localisedStyleMapFamilyName = {}
         self.glyphs = {}
         self.axisOrder = []
         self.kerning = True
