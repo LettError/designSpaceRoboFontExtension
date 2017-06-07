@@ -60,7 +60,7 @@ defaultSymbol = u"🔹"
 #    return type(clsName, bases, dct)
 
 class KeyedGlyphDescriptor(NSObject):
-    #__metaclass__= ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.glyphName = None
@@ -91,7 +91,7 @@ def renameAxis(oldName, newName, location):
 
 
 class KeyedRuleDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    #__metaclass__  = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.name = None
@@ -119,7 +119,7 @@ class KeyedRuleDescriptor(NSObject):
                 self.name = value
 
 class KeyedSourceDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    #__metaclass__  = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -266,7 +266,7 @@ class KeyedSourceDescriptor(NSObject):
                 NSBeep()
     
 class KeyedInstanceDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    #__metaclass__  = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -427,7 +427,7 @@ def intOrFloat(num):
     return "%f" % num
     
 class KeyedAxisDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    #__metaclass__  = ClassNameIncrementer
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
         ("italic", "ital"),
@@ -1128,8 +1128,7 @@ class DesignSpaceEditor(BaseWindowController):
                             alreadyOpen = True
                             break
                     if not alreadyOpen:
-                        font = RFont(path, showUI=False)
-                        font.showUI()
+                        font = RFont(path)
                 except:
                     print "Bad UFO:", path
                     pass
