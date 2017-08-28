@@ -22,9 +22,11 @@ reload(ufoProcessor)
 
 import designSpaceEditorSettings
 reload(designSpaceEditorSettings)
+import ufoLib
 
 checkSymbol = u"✓"
 defaultSymbol = u"🔹"
+
 
 """
 
@@ -45,7 +47,7 @@ defaultSymbol = u"🔹"
     step 2: on reading, calculate the absolute paths for the sources and instances
 
 """
-# NSOBject Hack, please remove before release.
+#NSOBject Hack, please remove before release.
 # def ClassNameIncrementer(clsName, bases, dct):
 #    import objc
 #    orgName = clsName
@@ -91,7 +93,7 @@ def renameAxis(oldName, newName, location):
 
 
 class KeyedRuleDescriptor(NSObject):
-    #__metaclass__  = ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.name = None
@@ -119,7 +121,7 @@ class KeyedRuleDescriptor(NSObject):
                 self.name = value
 
 class KeyedSourceDescriptor(NSObject):
-    #__metaclass__  = ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -266,7 +268,7 @@ class KeyedSourceDescriptor(NSObject):
                 NSBeep()
     
 class KeyedInstanceDescriptor(NSObject):
-    #__metaclass__  = ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -427,7 +429,7 @@ def intOrFloat(num):
     return "%f" % num
     
 class KeyedAxisDescriptor(NSObject):
-    #__metaclass__  = ClassNameIncrementer
+    #__metaclass__ = ClassNameIncrementer
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
         ("italic", "ital"),
@@ -553,7 +555,6 @@ def newImageListCell():
     cell.setImageFrameStyle_(NSImageFrameNone)
     return cell
 
-
 class DesignSpaceEditor(BaseWindowController):
     preferredAxes = [
         ("weight", "wght", 0, 1000, 0),
@@ -575,7 +576,7 @@ class DesignSpaceEditor(BaseWindowController):
             fileNameTitle = "Untitled.designspace"
         else:
             fileNameTitle = os.path.basename(self.designSpacePath)
-        self.w = Window((940, 700), fileNameTitle, minSize=(740,400))
+        self.w = Window((940, 800), fileNameTitle)
         self._updatingTheAxesNames = False
         _numberFormatter = NSNumberFormatter.alloc().init()
         #_numberFormatter.setNumberStyle_(NSNumberFormatterDecimalStyle)
@@ -790,18 +791,31 @@ class DesignSpaceEditor(BaseWindowController):
                 },
         ]
         toolbarHeight = 24
-        self.axesGroup = Group((0,0,0,0))
-        self.axesItem = List((0, toolbarHeight, -0, -0), [], columnDescriptions=axisColDescriptions, editCallback=self.callbackAxesListEdit)
-        self.axesGroup.l = self.axesItem
+        axesGroupStart = 0
+        axesGroupHeight = 120
+        masterGroupStart = axesGroupHeight
+        instanceGroupHeight = masterGroupHeight = 175
+        instanceGroupStart = masterGroupStart + masterGroupHeight
+        ruleGroupStart = instanceGroupStart + instanceGroupHeight
+        ruleGroupHeight = 120
+        reportGroupStart = ruleGroupStart + ruleGroupHeight
+        
+        
         buttonMargin = 2
         buttonHeight = 20
-        linkButtonSize = (48, buttonMargin+1, 30, buttonHeight)
-        firstButtonSize = (78,buttonMargin+1,50,buttonHeight)
-        secondButtonSize = (130,buttonMargin+1,100,buttonHeight)
-        first_and_secondButtonSize = (78,buttonMargin+1,150,buttonHeight)
-        thirdButtonSize = (232,buttonMargin+1,100,buttonHeight)
-        statusTextSize = (165, buttonMargin+4,-10,buttonHeight)
-        addButtonSize = (102,buttonMargin+1,50,buttonHeight)
+        titleOffset = 100
+        sectionTitleSize = (50, 3, 100, 20)
+        self.axesGroup = self.w.axesGroup = Group((0,axesGroupStart,0,axesGroupHeight))
+        self.axesItem = List((0, toolbarHeight, -0, -0), [], columnDescriptions=axisColDescriptions, editCallback=self.callbackAxesListEdit)
+        self.axesGroup.title = TextBox(sectionTitleSize, "Axes")
+        self.axesGroup.l = self.axesItem
+        linkButtonSize = (titleOffset+48, buttonMargin+1, 30, buttonHeight)
+        firstButtonSize = (titleOffset+78,buttonMargin+1,50,buttonHeight)
+        secondButtonSize = (titleOffset+130,buttonMargin+1,100,buttonHeight)
+        first_and_secondButtonSize = (titleOffset+78,buttonMargin+1,150,buttonHeight)
+        thirdButtonSize = (titleOffset+232,buttonMargin+1,100,buttonHeight)
+        statusTextSize = (titleOffset+165, buttonMargin+4,-10,buttonHeight)
+        addButtonSize = (titleOffset+102,buttonMargin+1,50,buttonHeight)
         axisToolDescriptions = [
             {'title': "+", 'width': 20,},
             {'title': "-", 'width': 20}
@@ -816,7 +830,8 @@ class DesignSpaceEditor(BaseWindowController):
             callback=self.callbackAxesFromSources,
             sizeStyle="small")
         
-        self.mastersGroup = Group((0,0,0,0))
+        self.mastersGroup = self.w.mastersGroup = Group((0,masterGroupStart,0,masterGroupHeight))
+        self.mastersGroup.title = TextBox(sectionTitleSize, "Masters")
         masterToolDescriptions = [
             {'title': "+", 'width': 20,},
             {'title': "-", 'width': 20},
@@ -848,7 +863,8 @@ class DesignSpaceEditor(BaseWindowController):
             sizeStyle="small")
         self.mastersGroup.loadNamesFromSourceButton.enable(False)
         
-        self.instancesGroup = Group((0,0,0,0))
+        self.instancesGroup = self.w.instancesGroup = Group((0,instanceGroupStart,0,instanceGroupHeight))
+        self.instancesGroup.title = TextBox(sectionTitleSize, "Instances")
         self.instancesItem = List((0, toolbarHeight, -0, -0), [],
             columnDescriptions=instanceColDescriptions,
             selectionCallback=self.callbackInstanceSelection,
@@ -923,7 +939,8 @@ class DesignSpaceEditor(BaseWindowController):
             ]
         
         listMargin = 5
-        self.rulesGroup = Group((0,0,0,0))
+        self.rulesGroup = self.w.ruleGroup = Group((0,ruleGroupStart,0,ruleGroupHeight))
+        self.rulesGroup.title = TextBox(sectionTitleSize, "Rules")
         self.rulesNames = List((0,toolbarHeight, 200,-0), [],
             columnDescriptions=ruleNameColDescriptions,
             selectionCallback=self.callbackRuleNameSelection,
@@ -954,8 +971,8 @@ class DesignSpaceEditor(BaseWindowController):
             selectionStyle="momentary",
             callback=self.callbackRuleGlyphTools)
         
-        self.reportGroup = Group((0,0,0,0))
-        self.reportGroup.text = EditText((0,toolbarHeight,-0,-0), 'hehe')
+        self.reportGroup = self.w.reportGroup = Group((0,reportGroupStart,0,-5))
+        self.reportGroup.text = EditText((0,toolbarHeight,-0,0), 'hehe')
         
         descriptions = [
            dict(label="Axes", view=self.axesGroup, size=138, collapsed=False, canResize=False),
@@ -968,7 +985,7 @@ class DesignSpaceEditor(BaseWindowController):
         ]
 
         self.read(self.designSpacePath)
-        self.w.accordionView = AccordionView((0, 0, -0, -0), descriptions)
+        #self.w.accordionView = AccordionView((0, 0, -0, -0), descriptions)
         self.updateAxesColumns()
         self.enableInstanceList()
         self.w.open()
@@ -1427,8 +1444,9 @@ class DesignSpaceEditor(BaseWindowController):
         # and make sure the last one remains empty and editable
         if self._selectedRule is None:
             return
-        self._selectedRule.subs.append(names)
-        self.rulesGroup.names.set(self.doc.rules)
+        if not names in self._selectedRule.subs:
+            self._selectedRule.subs.append(names)
+            self.rulesGroup.names.set(self.doc.rules)
             
     def _checkRuleGlyphListHasEditableEmpty(self):
         if self._selectedRule is None:
@@ -1777,7 +1795,7 @@ if __name__ == "__main__":
     assert renameAxis("aaa", "bbb", dict(aaa=1)) == dict(bbb=1)
     assert renameAxis("ccc", "bbb", dict(aaa=1)) == dict(aaa=1)
     
-    testWithFile = False    # set to False to test without getfile dialog
+    testWithFile = True    # set to False to test without getfile dialog
 
     if not testWithFile:
         # test
