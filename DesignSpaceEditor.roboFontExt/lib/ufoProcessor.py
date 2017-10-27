@@ -1,7 +1,9 @@
+# coding: utf-8
 from __future__ import print_function, division, absolute_import
 
 from ufoLib import fontInfoAttributesVersion1, fontInfoAttributesVersion2, fontInfoAttributesVersion3
 from pprint import pprint
+import logging
 
 """
     
@@ -21,6 +23,7 @@ from fontMath.mathInfo import MathInfo
 from fontMath.mathKerning import MathKerning
 from mutatorMath.objects.mutator import buildMutator
 from mutatorMath.objects.location import biasFromLocations, Location
+import plistlib
 import os
 
 """
@@ -39,6 +42,71 @@ import os
     Parking the glyphs under a swapname is a bit lazy, but at least it guarantees the glyphs have the right parent.
 
 """
+
+
+""" These are some UFO specific tools for use with Mutator.
+
+
+    build() is a convenience function for reading and executing a designspace file.
+        documentPath:               filepath to the .designspace document
+        outputUFOFormatVersion:     ufo format for output
+        verbose:                    True / False for lots or no feedback
+        logPath:                    filepath to a log file
+        progressFunc:               an optional callback to report progress.
+                                    see mutatorMath.ufo.tokenProgressFunc
+
+"""
+
+def build(
+        documentPath,
+        outputUFOFormatVersion=3,
+        roundGeometry=True,
+        verbose=True,           # not supported
+        logPath=None,           # not supported
+        progressFunc=None,      # not supported
+        processRules=True,
+        logger=None
+        ):
+    """
+        Simple builder for UFO designspaces.
+    """
+    import os, glob
+    if os.path.isdir(documentPath):
+        # process all *.designspace documents in this folder
+        todo = glob.glob(os.path.join(documentPath, "*.designspace"))
+    else:
+        # process the 
+        todo = [documentPath]
+    results = []
+    for path in todo:
+        reader = DesignSpaceProcessor(ufoVersion=outputUFOFormatVersion)
+        reader.roundGeometry = roundGeometry
+        reader.read(path)
+        try:
+            r = reader.generateUFO(processRules=processRules)
+            results.append(r)
+        except:
+            if logger:
+                logger.exception("ufoProcessor error")
+        #results += reader.generateUFO(processRules=processRules)
+        reader = None
+    return results
+
+def getUFOVersion(ufoPath):
+    # <?xml version="1.0" encoding="UTF-8"?>
+    # <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    # <plist version="1.0">
+    # <dict>
+    #   <key>creator</key>
+    #   <string>org.robofab.ufoLib</string>
+    #   <key>formatVersion</key>
+    #   <integer>2</integer>
+    # </dict>
+    # </plist>
+    metaInfoPath = os.path.join(ufoPath, u"metainfo.plist")
+    p = plistlib.readPlist(metaInfoPath)
+    return p.get('formatVersion')
+
 def swapGlyphNames(font, oldName, newName, swapNameExtension = "_______________swap"):
     if not oldName in font or not newName in font:
         return None
@@ -51,6 +119,7 @@ def swapGlyphNames(font, oldName, newName, swapNameExtension = "_______________s
     p = font[swapName].getPointPen()
     font[oldName].drawPoints(p)
     font[swapName].width = font[oldName].width
+    # lib?
     
     font[oldName].clear()
     p = font[oldName].getPointPen()
@@ -138,7 +207,7 @@ class DesignSpaceProcessor(DesignSpaceDocument):
     mathGlyphClass = MathGlyph
     mathKerningClass = MathKerning
 
-    def __init__(self, readerClass=None, writerClass=None, fontClass=None, ufoVersion=2):
+    def __init__(self, readerClass=None, writerClass=None, fontClass=None, ufoVersion=3):
         super(DesignSpaceProcessor, self).__init__(readerClass=readerClass, writerClass=writerClass, fontClass=fontClass)
         self.ufoVersion = ufoVersion         # target UFO version
         self.roundGeometry = False
@@ -154,16 +223,26 @@ class DesignSpaceProcessor(DesignSpaceDocument):
     def generateUFO(self, processRules=True):
         # makes the instances
         # option to execute the rules
-        #self.checkAxes()
+        # make sure we're not trying to overwrite a newer UFO format
         self.loadFonts()
         self.checkDefault()
+        v = 0
         for instanceDescriptor in self.instances:
             if instanceDescriptor.path is None:
                 continue
             font = self.makeInstance(instanceDescriptor, processRules)
-            if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
-                os.makedirs(os.path.dirname(instanceDescriptor.path))
-            font.save(instanceDescriptor.path, self.ufoVersion)
+            folder = os.path.dirname(instanceDescriptor.path)
+            path = instanceDescriptor.path
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+            if os.path.exists(path):
+                existingUFOFormatVersion = getUFOVersion(path)
+                if existingUFOFormatVersion > self.ufoVersion:
+                    self.problems.append(u"Can’t overwrite existing UFO%d with UFO%d."%(existingUFOFormatVersion, self.ufoVersion))
+                    continue
+            else:
+                font.save(path, self.ufoVersion)
+                self.problems.append("Generated %s as UFO%d"%(os.path.basename(path), self.ufoVersion))
 
     def getInfoMutator(self):
         """ Returns a info mutator """
@@ -185,6 +264,7 @@ class DesignSpaceProcessor(DesignSpaceDocument):
         for sourceDescriptor in self.sources:
             loc = Location(sourceDescriptor.location)
             sourceFont = self.fonts[sourceDescriptor.name]
+            # this makes assumptions about the groups of all sources being the same. 
             kerningItems.append((loc, self.mathKerningClass(sourceFont.kerning, sourceFont.groups)))
         bias, self._kerningMutator = buildMutator(kerningItems, axes=self._preppedAxes, bias=self.defaultLoc)
         return self._kerningMutator
@@ -212,6 +292,7 @@ class DesignSpaceProcessor(DesignSpaceDocument):
         for sourceDescriptor in self.sources:
             if not sourceDescriptor.name in self.fonts:
                 self.fonts[sourceDescriptor.name] = self._instantiateFont(sourceDescriptor.path)
+                self.problems.append("loaded master from %s, format %d"%(sourceDescriptor.path, getUFOVersion(sourceDescriptor.path)))
             names = names | set(self.fonts[sourceDescriptor.name].keys())
         self.glyphNames = list(names)
 
@@ -221,6 +302,13 @@ class DesignSpaceProcessor(DesignSpaceDocument):
         self._preppedAxes = self._prepAxesForBender()
         # make fonty things here
         loc = Location(instanceDescriptor.location)
+        # groups, 
+        if hasattr(self.fonts[self.default.name], "kerningGroupConversionRenameMaps"):
+            renameMap = self.fonts[self.default.name].kerningGroupConversionRenameMaps
+            self.problems.append("renameMap %s"%renameMap)
+        else:
+            renameMap = {}
+        font.kerningGroupConversionRenameMaps = renameMap
         # make the kerning
         if instanceDescriptor.kerning:
             try:
@@ -239,7 +327,6 @@ class DesignSpaceProcessor(DesignSpaceDocument):
                 font.info.styleMapFamilyName = instanceDescriptor.styleMapFamilyName
                 font.info.styleMapStyleName = instanceDescriptor.styleMapStyleName
                 # localised names need to go to the right openTypeNameRecords
-                #print("xxx", font.info.openTypeNameRecords)
                 # records = []
                 # nameID = 1
                 # platformID = 
@@ -255,7 +342,9 @@ class DesignSpaceProcessor(DesignSpaceDocument):
                 # this is the source
                 self._copyFontInfo(self.fonts[sourceDescriptor.name].info, font.info)
             if sourceDescriptor.copyLib:
-                font.lib.update(self.fonts[sourceDescriptor.name].lib)
+                # excplicitly copy the font.lib items
+                for key, value in self.fonts[sourceDescriptor.name].lib.items():
+                    font.lib[key] = value
             if sourceDescriptor.copyFeatures:
                 featuresText = self.fonts[sourceDescriptor.name].features.text
                 if isinstance(featuresText, str):
@@ -267,6 +356,9 @@ class DesignSpaceProcessor(DesignSpaceDocument):
             selectedGlyphNames = glyphNames
         else:
             selectedGlyphNames = self.glyphNames
+        # add the glyphnames to the font.lib['public.glyphOrder']
+        if not 'public.glyphOrder' in font.lib.keys():
+            font.lib['public.glyphOrder'] = selectedGlyphNames
         for glyphName in selectedGlyphNames:
             try:
                 glyphMutator = self.getGlyphMutator(glyphName)
@@ -294,7 +386,7 @@ class DesignSpaceProcessor(DesignSpaceDocument):
                 #              {'font': 'master.Adobe VF Prototype.Master_4.5',
                 #               'glyphName': 'dollar.nostroke',
                 #               'location': {'custom': 100.0, 'weight': 368.0}}],
-                #  'unicodeValue': 36}
+                #  'unicodes': [36]}
                 glyphData = instanceDescriptor.glyphs[glyphName]
             else:
                 glyphData = {}
@@ -305,10 +397,10 @@ class DesignSpaceProcessor(DesignSpaceDocument):
                 continue
             glyphInstanceLocation = Location(glyphData.get("instanceLocation", instanceDescriptor.location))
             try:
-                uniValue = glyphMutator[()][0].unicodes[0]
+                uniValues = glyphMutator[()][0].unicodes
             except IndexError:
-                uniValue = None
-            glyphInstanceUnicode = glyphData.get("unicodeValue", uniValue)
+                uniValues = []
+            glyphInstanceUnicodes = glyphData.get("unicodes", uniValues)
             note = glyphData.get("note")
             if note:
                 font[glyphName] = note
@@ -347,14 +439,19 @@ class DesignSpaceProcessor(DesignSpaceDocument):
                 font[glyphName].clear()
                 glyphInstanceObject.drawPoints(pPen)
             font[glyphName].width = glyphInstanceObject.width
-            font[glyphName].unicode = glyphInstanceUnicode
+            font[glyphName].unicodes = glyphInstanceUnicodes
         if doRules:
             resultNames = processRules(self.rules, loc, self.glyphNames)
             for oldName, newName in zip(self.glyphNames, resultNames):
                 if oldName != newName:
                     swapGlyphNames(font, oldName, newName)
+        # copy the glyph lib?
+        #for sourceDescriptor in self.sources:
+        #    if sourceDescriptor.copyLib:
+        #        pass
+        #    pass
         # store designspace location in the font.lib
-        font.lib['designspace'] = instanceDescriptor.location.items()
+        font.lib['designspace'] = list(instanceDescriptor.location.items())
         return font
 
     def _instantiateFont(self, path):
@@ -447,7 +544,6 @@ if __name__ == "__main__":
             p.closePath()
             g.move((0,s+step))
             g.width = s
-            g.unicode = 200 + step
             step += 50
         for n, w in [('wide', 800), ('narrow', 100)]:
             font.newGlyph(n)
@@ -478,7 +574,6 @@ if __name__ == "__main__":
             g.unicode = uniValue
             uniValue += 1
 
-
     def fillInfo(font):
         font.info.unitsPerEm = 1000
         font.info.ascender = 800
@@ -505,6 +600,8 @@ if __name__ == "__main__":
         f2.info.descender = -100
         f1.info.copyright = u"This is the copyright notice from master 1"
         f2.info.copyright = u"This is the copyright notice from master 2"
+        f1.lib['ufoProcessor.test.lib.entry'] = "Lib entry for master 1"
+        f2.lib['ufoProcessor.test.lib.entry'] = "Lib entry for master 2"
         f1.save(path1, 2)
         f2.save(path2, 2)
         return path1, path2, path3, path4, path5
@@ -524,7 +621,7 @@ if __name__ == "__main__":
         f1.save(path1, 2)
         return path1, path2
 
-    def test0(docPath):
+    def testDocument(docPath):
         # make the test fonts and a test document
         testFontPath = os.path.join(os.getcwd(), "automatic_testfonts")
         m1, m2, i1, i2, i3 = makeTestFonts(testFontPath)
@@ -542,6 +639,7 @@ if __name__ == "__main__":
         s1.name = "test.master.1"
         s1.copyInfo = True
         s1.copyFeatures = True
+        s1.copyLib = True
         d.addSource(s1)
         s2 = SourceDescriptor()
         s2.path = m2
@@ -549,7 +647,6 @@ if __name__ == "__main__":
         s2.name = "test.master.2"
         #s2.copyInfo = True
         d.addSource(s2)
-
         for counter in range(3):
             factor = counter / 2        
             i = InstanceDescriptor()
@@ -563,14 +660,19 @@ if __name__ == "__main__":
             i.kerning = True
             if counter == 2:
                 i.glyphs['glyphTwo'] = dict(name="glyphTwo", mute=True)
+                i.copyLib = True
+            if counter == 2:
+               i.glyphs['narrow'] = dict(instanceLocation=dict(pop=400), unicodes=[0x123, 0x124, 0x125])
             d.addInstance(i)
         d.write(docPath)
 
-    def test1(docPath):
+    def testGenerateInstances(docPath):
         # execute the test document
         d = DesignSpaceProcessor()
         d.read(docPath)
         d.generateUFO()
+        if d.problems:
+            print(d.problems)
 
     def testSwap(docPath):
         srcPath, dstPath = makeSwapFonts(os.path.dirname(docPath))
@@ -595,12 +697,28 @@ if __name__ == "__main__":
         assert new['wide.component'].components[0].baseGlyph == "narrow"
         assert new['narrow.component'].components[0].baseGlyph == "wide"
 
+    def testUnicodes(docPath):
+        # after executing testSwap there should be some test fonts
+        # let's check if the unicode values for glyph "narrow" arrive at the right place.
+        d = DesignSpaceProcessor()
+        d.read(docPath)
+        for instance in d.instances:
+            if os.path.exists(instance.path):
+                f = Font(instance.path)
+                if instance.name == "TestFamily-TestStyle_pop1000.000":
+                    assert f['narrow'].unicodes == [291, 292, 293]
+                else:
+                    assert f['narrow'].unicodes == [207]
+            else:
+                print("Missing test font at %s"%instance.path)
+
     selfTest = True
     if selfTest:
         testRoot = os.path.join(os.getcwd(), "automatic_testfonts")
         if os.path.exists(testRoot):
             shutil.rmtree(testRoot)
         docPath = os.path.join(testRoot, "automatic_test.designspace")
-        test0(docPath)
-        test1(docPath)
+        testDocument(docPath)
+        testGenerateInstances(docPath)
         testSwap(docPath)
+        testUnicodes(docPath)

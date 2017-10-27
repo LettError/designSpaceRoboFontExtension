@@ -4,6 +4,7 @@ from __future__ import print_function, division, absolute_import
 import collections
 import logging
 import os
+import posixpath
 import xml.etree.ElementTree as ET
 from mutatorMath.objects.location import biasFromLocations, Location
 
@@ -153,12 +154,16 @@ class InstanceDescriptor(SimpleDescriptor):
     """Simple container for data related to the instance"""
     flavor = "instance"
     _defaultLanguageCode = "en"
-    _attrs = ['path', 'name',
-              'location', 'familyName',
-              'styleName', 'postScriptFontName',
-              'styleMapFamilyName',
-              'styleMapStyleName',
-              'kerning', 'info']
+    _attrs = [  'path',
+                'name',
+                'location',
+                'familyName',
+                'styleName',
+                'postScriptFontName',
+                'styleMapFamilyName',
+                'styleMapStyleName',
+                'kerning',
+                'info']
 
     def __init__(self):
         self.filename = None    # the original path as found in the document
@@ -175,6 +180,7 @@ class InstanceDescriptor(SimpleDescriptor):
         self.localisedStyleMapStyleName = {}
         self.localisedStyleMapFamilyName = {}
         self.glyphs = {}
+        self.mutedGlyphNames = []
         self.kerning = True
         self.info = True
 
@@ -230,6 +236,7 @@ class AxisDescriptor(SimpleDescriptor):
         self.minimum = None
         self.maximum = None
         self.default = None
+        self.hidden = False
         self.map = []
 
     def serialize(self):
@@ -240,6 +247,7 @@ class AxisDescriptor(SimpleDescriptor):
                 maximum = self.maximum,
                 minimum = self.minimum,
                 default = self.default,
+                hidden = self.hidden,
                 map = self.map,
             )
         return d
@@ -374,6 +382,8 @@ class BaseDocWriter(object):
         axisElement.attrib['minimum'] = self.intOrFloat(axisObject.minimum)
         axisElement.attrib['maximum'] = self.intOrFloat(axisObject.maximum)
         axisElement.attrib['default'] = self.intOrFloat(axisObject.default)
+        if axisObject.hidden:
+            axisElement.attrib['hidden'] = "1"
         for languageCode, labelName in axisObject.labelNames.items():
             languageElement = ET.Element('labelname')
             languageElement.attrib[u'xml:lang'] = languageCode
@@ -509,8 +519,8 @@ class BaseDocWriter(object):
         glyphElement = ET.Element('glyph')
         if data.get('mute'):
             glyphElement.attrib['mute'] = "1"
-        if data.get('unicodeValue') is not None:
-            glyphElement.attrib['unicode'] = hex(data.get('unicodeValue'))
+        if data.get('unicodes') is not None:
+            glyphElement.attrib['unicode'] = " ".join([hex(u) for u in data.get('unicodes')])
         if data.get('instanceLocation') is not None:
             locationElement, data['instanceLocation'] = self._makeLocationElement(data.get('instanceLocation'))
             glyphElement.append(locationElement)
@@ -615,6 +625,8 @@ class BaseDocReader(object):
             axisObject.name = axisElement.attrib.get("name")
             axisObject.minimum = float(axisElement.attrib.get("minimum"))
             axisObject.maximum = float(axisElement.attrib.get("maximum"))
+            if axisElement.attrib.get('hidden', False):
+                axisObject.hidden = True
             # we need to check if there is an attribute named "initial"
             if axisElement.attrib.get("default") is None:
                 if axisElement.attrib.get("initial") is not None:
@@ -830,8 +842,6 @@ class BaseDocReader(object):
             for key, lang in styleMapFamilyNameElement.items():
                 styleMapFamilyName = styleMapFamilyNameElement.text
                 instanceObject.setStyleMapFamilyName(styleMapFamilyName, lang)
-        #print("instanceObject", instanceObject.localisedStyleName)
-
         instanceLocation = self.locationFromElement(instanceElement)
         if instanceLocation is not None:
             instanceObject.location = instanceLocation
@@ -893,10 +903,15 @@ class BaseDocReader(object):
         mute = glyphElement.attrib.get("mute")
         if mute == "1":
             glyphData['mute'] = True
-        unicodeValue = glyphElement.attrib.get('unicode')
-        if unicodeValue is not None:
-            unicodeValue = int(unicodeValue, 16)
-            glyphData['unicodeValue'] = unicodeValue
+        # unicode
+        unicodes = glyphElement.attrib.get('unicode')
+        if unicodes is not None:
+            try:
+                unicodes = [int(u, 16) for u in unicodes.split(" ")]
+                glyphData['unicodes'] = unicodes
+            except ValueError:
+                raise DesignSpaceDocumentError("unicode values %s are not integers" % unicodes)
+
         note = None
         for noteElement in glyphElement.findall('.note'):
             glyphData['note'] = noteElement.text
@@ -961,6 +976,10 @@ class DesignSpaceDocument(object):
         writer = self.writerClass(path, self)
         writer.write()
 
+    def _posixRelativePath(self, otherPath):
+        relative = os.path.relpath(otherPath, os.path.dirname(self.path))
+        return posixpath.join(*relative.split(os.path.sep))
+
     def updatePaths(self):
         """ 
             Right before we save we need to identify and respond to the following situations:
@@ -1007,11 +1026,11 @@ class DesignSpaceDocument(object):
             # check what the relative path really should be?
             expectedFilename = None
             if descriptor.path is not None and self.path is not None:
-                expectedFilename = os.path.relpath(descriptor.path, os.path.dirname(self.path))
+                expectedFilename = self._posixRelativePath(descriptor.path)
 
             # 3
             if descriptor.filename is None and descriptor.path is not None and self.path is not None:
-                descriptor.filename = os.path.relpath(descriptor.path, os.path.dirname(self.path))
+                descriptor.filename = self._posixRelativePath(descriptor.path)
                 continue
 
             # 4
@@ -1045,13 +1064,13 @@ class DesignSpaceDocument(object):
                 if descriptor.filename is not None and not force:
                     continue
                 if self.path is not None:
-                    descriptor.filename = os.path.relpath(descriptor.path, os.path.dirname(self.path))
+                    descriptor.filename = self._posixRelativePath(descriptor.path)
         if instances:
            for descriptor in self.instances:
                 if descriptor.filename is not None and not force:
                     continue
                 if self.path is not None:
-                    descriptor.filename = os.path.relpath(descriptor.path, os.path.dirname(self.path))
+                    descriptor.filename = self._posixRelativePath(descriptor.path)
 
     def getFonts(self):
         # convenience method that delivers the masters and their locations
@@ -1133,6 +1152,32 @@ class DesignSpaceDocument(object):
                 self.default = mutatorDefaultCandidate
                 self.defaultLoc = self.default.location
         self.default.copyInfo = True
+        # now that we have a default, let's check if the axes are ok
+        for axisObj in self.axes:
+            if axisObj.name not in self.default.location:
+                # extend the location of the neutral master with missing default value for this axis
+                self.default.location[axisObj.name] = axisObj.default
+            else:
+                if axisObj.default == self.default.location.get(axisObj.name):
+                    continue
+                # proposed remedy: change default value in the axisdescriptor to the value of the neutral
+                neutralAxisValue = self.default.location.get(axisObj.name)
+                # make sure this value is between the min and max
+                if axisObj.minimum <= neutralAxisValue <= axisObj.maximum:
+                    # yes we can fix this
+                    axisObj.default = neutralAxisValue
+                    self.logger.info("Note: updating the default value of axis %s to neutral master at %3.3f"%(axisObj.name, neutralAxisValue))
+                # always fit the axis dimensions to the location of the designated neutral
+                elif neutralAxisValue < axisObj.minimum:
+                    axisObj.default = neutralAxisValue
+                    axisObj.minimum = neutralAxisValue
+                elif neutralAxisValue > axisObj.maximum:
+                    axisObj.maximum = neutralAxisValue
+                    axisObj.default = neutralAxisValue
+                else:
+                    # now we're in trouble, can't solve this, alert. 
+                    self.logger.info("Warning: mismatched default value for axis %s and neutral master. Master value outside of axis bounds"%(axisObj.name))
+
 
     def _prepAxesForBender(self):
         """
@@ -1351,7 +1396,7 @@ if __name__ == "__main__":
         >>> i1.postScriptFontName = "InstancePostscriptName"
         >>> i1.styleMapFamilyName = "InstanceStyleMapFamilyName"
         >>> i1.styleMapStyleName = "InstanceStyleMapStyleName"
-        >>> glyphData = dict(name="arrow", mute=True, unicode="0x123")
+        >>> glyphData = dict(name="arrow", mute=True, unicodes=[0x123, 0x124, 0x125])
         >>> i1.glyphs['arrow'] = glyphData
         >>> doc.addInstance(i1)
         >>> # add instance 2
@@ -1366,7 +1411,7 @@ if __name__ == "__main__":
         >>> i2.styleMapFamilyName = "InstanceStyleMapFamilyName"
         >>> i2.styleMapStyleName = "InstanceStyleMapStyleName"
         >>> glyphMasters = [dict(font="master.ufo1", glyphName="BB", location=dict(width=20,weight=20)), dict(font="master.ufo2", glyphName="CC", location=dict(width=900,weight=900))]
-        >>> glyphData = dict(name="arrow", unicodeValue=1234)
+        >>> glyphData = dict(name="arrow", unicodes=[101, 201, 301])
         >>> glyphData['masters'] = glyphMasters
         >>> glyphData['note'] = "A note about this glyph"
         >>> glyphData['instanceLocation'] = dict(width=100, weight=120)
@@ -1392,10 +1437,11 @@ if __name__ == "__main__":
         >>> a2 = AxisDescriptor()
         >>> a2.minimum = 0
         >>> a2.maximum = 1000
-        >>> a2.default = 0
+        >>> a2.default = 20
         >>> a2.name = "width"
         >>> a2.tag = "wdth"
         >>> a2.map = [(0.0, 10.0), (401.0, 66.0), (1000.0, 990.0)]
+        >>> a2.hidden = True
         >>> a2.labelNames[u'fr'] = u"Poids"
         >>> doc.addAxis(a2)
         >>> # add an axis that is not part of any location to see if that works
@@ -1420,7 +1466,10 @@ if __name__ == "__main__":
         >>> # import it again
         >>> new = DesignSpaceDocument()
         >>> new.read(testDocPath)
-        
+        >>> new.check()
+        >>> new.default.location
+        {'width': 20.0, 'weight': 0.0}
+
         # >>> for a, b in zip(doc.instances, new.instances):
         # ...     a.compare(b)
         # >>> for a, b in zip(doc.sources, new.sources):
@@ -1447,6 +1496,113 @@ if __name__ == "__main__":
         ...     a, b = v
         ...     assert a == b
 
+        """
+
+    def testAdjustAxisDefaultToNeutral():
+        u"""
+        >>> import os
+        >>> testDocPath = os.path.join(os.getcwd(), "testAdjustAxisDefaultToNeutral.designspace")
+        >>> masterPath1 = os.path.join(os.getcwd(), "masters", "masterTest1.ufo")
+        >>> masterPath2 = os.path.join(os.getcwd(), "masters", "masterTest2.ufo")
+        >>> instancePath1 = os.path.join(os.getcwd(), "instances", "instanceTest1.ufo")
+        >>> instancePath2 = os.path.join(os.getcwd(), "instances", "instanceTest2.ufo")
+        >>> doc = DesignSpaceDocument()
+        >>> # add master 1
+        >>> s1 = SourceDescriptor()
+        >>> s1.filename = os.path.relpath(masterPath1, os.path.dirname(testDocPath))
+        >>> s1.name = "master.ufo1"
+        >>> s1.copyInfo = True
+        >>> s1.copyFeatures = True
+        >>> s1.location = dict(weight=55, width=1000)
+        >>> doc.addSource(s1)
+        >>> # write some axes
+        >>> a1 = AxisDescriptor()
+        >>> a1.minimum = 0
+        >>> a1.maximum = 1000
+        >>> a1.default = 0      # the wrong value
+        >>> a1.name = "weight"
+        >>> a1.tag = "wght"
+        >>> doc.addAxis(a1)
+        >>> a2 = AxisDescriptor()
+        >>> a2.minimum = -10
+        >>> a2.maximum = 10
+        >>> a2.default = 0      # the wrong value
+        >>> a2.name = "width"
+        >>> a2.tag = "wdth"
+        >>> doc.addAxis(a2)
+        >>> # write the document
+        >>> doc.write(testDocPath)
+        >>> assert os.path.exists(testDocPath)
+        >>> # import it again
+        >>> new = DesignSpaceDocument()
+        >>> new.read(testDocPath)
+        >>> new.check()
+        >>> loc = new.default.location
+        >>> for axisObj in new.axes:
+        ...     n = axisObj.name
+        ...     assert axisObj.default == loc.get(n)
+        """
+
+    def testUnicodes():
+        u"""
+        >>> import os
+        >>> testDocPath = os.path.join(os.getcwd(), "testUnicodes.designspace")
+        >>> testDocPath2 = os.path.join(os.getcwd(), "testUnicodes_roundtrip.designspace")
+        >>> masterPath1 = os.path.join(os.getcwd(), "masters", "masterTest1.ufo")
+        >>> masterPath2 = os.path.join(os.getcwd(), "masters", "masterTest2.ufo")
+        >>> instancePath1 = os.path.join(os.getcwd(), "instances", "instanceTest1.ufo")
+        >>> instancePath2 = os.path.join(os.getcwd(), "instances", "instanceTest2.ufo")
+        >>> doc = DesignSpaceDocument()
+        >>> # add master 1
+        >>> s1 = SourceDescriptor()
+        >>> s1.filename = os.path.relpath(masterPath1, os.path.dirname(testDocPath))
+        >>> s1.name = "master.ufo1"
+        >>> s1.copyInfo = True
+        >>> s1.location = dict(weight=0)
+        >>> doc.addSource(s1)
+        >>> # add master 2
+        >>> s2 = SourceDescriptor()
+        >>> s2.filename = os.path.relpath(masterPath2, os.path.dirname(testDocPath))
+        >>> s2.name = "master.ufo2"
+        >>> s2.location = dict(weight=1000)
+        >>> doc.addSource(s2)
+        >>> # add instance 1
+        >>> i1 = InstanceDescriptor()
+        >>> i1.filename = os.path.relpath(instancePath1, os.path.dirname(testDocPath))
+        >>> i1.name = "instance.ufo1"
+        >>> i1.location = dict(weight=500)
+        >>> glyphData = dict(name="arrow", mute=True, unicodes=[100, 200, 300])
+        >>> i1.glyphs['arrow'] = glyphData
+        >>> doc.addInstance(i1)
+        >>> # now we have sources and instances, but no axes yet. 
+        >>> doc.axes = []   # clear the axes
+        >>> # write some axes
+        >>> a1 = AxisDescriptor()
+        >>> a1.minimum = 0
+        >>> a1.maximum = 1000
+        >>> a1.default = 0
+        >>> a1.name = "weight"
+        >>> a1.tag = "wght"
+        >>> doc.addAxis(a1)
+        >>> # write the document
+        >>> doc.write(testDocPath)
+        >>> assert os.path.exists(testDocPath)
+        >>> # import it again
+        >>> new = DesignSpaceDocument()
+        >>> new.read(testDocPath)
+        >>> new.write(testDocPath2)
+        >>> # compare the file contents
+        >>> f1 = open(testDocPath, 'r')
+        >>> t1 = f1.read()
+        >>> f1.close()
+        >>> f2 = open(testDocPath2, 'r')
+        >>> t2 = f2.read()
+        >>> f2.close()
+        >>> t1 == t2
+        True
+        >>> # check the unicode values read from the document
+        >>> new.instances[0].glyphs['arrow']['unicodes'] == [100,200,300]
+        True
         """
 
     def testLocalisedNames():
@@ -1489,7 +1645,7 @@ if __name__ == "__main__":
         >>> i1.name = "instance.ufo1"
         >>> i1.location = dict(weight=500, spooky=666)  # this adds a dimension that is not defined.
         >>> i1.postScriptFontName = "InstancePostscriptName"
-        >>> glyphData = dict(name="arrow", mute=True, unicode="0x123")
+        >>> glyphData = dict(name="arrow", mute=True, unicodes=[0x123])
         >>> i1.glyphs['arrow'] = glyphData
         >>> doc.addInstance(i1)
         >>> # now we have sources and instances, but no axes yet. 

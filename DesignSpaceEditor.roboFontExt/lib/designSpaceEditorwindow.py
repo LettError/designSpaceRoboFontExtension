@@ -48,21 +48,21 @@ defaultSymbol = u"🔹"
 
 """
 #NSOBject Hack, please remove before release.
-# def ClassNameIncrementer(clsName, bases, dct):
-#    import objc
-#    orgName = clsName
-#    counter = 0
-#    while 1:
-#        try:
-#            objc.lookUpClass(clsName)
-#        except objc.nosuchclass_error:
-#            break
-#        counter += 1
-#        clsName = orgName + str(counter)
-#    return type(clsName, bases, dct)
+def ClassNameIncrementer(clsName, bases, dct):
+   import objc
+   orgName = clsName
+   counter = 0
+   while 1:
+       try:
+           objc.lookUpClass(clsName)
+       except objc.nosuchclass_error:
+           break
+       counter += 1
+       clsName = orgName + str(counter)
+   return type(clsName, bases, dct)
 
 class KeyedGlyphDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    __metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.glyphName = None
@@ -93,7 +93,7 @@ def renameAxis(oldName, newName, location):
 
 
 class KeyedRuleDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    __metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.name = None
@@ -121,7 +121,7 @@ class KeyedRuleDescriptor(NSObject):
                 self.name = value
 
 class KeyedSourceDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    __metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -268,7 +268,7 @@ class KeyedSourceDescriptor(NSObject):
                 NSBeep()
     
 class KeyedInstanceDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    __metaclass__ = ClassNameIncrementer
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -429,7 +429,7 @@ def intOrFloat(num):
     return "%f" % num
     
 class KeyedAxisDescriptor(NSObject):
-    #__metaclass__ = ClassNameIncrementer
+    __metaclass__ = ClassNameIncrementer
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
         ("italic", "ital"),
@@ -449,6 +449,7 @@ class KeyedAxisDescriptor(NSObject):
         self.minimum = None
         self.maximum = None
         self.default = None
+        self.hidden = False
         self.map = []
         self.controller = None    # weakref to controller
         return self
@@ -457,6 +458,10 @@ class KeyedAxisDescriptor(NSObject):
         if self.name == oldName:
             self.name = newName
     
+    def hiddenKey(self):
+        if self.hidden: return "1"
+        return "0"
+        
     def registeredTagKey(self):
         for name, tag in self.registeredTags:
             if name == self.name and tag == self.tag:
@@ -491,6 +496,9 @@ class KeyedAxisDescriptor(NSObject):
         elif key == "labelNameKey":
             if not self.registeredTagKey():
                 self.labelNames[self.defaultLabelNameLanguageTag] = value
+        elif key == "hiddenKey":
+            #print "hiddenKey",value
+            self.hidden = value
         elif key == "mapKey":
             # interpret the string of numbers as 
             # <input1>, <output1>, <input2>, <output2>,...
@@ -536,7 +544,6 @@ class KeyedAxisDescriptor(NSObject):
             t.append(intOrFloat(outputValue))
         return ", ".join(t)
 
-
 class KeyedDocReader(designSpaceDocument.BaseDocReader):
     ruleDescriptorClass = KeyedRuleDescriptor
     axisDescriptorClass = KeyedAxisDescriptor
@@ -579,8 +586,6 @@ class DesignSpaceEditor(BaseWindowController):
         self.w = Window((940, 800), fileNameTitle)
         self._updatingTheAxesNames = False
         _numberFormatter = NSNumberFormatter.alloc().init()
-        #_numberFormatter.setNumberStyle_(NSNumberFormatterDecimalStyle)
-        #_numberFormatter.setFormat_("0.0000;0;-0.0000")
 
         toolbarItems = [
             {
@@ -767,6 +772,13 @@ class DesignSpaceEditor(BaseWindowController):
                     'width':150,
                     'editable':True,
                 },
+                {   'title': 'Hide',
+                    'key':'hiddenKey',
+                    'width':30,
+                    #'editable':True,
+                    "cell": CheckBoxListCell()
+                },
+                
                 {   'title': 'Map',
                     'key':'mapKey',
                     'width':250,
@@ -1158,7 +1170,7 @@ class DesignSpaceEditor(BaseWindowController):
             return
         progress = ProgressWindow(u"Generating instance UFO’s…", 10, parentWindow=self.w)
         try:
-            self.doc.generateUFO()
+            messages = self.doc.generateUFO()
         except:
             import traceback
             traceback.print_exc()
@@ -1672,8 +1684,10 @@ class DesignSpaceEditor(BaseWindowController):
             master.makeDefault(False)
         selectedMaster.makeDefault(True)
         self.mastersItem.set(self.doc.sources)
+        self.doc.checkDefault()
+        self.axesItem.set(self.doc.axes)
         self.validate()
-    
+        
     def callbackGetNamesFromSources(self, sender):
         # open the source fonts and load the family and stylenames
         for i in self.mastersItem.getSelection():
