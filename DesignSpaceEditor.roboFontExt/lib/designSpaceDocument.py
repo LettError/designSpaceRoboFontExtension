@@ -147,9 +147,6 @@ def processRules(rules, location, glyphNames):
             newNames = []
     return glyphNames
 
-
-
-
 class InstanceDescriptor(SimpleDescriptor):
     """Simple container for data related to the instance"""
     flavor = "instance"

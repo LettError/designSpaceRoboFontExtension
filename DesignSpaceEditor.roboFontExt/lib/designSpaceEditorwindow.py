@@ -4,12 +4,14 @@ import weakref
 from AppKit import NSToolbarFlexibleSpaceItemIdentifier, NSURL, NSImageCell, NSImageAlignTop, NSScaleNone, NSImageFrameNone, NSImage, NSObject, NSNumberFormatter, NSNumberFormatterDecimalStyle, NSBeep, NSImageNameRevealFreestandingTemplate, NSSmallSquareBezelStyle
 from defconAppKit.windows.baseWindow import BaseWindowController
 from mojo.extensions import getExtensionDefault, setExtensionDefault, ExtensionBundle
-from defcon import Font
 from defconAppKit.windows.progressWindow import ProgressWindow
 from vanilla import *
 from vanilla.dialogs import getFile, putFile, askYesNo
 from mojo.UI import AccordionView
 from mojo.roboFont import *
+
+if version[0] == '2':
+    import fontParts.nonelab.font
 
 import logging
 
@@ -74,6 +76,15 @@ class KeyedGlyphDescriptor(NSObject):
     
     def workingKey(self):
         return len(self.patterns)==1
+
+
+class LiveDesignSpaceProcessor(ufoProcessor.DesignSpaceProcessor):
+    def _instantiateFont(self, path):
+        """ Return a instance of a font object with all the given subclasses"""
+        for f in AllFonts():
+            if f.path == path:
+                return f
+        return self.fontClass(path)
 
 
 def renameAxis(oldName, newName, location):
@@ -1157,8 +1168,11 @@ class DesignSpaceEditor(BaseWindowController):
                             alreadyOpen = True
                             break
                     if not alreadyOpen:
-                        font = RFont(path)
-                except:
+                        if version[0] == '2':
+                            font = OpenFont(path, showInterface=True)
+                        else:
+                            font = OpenFont(path, showUI=True)
+s                except:
                     print "Bad UFO:", path
                     pass
                 progress.update()
@@ -1219,7 +1233,11 @@ class DesignSpaceEditor(BaseWindowController):
         self.instancesItem.getNSTableView().reloadData()
         
     def read(self, designSpacePath):
-        self.doc = ufoProcessor.DesignSpaceProcessor(KeyedDocReader, KeyedDocWriter)
+        if version[0] == '2':
+            thisFontClass = fontParts.nonelab.font.RFont
+        else:
+            thisFontClass = None
+        self.doc = LiveDesignSpaceProcessor(KeyedDocReader, KeyedDocWriter, fontClass=thisFontClass)
         if designSpacePath is not None:
             self.doc.read(designSpacePath)
         if len(self.doc.axes)==0:
@@ -1229,9 +1247,14 @@ class DesignSpaceEditor(BaseWindowController):
         self.axesItem.set(self.doc.axes)
         self.mastersItem.set(self.doc.sources)
         self.instancesItem.set(self.doc.instances)
+        self.doc.check()
         self.rulesGroup.names.set(self.doc.rules)
         self.updatePaths()
+        self.doc.loadFonts()
         self.validate()
+        # what if we replace the loaded fonts with locally loaded fonts?
+        # ('loaded', 'temp_master.0', <RFont 'MutatorMathTest LightCondensed' path='u'/Users/erik/code/braces/MutatorSansLightCondensed.ufo'' at 4581778896>)
+        # ('loaded', 'temp_master.1', <RFont 'MutatorMathTest BoldCondensed' path='u'/Users/erik/code/braces/MutatorSansBoldCondensed.ufo'' at 4581744080>)
 
     def getSaveDirFromMasters(self):
         options = {}
@@ -1693,10 +1716,10 @@ class DesignSpaceEditor(BaseWindowController):
         for i in self.mastersItem.getSelection():
             selectedItem = self.doc.sources[i]
             if selectedItem.sourceHasFileKey():
-                f = OpenFont(selectedItem.path, showUI=False)
+                f = OpenFont(selectedItem.path, showUI=True)
                 selectedItem.familyName = f.info.familyName
                 selectedItem.styleName = f.info.styleName
-                f.close()
+                #f.close()
         self.mastersItem.set(self.doc.sources)
         self.validate()
         
@@ -1762,7 +1785,7 @@ class DesignSpaceEditor(BaseWindowController):
 
     def finalizeAddMaster(self, paths):
         for path in paths:
-            font = OpenFont(path, showUI=False)
+            font = OpenFont(path, showUI=True)
             self.addSourceFromFont(font)
         self.updateAxesColumns()
         self.enableInstanceList()
