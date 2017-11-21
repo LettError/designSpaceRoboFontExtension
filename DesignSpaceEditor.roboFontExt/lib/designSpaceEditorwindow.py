@@ -1172,7 +1172,7 @@ class DesignSpaceEditor(BaseWindowController):
                             font = OpenFont(path, showInterface=True)
                         else:
                             font = OpenFont(path, showUI=True)
-s                except:
+                except:
                     print "Bad UFO:", path
                     pass
                 progress.update()
