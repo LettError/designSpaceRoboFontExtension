@@ -7,7 +7,11 @@ from mojo.extensions import getExtensionDefault, setExtensionDefault, ExtensionB
 from defcon import Font
 from defconAppKit.windows.progressWindow import ProgressWindow
 from vanilla import *
-from vanilla.py23 import python_method
+try:
+    from vanilla.py23 import python_method
+except:
+    def python_method(arg):
+        return arg
 from vanilla.dialogs import getFile, putFile, askYesNo
 from mojo.UI import AccordionView
 from mojo.roboFont import *
