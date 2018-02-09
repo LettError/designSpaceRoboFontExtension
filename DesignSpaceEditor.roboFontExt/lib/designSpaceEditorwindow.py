@@ -1,6 +1,7 @@
 # coding=utf-8
 import os, time
-import weakref
+import weakref, importlib
+from objc import python_method
 from AppKit import NSToolbarFlexibleSpaceItemIdentifier, NSURL, NSImageCell, NSImageAlignTop, NSScaleNone, NSImageFrameNone, NSImage, NSObject, NSNumberFormatter, NSNumberFormatterDecimalStyle, NSBeep, NSImageNameRevealFreestandingTemplate, NSSmallSquareBezelStyle
 from defconAppKit.windows.baseWindow import BaseWindowController
 from mojo.extensions import getExtensionDefault, setExtensionDefault, ExtensionBundle
@@ -17,17 +18,15 @@ import logging
 
 from vanilla import *
 
-import designSpaceDocument
-reload(designSpaceDocument)
+import fontTools.designspaceLib as dsd
 import ufoProcessor
-reload(ufoProcessor)
+importlib.reload(ufoProcessor)
 
 import designSpaceEditorSettings
-reload(designSpaceEditorSettings)
 import ufoLib
 
-checkSymbol = u"✓"
-defaultSymbol = u"🔹"
+checkSymbol = "✓"
+defaultSymbol = "🔹"
 
 
 """
@@ -49,6 +48,7 @@ defaultSymbol = u"🔹"
     step 2: on reading, calculate the absolute paths for the sources and instances
 
 """
+
 #NSOBject Hack, please remove before release.
 def ClassNameIncrementer(clsName, bases, dct):
    import objc
@@ -63,8 +63,9 @@ def ClassNameIncrementer(clsName, bases, dct):
        clsName = orgName + str(counter)
    return type(clsName, bases, dct)
 
-class KeyedGlyphDescriptor(NSObject):
-    __metaclass__ = ClassNameIncrementer
+class KeyedGlyphDescriptor(NSObject,
+        metaclass=ClassNameIncrementer
+        ):
     def __new__(cls):
         self = cls.alloc().init()
         self.glyphName = None
@@ -103,8 +104,9 @@ def renameAxis(oldName, newName, location):
     return newLocation
 
 
-class KeyedRuleDescriptor(NSObject):
-    __metaclass__ = ClassNameIncrementer
+class KeyedRuleDescriptor(NSObject,
+        metaclass=ClassNameIncrementer
+        ):
     def __new__(cls):
         self = cls.alloc().init()
         self.name = None
@@ -112,6 +114,7 @@ class KeyedRuleDescriptor(NSObject):
         self.subs = []
         return self
 
+    @python_method
     def renameAxis(self, oldName, newName=None):
         renamedConditions = []
         for cd in self.conditions:
@@ -131,8 +134,9 @@ class KeyedRuleDescriptor(NSObject):
             if len(value)>0:
                 self.name = value
 
-class KeyedSourceDescriptor(NSObject):
-    __metaclass__ = ClassNameIncrementer
+class KeyedSourceDescriptor(NSObject,
+        metaclass=ClassNameIncrementer
+        ):
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -152,9 +156,11 @@ class KeyedSourceDescriptor(NSObject):
         self.axisOrder = []
         return self
     
+    @python_method
     def renameAxis(self, oldName, newName):
         self.location = renameAxis(oldName, newName, self.location)
         
+    @python_method
     def makeDefault(self, state):
         # make this master the default
         # set the flags
@@ -179,6 +185,7 @@ class KeyedSourceDescriptor(NSObject):
             return
         self.name = "_".join(name)
     
+    @python_method
     def setAxisOrder(self, names):
         self.axisOrder = names
     
@@ -190,6 +197,7 @@ class KeyedSourceDescriptor(NSObject):
             return defaultSymbol
         return ""
 
+    @python_method
     def setDocumentFolder(self, docFolder):
         # let the descriptor know what the document folder is
         # so that the descriptor can do some validation if the paths
@@ -218,6 +226,7 @@ class KeyedSourceDescriptor(NSObject):
     def sourceStyleNameKey(self):
         return self.styleName
         
+    @python_method
     def getAxisValue(self, axisIndex):
         if 0 <= axisIndex < len(self.axisOrder):
             wantAxisName = self.axisOrder[axisIndex]
@@ -278,8 +287,9 @@ class KeyedSourceDescriptor(NSObject):
             except ValueError:
                 NSBeep()
     
-class KeyedInstanceDescriptor(NSObject):
-    __metaclass__ = ClassNameIncrementer
+class KeyedInstanceDescriptor(NSObject,
+        metaclass=ClassNameIncrementer
+        ):
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -302,6 +312,7 @@ class KeyedInstanceDescriptor(NSObject):
         self.info = True
         return self
 
+    @python_method
     def renameAxis(self, oldName, newName):
         self.location = renameAxis(oldName, newName, self.location)
         newAxisOrder = []
@@ -337,6 +348,7 @@ class KeyedInstanceDescriptor(NSObject):
             name.append("%s_%3.3f"%(k, v))
         self.name = "_".join(name)
         
+    @python_method
     def setAxisOrder(self, names):
         self.axisOrder = names
 
@@ -347,6 +359,7 @@ class KeyedInstanceDescriptor(NSObject):
             return checkSymbol
         return u""
     
+    @python_method
     def getAxisValue(self, axisIndex):
         if 0 <= axisIndex < len(self.axisOrder):
             wantAxisName = self.axisOrder[axisIndex]
@@ -374,17 +387,20 @@ class KeyedInstanceDescriptor(NSObject):
                 return self.filename
         return "[pending save]"
     
+    @python_method
     def setDocumentFolder(self, docFolder):
         # let the descriptor know what the document folder is
         # so that the descriptor can do some validation if the paths
         self.dir = docFolder
     
+    @python_method
     def makePath(self):
         # using the document folder and the file name
         # we should be able to make an absolute path
         if self.filename is not None and self.dir is not None:
             self.path = os.path.abspath(os.path.join(self.dir, self.filename))
         
+    @python_method
     def setPathRelativeTo(self, docFolder, instancesFolderName):
         self.dir = os.path.join(docFolder, instancesFolderName)
         self.path = os.path.join(self.dir, fileName)
@@ -439,8 +455,9 @@ def intOrFloat(num):
         return "%d" % num
     return "%f" % num
     
-class KeyedAxisDescriptor(NSObject):
-    __metaclass__ = ClassNameIncrementer
+class KeyedAxisDescriptor(NSObject,
+        metaclass=ClassNameIncrementer
+        ):
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
         ("italic", "ital"),
@@ -465,6 +482,7 @@ class KeyedAxisDescriptor(NSObject):
         self.controller = None    # weakref to controller
         return self
 
+    @python_method
     def renameAxis(self, oldName, newName):
         if self.name == oldName:
             self.name = newName
@@ -508,7 +526,6 @@ class KeyedAxisDescriptor(NSObject):
             if not self.registeredTagKey():
                 self.labelNames[self.defaultLabelNameLanguageTag] = value
         elif key == "hiddenKey":
-            #print "hiddenKey",value
             self.hidden = value
         elif key == "mapKey":
             # interpret the string of numbers as 
@@ -555,13 +572,13 @@ class KeyedAxisDescriptor(NSObject):
             t.append(intOrFloat(outputValue))
         return ", ".join(t)
 
-class KeyedDocReader(designSpaceDocument.BaseDocReader):
+class KeyedDocReader(dsd.BaseDocReader):
     ruleDescriptorClass = KeyedRuleDescriptor
     axisDescriptorClass = KeyedAxisDescriptor
     sourceDescriptorClass = KeyedSourceDescriptor
     instanceDescriptorClass = KeyedInstanceDescriptor
     
-class KeyedDocWriter(designSpaceDocument.BaseDocWriter):
+class KeyedDocWriter(dsd.BaseDocWriter):
     ruleDescriptorClass = KeyedRuleDescriptor
     axisDescriptorClass = KeyedAxisDescriptor
     sourceDescriptorClass = KeyedSourceDescriptor
@@ -1173,7 +1190,7 @@ class DesignSpaceEditor(BaseWindowController):
                         else:
                             font = OpenFont(path, showUI=True)
                 except:
-                    print "Bad UFO:", path
+                    print("Bad UFO:", path)
                     pass
                 progress.update()
             progress.close()            

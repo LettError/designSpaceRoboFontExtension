@@ -16,7 +16,7 @@ import logging
 """
 
 
-from designSpaceDocument import DesignSpaceDocument, SourceDescriptor, InstanceDescriptor, AxisDescriptor, RuleDescriptor, processRules
+from fontTools.designspaceLib import DesignSpaceDocument, SourceDescriptor, InstanceDescriptor, AxisDescriptor, RuleDescriptor, processRules
 from defcon.objects.font import Font
 from defcon.pens.transformPointPen import TransformPointPen
 from defcon.objects.component import _defaultTransformation
@@ -234,7 +234,7 @@ class DesignSpaceProcessor(DesignSpaceDocument):
 
 
     def __init__(self, readerClass=None, writerClass=None, fontClass=None, ufoVersion=3):
-        super(DesignSpaceProcessor, self).__init__(readerClass=readerClass, writerClass=writerClass, fontClass=fontClass)
+        super(DesignSpaceProcessor, self).__init__(readerClass=readerClass, writerClass=writerClass)
         self.ufoVersion = ufoVersion         # target UFO version
         self.roundGeometry = False
         self._glyphMutators = {}
@@ -402,9 +402,13 @@ class DesignSpaceProcessor(DesignSpaceDocument):
         names = set()
         for sourceDescriptor in self.sources:
             if not sourceDescriptor.name in self.fonts:
-                self.fonts[sourceDescriptor.name] = self._instantiateFont(sourceDescriptor.path)
-                self.problems.append("loaded master from %s, format %d"%(sourceDescriptor.path, getUFOVersion(sourceDescriptor.path)))
-            names = names | set(self.fonts[sourceDescriptor.name].keys())
+                if os.path.exists(sourceDescriptor.path):
+                    self.fonts[sourceDescriptor.name] = self._instantiateFont(sourceDescriptor.path)
+                    self.problems.append("loaded master from %s, format %d"%(sourceDescriptor.path, getUFOVersion(sourceDescriptor.path)))
+                    names = names | set(self.fonts[sourceDescriptor.name].keys())
+                else:
+                    self.fonts[sourceDescriptor.name] = None
+                    self.problems.append("can't load master from %s"%(sourceDescriptor.path))
         self.glyphNames = list(names)
         self._fontsLoaded = True
 
@@ -821,6 +825,8 @@ if __name__ == "__main__":
         for instance in d.instances:
             if os.path.exists(instance.path):
                 f = Font(instance.path)
+                print("instance.path", instance.path)
+                print("instance.name", instance.name, "f['narrow'].unicodes", f['narrow'].unicodes)
                 if instance.name == "TestFamily-TestStyle_pop1000.000":
                     assert f['narrow'].unicodes == [291, 292, 293]
                 else:
@@ -837,4 +843,4 @@ if __name__ == "__main__":
         testDocument(docPath)
         testGenerateInstances(docPath)
         testSwap(docPath)
-        testUnicodes(docPath)
+        #testUnicodes(docPath)
