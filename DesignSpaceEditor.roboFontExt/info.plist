@@ -34,9 +34,9 @@
 	<key>name</key>
 	<string>DesignSpaceEditor</string>
 	<key>requiresVersionMajor</key>
-	<string>1</string>
+	<string>2</string>
 	<key>requiresVersionMinor</key>
-	<string>8</string>
+	<string>0</string>
 	<key>timeStamp</key>
 	<real>1509113194.26</real>
 	<key>version</key>
