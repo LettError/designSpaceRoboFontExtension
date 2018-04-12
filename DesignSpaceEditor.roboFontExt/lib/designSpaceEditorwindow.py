@@ -84,7 +84,6 @@ class LiveDesignSpaceProcessor(ufoProcessor.DesignSpaceProcessor):
         for f in AllFonts():
             if f.path == path:
                 return f
-        print("LiveDesignSpaceProcessor._instantiateFont with", self.fontClass)
         # still needs to be a RF class
         return OpenFont(path, showUI=False)
 
@@ -1371,8 +1370,6 @@ class DesignSpaceEditor(BaseWindowController):
         self.updatePaths()
         #for item in self.mastersItem:
         #    item.setName()
-        for des in self.doc.instances:
-            print(des)
         self.doc.write(self.designSpacePath)
         self.w.getNSWindow().setRepresentedURL_(NSURL.fileURLWithPath_(self.designSpacePath))
         self.w.setTitle(os.path.basename(self.designSpacePath))
@@ -1819,7 +1816,6 @@ class DesignSpaceEditor(BaseWindowController):
             # that means we can't make a relative path
             # what to do? absolute path to the source?
             sourceDescriptor.filename = font.path
-        #print("XXX", sourceDescriptor.filename, sourceDescriptor.path)
         if len(self.mastersItem)==0:
             # this is the first master we're adding
             # make this the default so we have one.
