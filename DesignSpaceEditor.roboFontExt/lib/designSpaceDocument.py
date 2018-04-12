@@ -407,7 +407,7 @@ class BaseDocWriter(object):
             instanceElement.attrib['stylename'] = instanceObject.styleName
         # add localisations
         if instanceObject.localisedStyleName:
-            languageCodes = instanceObject.localisedStyleName.keys()
+            languageCodes = list(instanceObject.localisedStyleName.keys())
             languageCodes.sort()
             for code in languageCodes:
                 if code == "en": continue # already stored in the element attribute
@@ -416,7 +416,7 @@ class BaseDocWriter(object):
                 localisedStyleNameElement.text = instanceObject.getStyleName(code)
                 instanceElement.append(localisedStyleNameElement)
         if instanceObject.localisedFamilyName:
-            languageCodes = instanceObject.localisedFamilyName.keys()
+            languageCodes = list(instanceObject.localisedFamilyName.keys())
             languageCodes.sort()
             for code in languageCodes:
                 if code == "en": continue # already stored in the element attribute
@@ -425,7 +425,7 @@ class BaseDocWriter(object):
                 localisedFamilyNameElement.text = instanceObject.getFamilyName(code)
                 instanceElement.append(localisedFamilyNameElement)
         if instanceObject.localisedStyleMapStyleName:
-            languageCodes = instanceObject.localisedStyleMapStyleName.keys()
+            languageCodes = list(instanceObject.localisedStyleMapStyleName.keys())
             languageCodes.sort()
             for code in languageCodes:
                 if code == "en": continue
@@ -434,7 +434,7 @@ class BaseDocWriter(object):
                 localisedStyleMapStyleNameElement.text = instanceObject.getStyleMapStyleName(code)
                 instanceElement.append(localisedStyleMapStyleNameElement)
         if instanceObject.localisedStyleMapFamilyName:
-            languageCodes = instanceObject.localisedStyleMapFamilyName.keys()
+            languageCodes = list(instanceObject.localisedStyleMapFamilyName.keys())
             languageCodes.sort()
             for code in languageCodes:
                 if code == "en": continue

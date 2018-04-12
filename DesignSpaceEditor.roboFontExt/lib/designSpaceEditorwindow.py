@@ -1266,9 +1266,9 @@ class DesignSpaceEditor(BaseWindowController):
                 options[thisFileDir] = True
         if len(options)==1:
             # neat and tidy, all masters in a folder
-            return options.keys()[0]
+            return list(options.keys())[0]
         if options:
-            paths = options.keys()
+            paths = list(options.keys())
             paths.sort()
             return paths[0]
         return None
@@ -1729,7 +1729,7 @@ class DesignSpaceEditor(BaseWindowController):
         # add the open fonts
         weHave = [s.path for s in self.doc.sources]
         for f in AllFonts():
-            if f.path not in weHave:
+            if f.path and f.path not in weHave:
                 self.addSourceFromFont(f)
         self.enableInstanceList()
         self.validate()
