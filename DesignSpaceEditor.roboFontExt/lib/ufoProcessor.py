@@ -1,5 +1,4 @@
 
-
 # coding: utf-8
 from __future__ import print_function, division, absolute_import
 
@@ -112,9 +111,6 @@ def getUFOVersion(ufoPath):
     return p.get('formatVersion')
 
 def swapGlyphNames(font, oldName, newName, swapNameExtension = "_______________swap"):
-    # In font swap the glyphs oldName and newName.
-    # Also swap the names in components in order to preserve appearance.
-    # Also swap the names in font groups. 
     if not oldName in font or not newName in font:
         return None
     swapName = oldName + swapNameExtension
@@ -127,6 +123,7 @@ def swapGlyphNames(font, oldName, newName, swapNameExtension = "_______________s
     font[oldName].drawPoints(p)
     font[swapName].width = font[oldName].width
     # lib?
+    
     font[oldName].clear()
     p = font[oldName].getPointPen()
     font[newName].drawPoints(p)
@@ -189,7 +186,6 @@ def swapGlyphNames(font, oldName, newName, swapNameExtension = "_______________s
     for r in remove:
         del font[r]
 
-
 class DecomposePointPen(object):
     
     def __init__(self, glyphSet, outPointPen):
@@ -232,8 +228,13 @@ class DesignSpaceProcessor(DesignSpaceDocument):
     mathGlyphClass = MathGlyph
     mathKerningClass = MathKerning
 
+    braceLayerNamePattern = u"#brace "
+    braceLocationLibKey = "designspace.location"
+    braceGlyphSourceKey = "designspace.glyph.source"
+
+
     def __init__(self, readerClass=None, writerClass=None, fontClass=None, ufoVersion=3):
-        super(DesignSpaceProcessor, self).__init__(readerClass=readerClass, writerClass=writerClass, fontClass=fontClass)
+        super(DesignSpaceProcessor, self).__init__(readerClass=readerClass, writerClass=writerClass)
         self.ufoVersion = ufoVersion         # target UFO version
         self.roundGeometry = False
         self._glyphMutators = {}
@@ -266,8 +267,9 @@ class DesignSpaceProcessor(DesignSpaceDocument):
                 if existingUFOFormatVersion > self.ufoVersion:
                     self.problems.append(u"Can’t overwrite existing UFO%d with UFO%d."%(existingUFOFormatVersion, self.ufoVersion))
                     continue
-            font.save(path, self.ufoVersion)
-            self.problems.append("Generated %s as UFO%d"%(os.path.basename(path), self.ufoVersion))
+            else:
+                font.save(path, self.ufoVersion)
+                self.problems.append("Generated %s as UFO%d"%(os.path.basename(path), self.ufoVersion))
 
     def getInfoMutator(self):
         """ Returns a info mutator """
@@ -294,16 +296,53 @@ class DesignSpaceProcessor(DesignSpaceDocument):
         bias, self._kerningMutator = buildMutator(kerningItems, axes=self._preppedAxes, bias=self.defaultLoc)
         return self._kerningMutator
 
-    def getGlyphMutator(self, glyphName, decomposeComponents=False, fromCache=True):
-        cacheKey = (glyphName, decomposeComponents)
+    def _collectBraceGlyphs(self, glyphName):
+        """ 
+            - Collect the brace glyphs and their locations.
+            - The layer API is rather different between fontparts and defcon. 
+            - Just suck it up and make it work here. 
+        """
+        braces = []
+        defaultFont = self.getNeutralFont()
+        glyph = defaultFont[glyphName]
+        if hasattr(glyph, "layers"):
+            #print("_collectBraceGlyphs: fontparts")
+            # fontParts
+            for layerGlyph in glyph.layers:
+                #print("from fontparts", layerGlyph, layerGlyph.layer.name, layerGlyph.lib.get(self.braceLocationLibKey))
+                locFromLib = layerGlyph.lib.get(self.braceLocationLibKey)
+                if locFromLib is not None:
+                    sourceInfo = dict(source=defaultFont.path, glyphName=glyphName, layerName=layerGlyph.layer.name, location=locFromLib, sourceName=self.default.name)
+                    braces.append((locFromLib, layerGlyph, sourceInfo))
+        elif hasattr(defaultFont, "layers"):
+            #print("_collectBraceGlyphs: defcon")
+            # defcon
+            if hasattr(defaultFont.layers, "layerOrder"):
+                for layerName in defaultFont.layers.layerOrder:
+                    layer = defaultFont.layers[layerName]
+                    if glyphName in layer:
+                        layerGlyph = layer[glyphName]
+                    locFromLib = layerGlyph.lib.get(self.braceLocationLibKey)
+                    if locFromLib is not None:
+                        # collect the source info here so an editor can find the right source to open
+                        if self.default is not None:
+                            name = self.default.name
+                        else:
+                            name = "xxxxxx"
+                        sourceInfo = dict(source=defaultFont.path, glyphName=glyphName, layerName=layerName, location=locFromLib, sourceName=name)
+                        braces.append((locFromLib, layerGlyph, sourceInfo))
+        return braces
+
+    def getGlyphMutator(self, glyphName, decomposeComponents=False, includeBraces=True, fromCache=True):
+        cacheKey = (glyphName, decomposeComponents, includeBraces)
         if cacheKey in self._glyphMutators and fromCache:
             return self._glyphMutators[cacheKey]
-        items = self.collectMastersForGlyph(glyphName, decomposeComponents=decomposeComponents)
+        items = self.collectMastersForGlyph(glyphName, decomposeComponents=decomposeComponents, includeBraces=includeBraces)
         items = [(a,self.mathGlyphClass(b)) for a, b, c in items]
         bias, self._glyphMutators[cacheKey] = buildMutator(items, axes=self._preppedAxes, bias=self.defaultLoc)
         return self._glyphMutators[cacheKey]
 
-    def collectMastersForGlyph(self, glyphName, decomposeComponents=False):
+    def collectMastersForGlyph(self, glyphName, decomposeComponents=False, includeBraces=True):
         """ Return a glyph mutator.defaultLoc
             decomposeComponents = True causes the source glyphs to be decomposed first
             before building the mutator. That gives you instances that do not depend
@@ -332,6 +371,18 @@ class DesignSpaceProcessor(DesignSpaceDocument):
                 processThis = sourceGlyphObject
             sourceInfo = dict(source=f.path, glyphName=glyphName, layerName="foreground", location=sourceDescriptor.location, sourceName=sourceDescriptor.name)
             items.append((loc, self.mathGlyphClass(processThis), sourceInfo))
+            #items.append((loc, processThis, sourceInfo))
+        # XXXX find open locations and generate supports here. 
+        if includeBraces:
+            braces = self._collectBraceGlyphs(glyphName)
+            if braces and not glyphName in sourceDescriptor.mutedGlyphNames:
+                #print("xxxx braces", braces)
+                for locDict, braceGlyph, sourceInfo in braces:
+                    loc = Location(locDict)
+                    # do we need decomposition here?
+                    #print("adding brace", loc, braceGlyph)
+                    items.append((loc, self.mathGlyphClass(braceGlyph), sourceInfo))
+                    #items.append((loc, braceGlyph, sourceInfo))
         return items
 
     def getNeutralFont(self):
@@ -360,15 +411,6 @@ class DesignSpaceProcessor(DesignSpaceDocument):
                     self.problems.append("can't load master from %s"%(sourceDescriptor.path))
         self.glyphNames = list(names)
         self._fontsLoaded = True
-
-    def getFonts(self):
-        # returnn a list of (font object, location) tuples
-        fonts = []
-        for sourceDescriptor in self.sources:
-            f = self.fonts.get(sourceDescriptor.name)
-            if f is not None:
-                fonts.append((f, sourceDescriptor.location))
-        return fonts
 
     def makeInstance(self, instanceDescriptor, doRules=False, glyphNames=None):
         """ Generate a font object for this instance """
@@ -699,7 +741,7 @@ if __name__ == "__main__":
         f1.save(path1, 2)
         return path1, path2
 
-    def testDocument(docPath, makeSmallChange=False):
+    def testDocument(docPath):
         # make the test fonts and a test document
         testFontPath = os.path.join(os.getcwd(), "automatic_testfonts")
         m1, m2, i1, i2, i3 = makeTestFonts(testFontPath)
@@ -721,10 +763,7 @@ if __name__ == "__main__":
         d.addSource(s1)
         s2 = SourceDescriptor()
         s2.path = m2
-        if makeSmallChange:
-            s2.location = dict(pop=2000)
-        else:
-            s2.location = dict(pop=1000)
+        s2.location = dict(pop=1000)
         s2.name = "test.master.2"
         #s2.copyInfo = True
         d.addSource(s2)
@@ -804,8 +843,4 @@ if __name__ == "__main__":
         testDocument(docPath)
         testGenerateInstances(docPath)
         testSwap(docPath)
-
-        testDocument(docPath, makeSmallChange=True)
-        testGenerateInstances(docPath)
-
         #testUnicodes(docPath)
