@@ -28,17 +28,14 @@ except NameError:
     reload = importlib.reload
 
 import designSpaceDocument
-reload(designSpaceDocument)
 import ufoProcessor
-reload(ufoProcessor)
 
 import designSpaceEditorSettings
-reload(designSpaceEditorSettings)
+
 import ufoLib
 
-checkSymbol = u"✓"
-defaultSymbol = u"🔹"
-
+checkSymbol = chr(10003)
+defaultSymbol = chr(128313)
 
 """
 
