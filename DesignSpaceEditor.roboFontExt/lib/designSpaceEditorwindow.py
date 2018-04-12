@@ -1,4 +1,4 @@
-# coding=utf-8
+# coding = utf-8
 import os, time
 import weakref, importlib
 from objc import python_method
@@ -25,9 +25,8 @@ importlib.reload(ufoProcessor)
 import designSpaceEditorSettings
 import ufoLib
 
-checkSymbol = "✓"
-defaultSymbol = "🔹"
-
+checkSymbol = chr(10003)
+defaultSymbol = chr(128313)
 
 """
 
@@ -85,7 +84,28 @@ class LiveDesignSpaceProcessor(ufoProcessor.DesignSpaceProcessor):
         for f in AllFonts():
             if f.path == path:
                 return f
-        return self.fontClass(path)
+        print("LiveDesignSpaceProcessor._instantiateFont with", self.fontClass)
+        # still needs to be a RF class
+        return OpenFont(path, showUI=False)
+
+    def loadFonts(self, reload=False):
+        # Load the fonts and find the default candidate based on the info flag
+        if self._fontsLoaded and not reload:
+            return
+        names = set()
+        for sourceDescriptor in self.sources:
+            if not sourceDescriptor.name in self.fonts:
+                if os.path.exists(sourceDescriptor.path):
+                    self.fonts[sourceDescriptor.name] = self._instantiateFont(sourceDescriptor.path)
+                    # this is not a problem, why report it as one?
+                    self.problems.append("loaded master from %s, format %d"%(sourceDescriptor.path, ufoProcessor.getUFOVersion(sourceDescriptor.path)))
+                    names = names | set(self.fonts[sourceDescriptor.name].keys())
+                else:
+                    self.fonts[sourceDescriptor.name] = None
+                    self.problems.append("can't load master from %s"%(sourceDescriptor.path))
+        self.glyphNames = list(names)
+        self._fontsLoaded = True
+
 
 
 def renameAxis(oldName, newName, location):
@@ -154,6 +174,7 @@ class KeyedSourceDescriptor(NSObject,
         self.familyName = None
         self.styleName = None
         self.axisOrder = []
+        self.lib = {}
         return self
     
     @python_method
@@ -310,6 +331,7 @@ class KeyedInstanceDescriptor(NSObject,
         self.axisOrder = []
         self.kerning = True
         self.info = True
+        self.lib = {}
         return self
 
     @python_method
@@ -613,6 +635,13 @@ class DesignSpaceEditor(BaseWindowController):
             fileNameTitle = os.path.basename(self.designSpacePath)
         self.w = Window((940, 800), fileNameTitle)
         self._updatingTheAxesNames = False
+        
+        if version[0] == '2':
+            thisFontClass = fontParts.nonelab.font.RFont
+        else:
+            thisFontClass = None
+        self.doc = LiveDesignSpaceProcessor(KeyedDocReader, KeyedDocWriter, fontClass=thisFontClass)
+
         _numberFormatter = NSNumberFormatter.alloc().init()
 
         toolbarItems = [
@@ -1023,10 +1052,11 @@ class DesignSpaceEditor(BaseWindowController):
            #dict(label="Glyphs", view=self.glyphsGroup, size=250, collapsed=False, canResize=True),
            # this panel will show glyphs and compatibiility.
         ]
-
-        self.read(self.designSpacePath)
+        
+        if self.designSpacePath is not None:
+            self.read(self.designSpacePath)
         #self.w.accordionView = AccordionView((0, 0, -0, -0), descriptions)
-        self.updateAxesColumns()
+            self.updateAxesColumns()
         self.enableInstanceList()
         self.w.open()
         if self.designSpacePath is not None:
@@ -1143,7 +1173,7 @@ class DesignSpaceEditor(BaseWindowController):
                 for cd in rule.conditions:
                     conditionAxis = cd['name']
                     if conditionAxis not in axisNames:
-                        report.append("\tCondition iun rule %s references unknown axis %s"%(rule.name, cd['name']))
+                        report.append("\tCondition in rule %s references unknown axis %s"%(rule.name, cd['name']))
                     if conditionAxis in axisData:
                         axisMin, axisMax = axisData[conditionAxis]
                         if cd.get('minimum') is None:
@@ -1250,11 +1280,6 @@ class DesignSpaceEditor(BaseWindowController):
         self.instancesItem.getNSTableView().reloadData()
         
     def read(self, designSpacePath):
-        if version[0] == '2':
-            thisFontClass = fontParts.nonelab.font.RFont
-        else:
-            thisFontClass = None
-        self.doc = LiveDesignSpaceProcessor(KeyedDocReader, KeyedDocWriter, fontClass=thisFontClass)
         if designSpacePath is not None:
             self.doc.read(designSpacePath)
         if len(self.doc.axes)==0:
@@ -1281,9 +1306,9 @@ class DesignSpaceEditor(BaseWindowController):
                 options[thisFileDir] = True
         if len(options)==1:
             # neat and tidy, all masters in a folder
-            return options.keys()[0]
+            return list(options.keys())[0]
         if options:
-            paths = options.keys()
+            paths = list(options.keys())
             paths.sort()
             return paths[0]
         return None
@@ -1346,6 +1371,8 @@ class DesignSpaceEditor(BaseWindowController):
         self.updatePaths()
         #for item in self.mastersItem:
         #    item.setName()
+        for des in self.doc.instances:
+            print(des)
         self.doc.write(self.designSpacePath)
         self.w.getNSWindow().setRepresentedURL_(NSURL.fileURLWithPath_(self.designSpacePath))
         self.w.setTitle(os.path.basename(self.designSpacePath))
@@ -1849,7 +1876,7 @@ if __name__ == "__main__":
     assert renameAxis("aaa", "bbb", dict(aaa=1)) == dict(bbb=1)
     assert renameAxis("ccc", "bbb", dict(aaa=1)) == dict(aaa=1)
     
-    testWithFile = True    # set to False to test without getfile dialog
+    testWithFile = False    # set to False to test without getfile dialog
 
     if not testWithFile:
         # test
