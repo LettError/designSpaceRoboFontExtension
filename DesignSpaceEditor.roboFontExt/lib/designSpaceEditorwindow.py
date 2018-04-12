@@ -1293,9 +1293,6 @@ class DesignSpaceEditor(BaseWindowController):
         self.updatePaths()
         self.doc.loadFonts()
         self.validate()
-        # what if we replace the loaded fonts with locally loaded fonts?
-        # ('loaded', 'temp_master.0', <RFont 'MutatorMathTest LightCondensed' path='u'/Users/erik/code/braces/MutatorSansLightCondensed.ufo'' at 4581778896>)
-        # ('loaded', 'temp_master.1', <RFont 'MutatorMathTest BoldCondensed' path='u'/Users/erik/code/braces/MutatorSansBoldCondensed.ufo'' at 4581744080>)
 
     def getSaveDirFromMasters(self):
         options = {}
