@@ -5,3 +5,4 @@ screen.psd
 __pycache__
 automatic_testfonts
 *.pyc
+DesignSpaceEditor.roboFontExt/lib/.pytest_cache
