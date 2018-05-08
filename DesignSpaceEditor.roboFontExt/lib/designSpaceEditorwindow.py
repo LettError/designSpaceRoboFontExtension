@@ -19,8 +19,9 @@ import logging
 from vanilla import *
 
 import fontTools.designspaceLib as dsd
-import ufoProcessor
-importlib.reload(ufoProcessor)
+import local_ufoProcessor
+#importlib.reload(ufoProcessor)
+print("ufoProcessor loads from", local_ufoProcessor.__file__)
 
 import designSpaceEditorSettings
 import ufoLib
@@ -78,15 +79,15 @@ class KeyedGlyphDescriptor(NSObject,
         return len(self.patterns)==1
 
 
-class LiveDesignSpaceProcessor(ufoProcessor.DesignSpaceProcessor):
-    def _instantiateFont(self, path):
-        """ Return a instance of a font object with all the given subclasses"""
-        for f in AllFonts():
-            if f.path == path:
-                return f
-        print("LiveDesignSpaceProcessor._instantiateFont with", self.fontClass)
-        # still needs to be a RF class
-        return OpenFont(path, showUI=False)
+class LiveDesignSpaceProcessor(local_ufoProcessor.DesignSpaceProcessor):
+    # def _instantiateFont(self, path):
+    #     """ Return a instance of a font object with all the given subclasses"""
+    #     for f in AllFonts():
+    #         if f.path == path:
+    #             return f
+    #     print("LiveDesignSpaceProcessor._instantiateFont with", self.fontClass)
+    #     # still needs to be a RF class
+    #     return RFont(path, showInterface=False)
 
     def loadFonts(self, reload=False):
         # Load the fonts and find the default candidate based on the info flag
@@ -98,7 +99,7 @@ class LiveDesignSpaceProcessor(ufoProcessor.DesignSpaceProcessor):
                 if os.path.exists(sourceDescriptor.path):
                     self.fonts[sourceDescriptor.name] = self._instantiateFont(sourceDescriptor.path)
                     # this is not a problem, why report it as one?
-                    self.problems.append("loaded master from %s, format %d"%(sourceDescriptor.path, ufoProcessor.getUFOVersion(sourceDescriptor.path)))
+                    self.problems.append("loaded master from %s, format %d"%(sourceDescriptor.path, local_ufoProcessor.getUFOVersion(sourceDescriptor.path)))
                     names = names | set(self.fonts[sourceDescriptor.name].keys())
                 else:
                     self.fonts[sourceDescriptor.name] = None
@@ -162,6 +163,7 @@ class KeyedSourceDescriptor(NSObject,
         self.dir = None
         self.filename = None    # the filename as it appears in the document
         self.path = None
+        self.layerName = None
         self.name = None
         self.location = None
         self.copyLib = False
@@ -235,6 +237,9 @@ class KeyedSourceDescriptor(NSObject,
             if self.dir is not None:
                 return self.filename
         return "[pending save]"
+
+    def sourceLayerNameKey(self):
+        return self.layerName
         
     def sourceHasFileKey(self):
         if os.path.exists(self.path):
@@ -640,7 +645,7 @@ class DesignSpaceEditor(BaseWindowController):
             thisFontClass = fontParts.nonelab.font.RFont
         else:
             thisFontClass = None
-        self.doc = LiveDesignSpaceProcessor(KeyedDocReader, KeyedDocWriter, fontClass=thisFontClass)
+        self.doc = LiveDesignSpaceProcessor(KeyedDocReader, KeyedDocWriter)    #, fontClass=thisFontClass)
 
         _numberFormatter = NSNumberFormatter.alloc().init()
 
@@ -704,6 +709,11 @@ class DesignSpaceEditor(BaseWindowController):
                     'key':'sourceStyleNameKey',
                     'width':familyNameWidth,
                     'editable':True,
+                },
+                {   'title': 'Layer',
+                    'key':'sourceLayerNameKey',
+                    'width':familyNameWidth,
+                    'editable':False,
                 },
                 {   'title': 'Axis 1',
                     'key':'sourceAxis_1',
@@ -1876,7 +1886,7 @@ if __name__ == "__main__":
     assert renameAxis("aaa", "bbb", dict(aaa=1)) == dict(bbb=1)
     assert renameAxis("ccc", "bbb", dict(aaa=1)) == dict(aaa=1)
     
-    testWithFile = False    # set to False to test without getfile dialog
+    testWithFile = True    # set to False to test without getfile dialog
 
     if not testWithFile:
         # test
