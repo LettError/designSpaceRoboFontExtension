@@ -1138,7 +1138,7 @@ class DesignSpaceEditor(BaseWindowController):
             rule.renameAxis(oldName, newName)
         for axis in self.doc.axes:
             axis.renameAxis(oldName, newName)
-        self._setRulesGroupConditions()
+        #self._setRulesGroupConditions()
         self.updateRules()
         #self.updateDocumentPath()
         self.updatePaths()
@@ -1477,13 +1477,27 @@ class DesignSpaceEditor(BaseWindowController):
         if len(sel) != 1:
             # empty the conditions on display
             # ZZZ
+            self._selectedConditionSetIndex = None
+            self.rulesGroup.conditions.set([])
+            self.rulesGroup.conditions.setSelection([])
+            print("\tnothing selected, skipping")
             return
-        selectedConditionSet = sender[sel[0]]
-        print("selected conditionset", selectedConditionSet)
+        self._selectedConditionSetIndex = sel[0] #sender[sel[0]]
+        i = sender[sel[0]]['index']
+        
+        self._selectedConditions = self._selectedRule.conditionSets[i]
+        print("selected conditionset self._selectedConditionSetIndex", self._selectedConditionSetIndex)
+        print("selected conditionset self._selectedConditions", self._selectedConditions)
+        self.rulesGroup.conditions.set(self._selectedConditions)
+        #print("selected conditionsets ?", self._selectedRule.conditionSets[self._selectedConditionSetIndex])
+        #self.rulesGroup.conditions.set([])
+        #self.rulesGroup.conditions.setSelection([])
         
     def callbackEditRuleCondition(self, sender = None):
         if self._settingConditionsFlag:
             # not actually editing the list, we can skip
+            return
+        if not self._selectedRule:
             return
         newConditions = []
         for item in self.rulesGroup.conditions:
@@ -1566,9 +1580,9 @@ class DesignSpaceEditor(BaseWindowController):
             print("self._selectedRule.conditionSets", self._selectedRule.conditionSets)
             self.rulesGroup.conditionSets.set(itemsForConditionSet)
             #self.rulesGroup.conditionSets.setSelection(self._selectedConditionSetIndex)
-            self._settingConditionsFlag = True
-            self._setRulesGroupConditions()
-            self._settingConditionsFlag = False
+            #self._settingConditionsFlag = True
+            #self._setRulesGroupConditions()
+            #self._settingConditionsFlag = False
             self.rulesGroup.glyphs.enable(True)
             self._settingGlyphsFlag = True
             self._setGlyphNamesToList()
@@ -1615,15 +1629,17 @@ class DesignSpaceEditor(BaseWindowController):
         self.rulesGroup.names.set(self.doc.rules)
 
     def callbackRulesTools(self, sender):
+        # add or remove a rule
         if sender.get() == 0:
             # + button
             newRuleDescriptor = KeyedRuleDescriptor()
             newRuleDescriptor.name = "Unnamed Rule %d"%self._newRuleCounter
             newRuleDescriptor.conditionSets = []
-            newRuleDescriptor.conditions = []
             
+            oneNewConditionSet = []            
             for axis in self.doc.axes:
-                newRuleDescriptor.conditions.append(dict(name=axis.name, minimum=axis.minimum, maximum=axis.maximum))                    
+                oneNewConditionSet.append(dict(name=axis.name, minimum=axis.minimum, maximum=axis.maximum))
+            newRuleDescriptor.conditionSets.append(oneNewConditionSet)                    
             self._newRuleCounter += 1
             self.doc.addRule(newRuleDescriptor)
             self.rulesGroup.names.set(self.doc.rules)
