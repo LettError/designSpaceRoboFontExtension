@@ -1,15 +1,17 @@
 # coding = utf-8
 import os, time
 import weakref, importlib
+import AppKit
 from objc import python_method
-from AppKit import NSToolbarFlexibleSpaceItemIdentifier, NSURL, NSImageCell, NSImageAlignTop, NSScaleNone, NSImageFrameNone, NSImage, NSObject, NSNumberFormatter, NSNumberFormatterDecimalStyle, NSBeep, NSImageNameRevealFreestandingTemplate, NSSmallSquareBezelStyle
 from defconAppKit.windows.baseWindow import BaseWindowController
 from mojo.extensions import getExtensionDefault, setExtensionDefault, ExtensionBundle
 from defconAppKit.windows.progressWindow import ProgressWindow
 from vanilla import *
+import vanilla
 from vanilla.dialogs import getFile, putFile, askYesNo
 from mojo.UI import AccordionView
 from mojo.roboFont import *
+import ufoLib
 
 if version[0] == '2':
     import fontParts.nonelab.font
@@ -18,10 +20,13 @@ import logging
 
 from vanilla import *
 
-import fontTools.designspaceLib as dsd
-import local_ufoProcessor
+import ufoProcessor
 #importlib.reload(ufoProcessor)
-print("ufoProcessor loads from", local_ufoProcessor.__file__)
+print("ufoProcessor loads from", ufoProcessor.__file__)
+
+import ufoProcessor.designspaceLib
+print("designspaceLib loads from", ufoProcessor.designspaceLib.__file__)
+import ufoProcessor.designspaceLib as dsd
 
 import designSpaceEditorSettings
 import ufoLib
@@ -63,7 +68,7 @@ def ClassNameIncrementer(clsName, bases, dct):
        clsName = orgName + str(counter)
    return type(clsName, bases, dct)
 
-class KeyedGlyphDescriptor(NSObject,
+class KeyedGlyphDescriptor(AppKit.NSObject,
         metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
@@ -79,7 +84,7 @@ class KeyedGlyphDescriptor(NSObject,
         return len(self.patterns)==1
 
 
-class LiveDesignSpaceProcessor(local_ufoProcessor.DesignSpaceProcessor):
+class LiveDesignSpaceProcessor(ufoProcessor.DesignSpaceProcessor):
     # def _instantiateFont(self, path):
     #     """ Return a instance of a font object with all the given subclasses"""
     #     for f in AllFonts():
@@ -99,7 +104,7 @@ class LiveDesignSpaceProcessor(local_ufoProcessor.DesignSpaceProcessor):
                 if os.path.exists(sourceDescriptor.path):
                     self.fonts[sourceDescriptor.name] = self._instantiateFont(sourceDescriptor.path)
                     # this is not a problem, why report it as one?
-                    self.problems.append("loaded master from %s, format %d"%(sourceDescriptor.path, local_ufoProcessor.getUFOVersion(sourceDescriptor.path)))
+                    self.problems.append("loaded master from %s, format %d"%(sourceDescriptor.path, ufoProcessor.getUFOVersion(sourceDescriptor.path)))
                     names = names | set(self.fonts[sourceDescriptor.name].keys())
                 else:
                     self.fonts[sourceDescriptor.name] = None
@@ -125,12 +130,13 @@ def renameAxis(oldName, newName, location):
     return newLocation
 
 
-class KeyedRuleDescriptor(NSObject,
+class KeyedRuleDescriptor(AppKit.NSObject,
         metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
         self.name = None
+        self.conditionSets = []
         self.conditions = []
         self.subs = []
         return self
@@ -154,8 +160,12 @@ class KeyedRuleDescriptor(NSObject,
             # rename this axis
             if len(value)>0:
                 self.name = value
+    
+    @python_method
+    def __repr__(self):
+        return "rule: %s with %d conditionsets" % (self.name, len(self.conditionSets))
 
-class KeyedSourceDescriptor(NSObject,
+class KeyedSourceDescriptor(AppKit.NSObject,
         metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
@@ -179,6 +189,15 @@ class KeyedSourceDescriptor(NSObject,
         self.lib = {}
         return self
     
+    @python_method
+    def getLayerNames(self):
+        # see if we can get the layernames
+        if self.path is not None:
+            reader = ufoLib.UFOReader(self.path)
+            return reader.getLayerNames()
+        print("no path, no layers")
+        return []
+
     @python_method
     def renameAxis(self, oldName, newName):
         self.location = renameAxis(oldName, newName, self.location)
@@ -287,33 +306,37 @@ class KeyedSourceDescriptor(NSObject,
             try:
                 self.location[axisName] = float(value)
             except ValueError:
-                NSBeep()
+                AppKit.NSBeep()
         elif key == "sourceAxis_2":
             axisName = self.axisOrder[1]
             try:
                 self.location[axisName] = float(value)
             except ValueError:
-                NSBeep()
+                AppKit.NSBeep()
         elif key == "sourceAxis_3":
             axisName = self.axisOrder[2]
             try:
                 self.location[axisName] = float(value)
             except ValueError:
-                NSBeep()
+                AppKit.NSBeep()
         elif key == "sourceAxis_4":
             axisName = self.axisOrder[3]
             try:
                 self.location[axisName] = float(value)
             except ValueError:
-                NSBeep()
+                AppKit.NSBeep()
         elif key == "sourceAxis_5":
             axisName = self.axisOrder[4]
             try:
                 self.location[axisName] = float(value)
             except ValueError:
-                NSBeep()
+                AppKit.NSBeep()
+        elif key == "sourceLayerNameKey":
+            self.layerName = value
+        else:
+            print("KeyedSourceDescriptor", key, value)
     
-class KeyedInstanceDescriptor(NSObject,
+class KeyedInstanceDescriptor(AppKit.NSObject,
         metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
@@ -471,18 +494,22 @@ class KeyedInstanceDescriptor(NSObject,
                 self.location[axisName] = float(value)
             except ValueError:
                 NSBeep()
+        else:
+            print("KeyedInstanceDescriptor", key, value)
             
     def instanceFamilyNameKey(self):
         return self.familyName
     def instanceStyleNameKey(self):
         return self.styleName
 
+
 def intOrFloat(num):
     if int(num) == num:
         return "%d" % num
     return "%f" % num
-    
-class KeyedAxisDescriptor(NSObject,
+
+
+class KeyedAxisDescriptor(AppKit.NSObject,
         metaclass=ClassNameIncrementer
         ):
     # https://www.microsoft.com/typography/otspec/fvar.htm
@@ -612,9 +639,9 @@ class KeyedDocWriter(dsd.BaseDocWriter):
     instanceDescriptorClass = KeyedInstanceDescriptor
 
 def newImageListCell():
-    cell = NSImageCell.alloc().init()
-    cell.setImageAlignment_(NSImageAlignTop)
-    cell.setImageFrameStyle_(NSImageFrameNone)
+    cell = AppKit.NSImageCell.alloc().init()
+    cell.setImageAlignment_(AppKit.NSImageAlignTop)
+    cell.setImageFrameStyle_(AppKit.NSImageFrameNone)
     return cell
 
 class DesignSpaceEditor(BaseWindowController):
@@ -625,6 +652,7 @@ class DesignSpaceEditor(BaseWindowController):
         ]
 
     def __init__(self, designSpacePath=None):
+        print("running from", __file__)
         self.settingsIdentifier = "%s.%s" % (designSpaceEditorSettings.settingsIdentifier, "general")
         self.updateFromSettings()        
         self.designSpacePath = designSpacePath
@@ -632,6 +660,7 @@ class DesignSpaceEditor(BaseWindowController):
         self._newInstanceCounter = 1
         self._newRuleCounter = 1
         self._selectedRule = None
+        self._selectedConditionSetIndex = None
         self._settingConditionsFlag = False
         self._settingGlyphsFlag = False
         if self.designSpacePath is None:
@@ -645,9 +674,9 @@ class DesignSpaceEditor(BaseWindowController):
             thisFontClass = fontParts.nonelab.font.RFont
         else:
             thisFontClass = None
-        self.doc = LiveDesignSpaceProcessor(KeyedDocReader, KeyedDocWriter)    #, fontClass=thisFontClass)
+        self.doc = LiveDesignSpaceProcessor(readerClass=KeyedDocReader, writerClass=KeyedDocWriter)    #, fontClass=thisFontClass)
 
-        _numberFormatter = NSNumberFormatter.alloc().init()
+        _numberFormatter = AppKit.NSNumberFormatter.alloc().init()
 
         toolbarItems = [
             {
@@ -669,7 +698,7 @@ class DesignSpaceEditor(BaseWindowController):
                 'imageNamed': "prefToolbarMisc",
             },
             {
-                'itemIdentifier': NSToolbarFlexibleSpaceItemIdentifier,
+                'itemIdentifier': AppKit.NSToolbarFlexibleSpaceItemIdentifier,
             },
             {
                 'itemIdentifier': "settings",
@@ -690,7 +719,7 @@ class DesignSpaceEditor(BaseWindowController):
                     'width':fileIconWidth,
                     'editable':False,
                 },
-                {   'title': '',
+                {   'title': 'D',
                     'key':'defaultMasterKey',
                     'width':fileIconWidth,
                     'editable':False,
@@ -713,7 +742,7 @@ class DesignSpaceEditor(BaseWindowController):
                 {   'title': 'Layer',
                     'key':'sourceLayerNameKey',
                     'width':familyNameWidth,
-                    'editable':False,
+                    "editable": True
                 },
                 {   'title': 'Axis 1',
                     'key':'sourceAxis_1',
@@ -979,12 +1008,20 @@ class DesignSpaceEditor(BaseWindowController):
         self.glyphsGroup.l = self.glyphsItem
         
         ruleNameColDescriptions = [
-                {   'title': 'Name',
+                {   'title': 'Rule',
                     'key':'nameKey',
                     #'width':40,
                     'editable':True,
                 },
             ]
+        ruleConditionSetColDescriptions = [
+                {   'title': 'Condition Sets',
+                    'key':'nameKey',
+                    #'width':40,
+                    'editable':False,
+                },
+            ]
+        
         ruleConditionColDescriptions = [
                 {   'title': 'Axis',
                     'key':'name',
@@ -1019,24 +1056,31 @@ class DesignSpaceEditor(BaseWindowController):
         
         listMargin = 5
         self.rulesGroup = self.w.ruleGroup = Group((0,ruleGroupStart,0,ruleGroupHeight))
-        self.rulesGroup.title = TextBox(sectionTitleSize, "Rules")
-        self.rulesNames = List((0,toolbarHeight, 200,-0), [],
+        self.rulesGroup.title = TextBox(sectionTitleSize, "Conditional variations")
+
+        self.rulesNames = vanilla.List((0,toolbarHeight, 200,-0), [],
             columnDescriptions=ruleNameColDescriptions,
             selectionCallback=self.callbackRuleNameSelection,
             drawFocusRing = False,
         )
-        self.rulesConditions = List((200+listMargin,toolbarHeight, axisNameColumnWidth+2*axisValueWidth+20,-0), [],
+        self.rulesConditionSets = vanilla.List((200+listMargin,toolbarHeight, 200-listMargin,-0), [],
+            columnDescriptions=ruleConditionSetColDescriptions,
+            selectionCallback = self.callbackSelectedConditionSet,
+            drawFocusRing = False,
+        )
+        self.rulesConditions = vanilla.List((400+listMargin,toolbarHeight, axisNameColumnWidth+2*axisValueWidth+20,-0), [],
             columnDescriptions=ruleConditionColDescriptions,
             editCallback = self.callbackEditRuleCondition,
             drawFocusRing = False,
         )
-        ruleGlyphListLeftMargin = 485+listMargin
-        self.rulesGlyphs = List((ruleGlyphListLeftMargin,toolbarHeight, 2*axisValueWidth,-0), [],
+        ruleGlyphListLeftMargin = 685+listMargin
+        self.rulesGlyphs = vanilla.List((ruleGlyphListLeftMargin,toolbarHeight, -0,-0), [],
             columnDescriptions=ruleGlyphsColDescriptions,
             editCallback = self.callbackEditRuleGlyphs,
             drawFocusRing = False,
         )
         self.rulesGroup.names = self.rulesNames
+        self.rulesGroup.conditionSets = self.rulesConditionSets
         self.rulesGroup.conditions = self.rulesConditions
         self.rulesGroup.glyphs = self.rulesGlyphs
         self.rulesGroup.tools = SegmentedButton(
@@ -1070,7 +1114,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.enableInstanceList()
         self.w.open()
         if self.designSpacePath is not None:
-            self.w.getNSWindow().setRepresentedURL_(NSURL.fileURLWithPath_(self.designSpacePath))
+            self.w.getNSWindow().setRepresentedURL_(AppKit.NSURL.fileURLWithPath_(self.designSpacePath))
 
         self.w.bind("became main", self.callbackBecameMain)
         self.w.bind("close", self.callbackCleanup)
@@ -1268,7 +1312,7 @@ class DesignSpaceEditor(BaseWindowController):
             descriptor.setAxisOrder(names)
         # clear the old names
         columns = self.mastersItem.getNSTableView().tableColumns()
-        sourceColumnTitleOffset = 5
+        sourceColumnTitleOffset = 6    # index of the column where we can start messing with the names
         for col in range(sourceColumnTitleOffset, len(columns)):
             column = columns[col]
             try:
@@ -1384,7 +1428,7 @@ class DesignSpaceEditor(BaseWindowController):
         for des in self.doc.instances:
             print(des)
         self.doc.write(self.designSpacePath)
-        self.w.getNSWindow().setRepresentedURL_(NSURL.fileURLWithPath_(self.designSpacePath))
+        self.w.getNSWindow().setRepresentedURL_(AppKit.NSURL.fileURLWithPath_(self.designSpacePath))
         self.w.setTitle(os.path.basename(self.designSpacePath))
         self.instancesItem.set(self.doc.instances)
         self.validate()
@@ -1425,6 +1469,17 @@ class DesignSpaceEditor(BaseWindowController):
             newGlyphs.append((item['name'],item['with']))
         self._selectedRule.subs = newGlyphs
         self._checkRuleGlyphListHasEditableEmpty()
+    
+    def callbackSelectedConditionSet(self, sender=None):
+        # vanilla callback for selecting a rule condition set
+        print("callbackSelectedConditionSet", sender.getSelection())
+        sel = sender.getSelection()
+        if len(sel) != 1:
+            # empty the conditions on display
+            # ZZZ
+            return
+        selectedConditionSet = sender[sel[0]]
+        print("selected conditionset", selectedConditionSet)
         
     def callbackEditRuleCondition(self, sender = None):
         if self._settingConditionsFlag:
@@ -1489,11 +1544,28 @@ class DesignSpaceEditor(BaseWindowController):
             self.rulesGroup.glyphs.set([])
             self._settingGlyphsFlag = False
             self.rulesGroup.conditions.enable(False)
+            self.rulesGroup.conditions.set([])
+            self.rulesGroup.conditions.setSelection([])
+            self.rulesGroup.conditionSets.enable(False)
+            self.rulesGroup.conditionSets.setSelection([])
+            self.rulesGroup.conditionSets.set([])
+            self._selectedConditionSetIndex = None
             self.rulesGroup.glyphs.enable(False)
             self.rulesGroup.glyphTools.enable(False)
         else:
             self._selectedRule = self.rulesGroup.names[selection[0]]
+            self._selectedConditionSetIndex = 0
             self.rulesGroup.conditions.enable(True)
+            self.rulesGroup.conditionSets.enable(True)
+            itemsForConditionSet = []
+            
+            for index, item in enumerate(["Set %d"%n for n in range(len(self._selectedRule.conditionSets))]):
+                itemsForConditionSet.append(dict(nameKey=item, index=index))
+            print("XXX itemsForConditionSet", itemsForConditionSet)
+            print("self._selectedRule", self._selectedRule)
+            print("self._selectedRule.conditionSets", self._selectedRule.conditionSets)
+            self.rulesGroup.conditionSets.set(itemsForConditionSet)
+            #self.rulesGroup.conditionSets.setSelection(self._selectedConditionSetIndex)
             self._settingConditionsFlag = True
             self._setRulesGroupConditions()
             self._settingConditionsFlag = False
@@ -1547,7 +1619,9 @@ class DesignSpaceEditor(BaseWindowController):
             # + button
             newRuleDescriptor = KeyedRuleDescriptor()
             newRuleDescriptor.name = "Unnamed Rule %d"%self._newRuleCounter
+            newRuleDescriptor.conditionSets = []
             newRuleDescriptor.conditions = []
+            
             for axis in self.doc.axes:
                 newRuleDescriptor.conditions.append(dict(name=axis.name, minimum=axis.minimum, maximum=axis.maximum))                    
             self._newRuleCounter += 1
