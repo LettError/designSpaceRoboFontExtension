@@ -129,7 +129,6 @@ def renameAxis(oldName, newName, location):
         newLocation[name] = value
     return newLocation
 
-
 class KeyedRuleDescriptor(AppKit.NSObject,
         metaclass=ClassNameIncrementer
         ):
@@ -144,12 +143,13 @@ class KeyedRuleDescriptor(AppKit.NSObject,
     @python_method
     def renameAxis(self, oldName, newName=None):
         renamedConditions = []
-        for cd in self.conditions:
-            if cd['name'] == oldName:
-                renamedConditions.append(dict(name=newName, minimum=cd['minimum'], maximum=cd['maximum']))
-            else:
-                if newName is not None:
-                    renamedConditions.append(cd)
+        for conditionSet in self.conditionSets:
+            for cd in conditionSet:
+                if cd['name'] == oldName:
+                    renamedConditions.append(dict(name=newName, minimum=cd['minimum'], maximum=cd['maximum']))
+                else:
+                    if newName is not None:
+                        renamedConditions.append(cd)
         self.conditions = renamedConditions
     
     def nameKey(self):
@@ -626,6 +626,24 @@ class KeyedAxisDescriptor(AppKit.NSObject,
             t.append(intOrFloat(outputValue))
         return ", ".join(t)
 
+
+class ConditionDict(object):
+    def __init__(self, callback=None):
+        self.data = {}
+        self.callback = callback
+        
+    def __getitem__(self, key):
+        if not key in self.data:
+            raise IndexError
+        print("ConditionDict getting key", key)
+    
+    def __setitem__(self, key, value):
+        self.data[key] = value
+        print("ConditionDict setting key", key, value)
+
+#a = ConditionDict()
+#a['a'] = 10
+        
 class KeyedDocReader(dsd.BaseDocReader):
     ruleDescriptorClass = KeyedRuleDescriptor
     axisDescriptorClass = KeyedAxisDescriptor
@@ -1056,29 +1074,42 @@ class DesignSpaceEditor(BaseWindowController):
         
         listMargin = 5
         self.rulesGroup = self.w.ruleGroup = Group((0,ruleGroupStart,0,ruleGroupHeight))
-        self.rulesGroup.title = TextBox(sectionTitleSize, "Conditional variations")
-
-        self.rulesNames = vanilla.List((0,toolbarHeight, 200,-0), [],
+        self.rulesGroup.title = TextBox((50, 3, 150, 20), "Rules")
+        ruleToolbarHeight = 25
+        self.rulesNames = vanilla.List((0,ruleToolbarHeight, 200,-0), [],
             columnDescriptions=ruleNameColDescriptions,
             selectionCallback=self.callbackRuleNameSelection,
             drawFocusRing = False,
+            showColumnTitles = False
         )
-        self.rulesConditionSets = vanilla.List((200+listMargin,toolbarHeight, 200-listMargin,-0), [],
-            columnDescriptions=ruleConditionSetColDescriptions,
-            selectionCallback = self.callbackSelectedConditionSet,
-            drawFocusRing = False,
-        )
-        self.rulesConditions = vanilla.List((400+listMargin,toolbarHeight, axisNameColumnWidth+2*axisValueWidth+20,-0), [],
-            columnDescriptions=ruleConditionColDescriptions,
-            editCallback = self.callbackEditRuleCondition,
-            drawFocusRing = False,
-        )
-        ruleGlyphListLeftMargin = 685+listMargin
-        self.rulesGlyphs = vanilla.List((ruleGlyphListLeftMargin,toolbarHeight, -0,-0), [],
+
+        ruleGlyphListLeftMargin = 200+listMargin
+        self.rulesGroup.title3 = TextBox((ruleGlyphListLeftMargin + 50, 3, 150, 20), "Subs")
+        self.rulesGlyphs = vanilla.List((ruleGlyphListLeftMargin,ruleToolbarHeight, 200,-0), [],
             columnDescriptions=ruleGlyphsColDescriptions,
             editCallback = self.callbackEditRuleGlyphs,
             drawFocusRing = False,
+            showColumnTitles = False
         )
+
+        ruleConditionSetListLeftMargin = 400+3*listMargin
+        self.rulesGroup.title2 = TextBox((ruleConditionSetListLeftMargin + 50, 3, 250, 20), "Conditionsets")
+        self.rulesConditionSets = vanilla.List((ruleConditionSetListLeftMargin,ruleToolbarHeight, 100-listMargin,-0), [],
+            #columnDescriptions=ruleConditionSetColDescriptions,
+            selectionCallback = self.callbackSelectedConditionSet,
+            drawFocusRing = False,
+            showColumnTitles = False,
+            allowsMultipleSelection=False,
+        )
+        ruleAxesListLeftMargin = ruleConditionSetListLeftMargin + 95 +listMargin
+        self.rulesConditions = vanilla.List((ruleAxesListLeftMargin,ruleToolbarHeight, 300-listMargin,-0), [],
+            columnDescriptions=ruleConditionColDescriptions,
+            editCallback = self.callbackEditRuleCondition,
+            drawFocusRing = False,
+            showColumnTitles = False,
+            allowsMultipleSelection = False,
+        )
+
         self.rulesGroup.names = self.rulesNames
         self.rulesGroup.conditionSets = self.rulesConditionSets
         self.rulesGroup.conditions = self.rulesConditions
@@ -1088,6 +1119,11 @@ class DesignSpaceEditor(BaseWindowController):
             segmentDescriptions=instancesToolDescriptions,
             selectionStyle="momentary",
             callback=self.callbackRulesTools)
+        self.rulesGroup.conditionSetTools = SegmentedButton(
+            (ruleConditionSetListLeftMargin, buttonMargin,100,buttonHeight),
+            segmentDescriptions=instancesToolDescriptions,
+            selectionStyle="momentary",
+            callback=self.callbackConditionSetTools)
         self.rulesGroup.glyphTools = SegmentedButton(
             (ruleGlyphListLeftMargin, buttonMargin,100,buttonHeight),
             segmentDescriptions=instancesToolDescriptions,
@@ -1138,7 +1174,6 @@ class DesignSpaceEditor(BaseWindowController):
             rule.renameAxis(oldName, newName)
         for axis in self.doc.axes:
             axis.renameAxis(oldName, newName)
-        #self._setRulesGroupConditions()
         self.updateRules()
         #self.updateDocumentPath()
         self.updatePaths()
@@ -1345,6 +1380,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.instancesItem.set(self.doc.instances)
         self.doc.check()
         self.rulesGroup.names.set(self.doc.rules)
+        self.rulesGroup.names.setSelection([0])
         self.updatePaths()
         self.doc.loadFonts()
         self.validate()
@@ -1470,6 +1506,37 @@ class DesignSpaceEditor(BaseWindowController):
         self._selectedRule.subs = newGlyphs
         self._checkRuleGlyphListHasEditableEmpty()
     
+    def callbackEditRuleCondition(self, sender=None):
+        # vanilla callback for selected a specific axis in the condition list
+        if not self._selectedRule: return
+        if self._selectedConditionSetIndex is None:
+            return
+        print("callbackEditRuleCondition", sender.getSelection(), sender.get())
+        print("editing", self._selectedConditionSetIndex)
+        edited = []
+        for item in sender.get():
+            d = {'minimum':None, 'maximum':None}
+            if item.get("minimum") is None:
+                d['minimum'] = None
+            else:
+                try:
+                    v = int(item['minimum'])
+                except ValueError:
+                    v = None
+                d['minimum'] = v
+            if item.get("maximum") is None:
+                d['maximum'] = None
+            else:
+                try:
+                    v = int(item['maximum'])
+                except ValueError:
+                    v = None
+                d['maximum'] = v
+            d['name'] = item['name']
+            edited.append(d)
+        print("edited", edited)
+        self._selectedRule.conditionSets[self._selectedConditionSetIndex] = edited
+
     def callbackSelectedConditionSet(self, sender=None):
         # vanilla callback for selecting a rule condition set
         print("callbackSelectedConditionSet", sender.getSelection())
@@ -1482,77 +1549,30 @@ class DesignSpaceEditor(BaseWindowController):
             self.rulesGroup.conditions.setSelection([])
             print("\tnothing selected, skipping")
             return
-        self._selectedConditionSetIndex = sel[0] #sender[sel[0]]
-        i = sender[sel[0]]['index']
-        
-        self._selectedConditions = self._selectedRule.conditionSets[i]
-        print("selected conditionset self._selectedConditionSetIndex", self._selectedConditionSetIndex)
-        print("selected conditionset self._selectedConditions", self._selectedConditions)
-        self.rulesGroup.conditions.set(self._selectedConditions)
-        #print("selected conditionsets ?", self._selectedRule.conditionSets[self._selectedConditionSetIndex])
-        #self.rulesGroup.conditions.set([])
-        #self.rulesGroup.conditions.setSelection([])
-        
-    def callbackEditRuleCondition(self, sender = None):
-        if self._settingConditionsFlag:
-            # not actually editing the list, we can skip
-            return
-        if not self._selectedRule:
-            return
-        newConditions = []
-        for item in self.rulesGroup.conditions:
-            cd = {}
-            cd['name'] = item['name']
-            v = item.get('minimum')
-            if v is not None and v is not "":
-                cd['minimum'] = float(item['minimum'])
-            else:
-                cd['minimum'] = None
-            v = item.get('maximum')
-            if v is not None and v is not "":
-                cd['maximum'] = float(item['maximum'])
-            else:
-                cd['maximum'] = None
-            newConditions.append(cd)
-        self._selectedRule.conditions = newConditions
+        sel = sel[0]
+        self._selectedConditionSetIndex = sel
+        self._setConditionsFromSelectedConditionSet()
     
-    def _setRulesGroupConditions(self, clear=False):
-        # the condition might have None as value
-        # but the list needs ""
-        # translate here.
-        conditions = []
-        done = []
-        axisNames = self._getAxisNames()
-        if not self._selectedRule:
-            return
-        if not clear:
-            for cd in self._selectedRule.conditions:
-                new = dict(name=cd['name'])
-                if cd.get('minimum') is None:
-                    new['minimum'] = ''
-                else:
-                    new['minimum'] = cd['minimum']
-                if cd.get('maximum') is None:
-                    new['maximum'] = ''
-                else:
-                    new['maximum'] = cd['maximum']
-                conditions.append(new)
-                done.append(cd['name'])
-        for name in axisNames:
-            new = {}
-            if name not in done:
-                new['name'] = name
-                new['minimum'] = ''
-                new['maximum'] = ''
-                conditions.append(new)
-        self.rulesGroup.conditions.set(conditions)
+    def _setConditionsFromSelectedConditionSet(self):
+        # set the conditions from the selected condition set
+        thing = self._selectedRule.conditionSets[self._selectedConditionSetIndex]
+        newThing = []
+        for item in thing:
+            d = {}
+            for k, v in item.items():
+                if v is None:
+                    v = ""
+                d[k]=v
+            newThing.append(d)
+        print('setting thing:', thing, newThing)
+        self.rulesGroup.conditions.set(newThing)
+        print("callbackSelectedConditionSet thing", newThing)
 
     def callbackRuleNameSelection(self, sender):
         selection = sender.getSelection()
         self._selectedRule = None
         if len(selection) > 1 or len(selection) == 0:
             self._settingConditionsFlag = True
-            self._setRulesGroupConditions(clear=True)
             self._settingConditionsFlag = False
             self._settingGlyphsFlag = True
             self.rulesGroup.glyphs.set([])
@@ -1571,30 +1591,45 @@ class DesignSpaceEditor(BaseWindowController):
             self._selectedConditionSetIndex = 0
             self.rulesGroup.conditions.enable(True)
             self.rulesGroup.conditionSets.enable(True)
-            itemsForConditionSet = []
-            
-            for index, item in enumerate(["Set %d"%n for n in range(len(self._selectedRule.conditionSets))]):
-                itemsForConditionSet.append(dict(nameKey=item, index=index))
-            print("XXX itemsForConditionSet", itemsForConditionSet)
-            print("self._selectedRule", self._selectedRule)
-            print("self._selectedRule.conditionSets", self._selectedRule.conditionSets)
-            self.rulesGroup.conditionSets.set(itemsForConditionSet)
-            #self.rulesGroup.conditionSets.setSelection(self._selectedConditionSetIndex)
-            #self._settingConditionsFlag = True
-            #self._setRulesGroupConditions()
-            #self._settingConditionsFlag = False
+            self._updateConditionSetsList()
+            self.rulesGroup.conditionSets.setSelection([0])
             self.rulesGroup.glyphs.enable(True)
             self._settingGlyphsFlag = True
             self._setGlyphNamesToList()
             self._settingGlyphsFlag = False
             self.rulesGroup.glyphTools.enable(True)
+            
+    def _updateConditionSetsList(self):
+        conditionSetsForThisRule = []
+        for i, conditionSet in enumerate(self._selectedRule.conditionSets):
+            conditionSetsForThisRule.append("set %d" % i)
+        self.rulesGroup.conditionSets.set(conditionSetsForThisRule)
     
     def _setGlyphNamesToList(self):
         names = []
         for a, b in self._selectedRule.subs:
             names.append({'name':a, 'with':b})
         self.rulesGroup.glyphs.set(names)
-
+    
+    def callbackConditionSetTools(self, sender):
+        # vanilla callback for the +- button above the conditionsets
+        print("callbackConditionSetTools")
+        if sender.get() == 0:
+            # + button
+            if not self._selectedRule:
+                return
+            newConditions = []
+            for axisDescriptor in self.doc.axes:
+                d = {}
+                d['name'] = axisDescriptor.name
+                d['minimum'] = None
+                d['maximum'] = None
+                newConditions.append(d)
+            self._selectedRule.conditionSets.append(newConditions)
+            self._setConditionsFromSelectedConditionSet()
+            self._updateConditionSetsList()
+        # things
+                
     def callbackRuleGlyphTools(self, sender):
         if sender.get() == 0:
             # + button
