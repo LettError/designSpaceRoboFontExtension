@@ -21,12 +21,7 @@ import logging
 from vanilla import *
 
 import ufoProcessor
-#importlib.reload(ufoProcessor)
-print("ufoProcessor loads from", ufoProcessor.__file__)
-
-import ufoProcessor.designspaceLib
-print("designspaceLib loads from", ufoProcessor.designspaceLib.__file__)
-import ufoProcessor.designspaceLib as dsd
+import fontTools.designspaceLib as dsd
 
 import designSpaceEditorSettings
 import ufoLib
@@ -69,7 +64,7 @@ def ClassNameIncrementer(clsName, bases, dct):
    return type(clsName, bases, dct)
 
 class KeyedGlyphDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -130,7 +125,7 @@ def renameAxis(oldName, newName, location):
     return newLocation
 
 class KeyedRuleDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -166,7 +161,7 @@ class KeyedRuleDescriptor(AppKit.NSObject,
         return "rule: %s with %d conditionsets" % (self.name, len(self.conditionSets))
 
 class KeyedSourceDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -337,7 +332,7 @@ class KeyedSourceDescriptor(AppKit.NSObject,
             print("KeyedSourceDescriptor", key, value)
     
 class KeyedInstanceDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -510,7 +505,7 @@ def intOrFloat(num):
 
 
 class KeyedAxisDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
@@ -535,6 +530,20 @@ class KeyedAxisDescriptor(AppKit.NSObject,
         self.map = []
         self.controller = None    # weakref to controller
         return self
+
+    @python_method
+    def serialize(self):
+        # output to a dict, used in testing
+        return dict(
+            tag=self.tag,
+            name=self.name,
+            labelNames=self.labelNames,
+            maximum=self.maximum,
+            minimum=self.minimum,
+            default=self.default,
+            hidden=self.hidden,
+            map=self.map,
+        )
 
     @python_method
     def renameAxis(self, oldName, newName):
@@ -692,7 +701,8 @@ class DesignSpaceEditor(BaseWindowController):
             thisFontClass = fontParts.nonelab.font.RFont
         else:
             thisFontClass = None
-        self.doc = LiveDesignSpaceProcessor(readerClass=KeyedDocReader, writerClass=KeyedDocWriter)    #, fontClass=thisFontClass)
+        self.doc = LiveDesignSpaceProcessor(readerClass=KeyedDocReader, writerClass=KeyedDocWriter)
+        self.doc.useVarlib = True
 
         _numberFormatter = AppKit.NSNumberFormatter.alloc().init()
 
@@ -1886,7 +1896,7 @@ class DesignSpaceEditor(BaseWindowController):
             master.makeDefault(False)
         selectedMaster.makeDefault(True)
         self.mastersItem.set(self.doc.sources)
-        self.doc.checkDefault()
+        self.doc.findDefault()
         self.axesItem.set(self.doc.axes)
         self.validate()
         

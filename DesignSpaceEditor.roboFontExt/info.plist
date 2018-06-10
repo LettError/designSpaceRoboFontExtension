@@ -34,12 +34,12 @@
 	<key>name</key>
 	<string>DesignSpaceEditor</string>
 	<key>requiresVersionMajor</key>
-	<string>2</string>
+	<string>3</string>
 	<key>requiresVersionMinor</key>
 	<string>0</string>
 	<key>timeStamp</key>
-	<real>1509113194.26</real>
+	<real>1528661728.32</real>
 	<key>version</key>
-	<string>1.4</string>
+	<string>1.5</string>
 </dict>
 </plist>
