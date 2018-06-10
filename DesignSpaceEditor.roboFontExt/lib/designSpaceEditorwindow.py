@@ -1378,7 +1378,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.axesItem.set(self.doc.axes)
         self.mastersItem.set(self.doc.sources)
         self.instancesItem.set(self.doc.instances)
-        self.doc.check()
+        self.doc.findDefault()
         self.rulesGroup.names.set(self.doc.rules)
         self.rulesGroup.names.setSelection([0])
         self.updatePaths()
