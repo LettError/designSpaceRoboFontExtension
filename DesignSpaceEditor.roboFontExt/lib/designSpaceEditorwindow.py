@@ -1,5 +1,5 @@
 # coding = utf-8
-import os, time
+import os, time, sys
 import weakref, importlib
 import AppKit
 from objc import python_method
@@ -64,7 +64,7 @@ def ClassNameIncrementer(clsName, bases, dct):
    return type(clsName, bases, dct)
 
 class KeyedGlyphDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -125,7 +125,7 @@ def renameAxis(oldName, newName, location):
     return newLocation
 
 class KeyedRuleDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -161,7 +161,7 @@ class KeyedRuleDescriptor(AppKit.NSObject,
         return "rule: %s with %d conditionsets" % (self.name, len(self.conditionSets))
 
 class KeyedSourceDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -182,8 +182,15 @@ class KeyedSourceDescriptor(AppKit.NSObject,
         self.styleName = None
         self.axisOrder = []
         self.lib = {}
+        self.isDefault = False
+        self.wasEditedCallback = None
         return self
     
+    @python_method
+    def callbackCleanup(self):
+        print("sourcedescriptor callbackCleanup")
+        self.wasEditedCallback = None
+        
     @python_method
     def getLayerNames(self):
         # see if we can get the layernames
@@ -206,11 +213,13 @@ class KeyedSourceDescriptor(AppKit.NSObject,
             self.copyGroups = True
             self.copyFeatures = True
             self.copyLib = True
+            self.isDefault = True
         else:
             self.copyInfo = False
             self.copyGroups = False
             self.copyFeatures = False
             self.copyLib = False
+            self.isDefault = False
             
     def setName(self):
         # make a name attribute based on the location
@@ -230,8 +239,10 @@ class KeyedSourceDescriptor(AppKit.NSObject,
         # apparently this is uses to indicate that this master
         # might be intended to be the default font in this system.
         # we could consider making this a separate flag?
-        if self.copyInfo:
+        if self.isDefault:
             return defaultSymbol
+        #if self.copyInfo:
+        #    return defaultSymbol
         return ""
 
     @python_method
@@ -300,39 +311,46 @@ class KeyedSourceDescriptor(AppKit.NSObject,
             axisName = self.axisOrder[0]
             try:
                 self.location[axisName] = float(value)
-            except ValueError:
+            except (TypeError, ValueError):
                 AppKit.NSBeep()
         elif key == "sourceAxis_2":
             axisName = self.axisOrder[1]
             try:
                 self.location[axisName] = float(value)
-            except ValueError:
+            except (TypeError, ValueError):
                 AppKit.NSBeep()
         elif key == "sourceAxis_3":
             axisName = self.axisOrder[2]
             try:
                 self.location[axisName] = float(value)
-            except ValueError:
+            except (TypeError, ValueError):
                 AppKit.NSBeep()
         elif key == "sourceAxis_4":
             axisName = self.axisOrder[3]
             try:
                 self.location[axisName] = float(value)
-            except ValueError:
+            except (TypeError, ValueError):
                 AppKit.NSBeep()
         elif key == "sourceAxis_5":
             axisName = self.axisOrder[4]
             try:
                 self.location[axisName] = float(value)
-            except ValueError:
+                if self.wasEditedCallback:
+                    self.wasEditedCallback(self)
+            except (TypeError, ValueError):
                 AppKit.NSBeep()
         elif key == "sourceLayerNameKey":
             self.layerName = value
         else:
             print("KeyedSourceDescriptor", key, value)
+        if self.wasEditedCallback is not None:
+            self.wasEditedCallback(self)
+        else:
+            print("KeyedSourceDescriptor.setValue_forUndefinedKey_ no wasEditedCallback")
+    
     
 class KeyedInstanceDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -505,7 +523,7 @@ def intOrFloat(num):
 
 
 class KeyedAxisDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
@@ -988,11 +1006,11 @@ class DesignSpaceEditor(BaseWindowController):
             callback=self.callbackOpenMaster,
             sizeStyle="small")
         self.mastersGroup.openButton.enable(False)
-        self.mastersGroup.makeDefaultButton = Button(
-            secondButtonSize, "Make Default",
-            callback=self.callbackMakeDefaultMaster,
-            sizeStyle="small")
-        self.mastersGroup.makeDefaultButton.enable(False)
+        #self.mastersGroup.makeDefaultButton = Button(
+        #    secondButtonSize, "Make Default",
+        #    callback=self.callbackMakeDefaultMaster,
+        #    sizeStyle="small")
+        #self.mastersGroup.makeDefaultButton.enable(False)
         self.mastersGroup.loadNamesFromSourceButton = Button(
             thirdButtonSize, "Load Names",
             callback=self.callbackGetNamesFromSources,
@@ -1158,6 +1176,8 @@ class DesignSpaceEditor(BaseWindowController):
         #self.w.accordionView = AccordionView((0, 0, -0, -0), descriptions)
             self.updateAxesColumns()
         self.enableInstanceList()
+        for sourceDescriptor in self.doc.sources:
+            sourceDescriptor.wasEditedCallback = self.sourceDescriptorWasEditedCallback
         self.w.open()
         if self.designSpacePath is not None:
             self.w.getNSWindow().setRepresentedURL_(AppKit.NSURL.fileURLWithPath_(self.designSpacePath))
@@ -1170,6 +1190,8 @@ class DesignSpaceEditor(BaseWindowController):
             
     def callbackCleanup(self, sender=None):
         self.w.document = None
+        for source in self.doc.sources:
+            source.callbackCleanup()
     
     def callbackRenameAxes(self, oldName, newName):
         # validate the new name, make sure we don't duplicate an existing name
@@ -1325,12 +1347,16 @@ class DesignSpaceEditor(BaseWindowController):
             progress.close()            
     
     def callbackGenerate(self, sender):
-        from mutatorMath.ufo import build
+        #from mutatorMath.ufo import build
         if self.designSpacePath is None:
             return
+        self.doc.problems = []
         progress = ProgressWindow(u"Generating instance UFO’s…", 10, parentWindow=self.w)
         try:
             messages = self.doc.generateUFO()
+        except ufoProcessor.UFOProcessorError:
+            error_type, error_instance, traceback = sys.exc_info()
+            self.doc.problems.append(str(error_instance.msg))
         except:
             import traceback
             traceback.print_exc()
@@ -1388,15 +1414,23 @@ class DesignSpaceEditor(BaseWindowController):
         self.axesItem.set(self.doc.axes)
         self.mastersItem.set(self.doc.sources)
         self.instancesItem.set(self.doc.instances)
-        self.doc.findDefault()
         self.rulesGroup.names.set(self.doc.rules)
         self.rulesGroup.names.setSelection([0])
         self.updatePaths()
         self.doc.loadFonts()
+        self.findDefault()
         self.validate()
         # what if we replace the loaded fonts with locally loaded fonts?
         # ('loaded', 'temp_master.0', <RFont 'MutatorMathTest LightCondensed' path='u'/Users/erik/code/braces/MutatorSansLightCondensed.ufo'' at 4581778896>)
         # ('loaded', 'temp_master.1', <RFont 'MutatorMathTest BoldCondensed' path='u'/Users/erik/code/braces/MutatorSansBoldCondensed.ufo'' at 4581744080>)
+
+    def findDefault(self):
+        # find the source descriptor that is the default. set this value in the sourcedescriptor
+        for sd in self.doc.sources:
+            sd.makeDefault(False)
+        defaultSourceDescriptor = self.doc.findDefault()
+        if defaultSourceDescriptor is not None:
+            defaultSourceDescriptor.makeDefault(True)
 
     def getSaveDirFromMasters(self):
         options = {}
@@ -1737,6 +1771,7 @@ class DesignSpaceEditor(BaseWindowController):
                 self.updateLocations()
                 self.axesItem.set(self.doc.axes)
                 self._updatingTheAxesNames = False
+                self.findDefault()
                 self.validate()
 
     def callbackAxisTools(self, sender):
@@ -1781,6 +1816,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.updateLocations()
         self.updateRules()
         self.axesItem.set(self.doc.axes)
+        self.findDefault()
         self.validate()
     
     def callbackInstanceTools(self, sender):
@@ -1940,16 +1976,23 @@ class DesignSpaceEditor(BaseWindowController):
         for item in self.doc.sources:
             if id(item) not in removeThese:
                 keepThese.append(item)
+            else:
+                item.callbackCleanup()
         self.doc.sources = keepThese
         self.mastersItem.set(self.doc.sources)
         self.enableInstanceList()
         self.validate()
     
+    def sourceDescriptorWasEditedCallback(self, sd):
+        # callback to be given to keyedSourceDescriptor when values are edited.
+        self.findDefault()
+        
     def addSourceFromFont(self, font):
         defaults = {}
         for axisDescriptor in self.doc.axes:
             defaults[axisDescriptor.name] = axisDescriptor.default
         sourceDescriptor = KeyedSourceDescriptor()
+        sourceDescriptor.wasEditedCallback = self.sourceDescriptorWasEditedCallback
         sourceDescriptor.path = font.path
         sourceDescriptor.familyName = font.info.familyName
         sourceDescriptor.styleName = font.info.styleName
@@ -1982,10 +2025,10 @@ class DesignSpaceEditor(BaseWindowController):
         self.validate()
 
     def callbackMasterSelection(self, sender):
-        if len(sender.getSelection()) == 1:
-            self.mastersGroup.makeDefaultButton.enable(True)
-        else:
-            self.mastersGroup.makeDefaultButton.enable(False)
+        #if len(sender.getSelection()) == 1:
+        #    self.mastersGroup.makeDefaultButton.enable(True)
+        #else:
+        #    self.mastersGroup.makeDefaultButton.enable(False)
         for i in sender.getSelection():
             selectedItem = self.doc.sources[i]
             if selectedItem.sourceHasFileKey():
