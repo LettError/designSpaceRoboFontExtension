@@ -11,6 +11,7 @@ import vanilla
 from vanilla.dialogs import getFile, putFile, askYesNo
 from mojo.UI import AccordionView
 from mojo.roboFont import *
+import mojo.extensions
 import ufoLib
 
 if version[0] == '2':
@@ -48,6 +49,15 @@ defaultSymbol = chr(128313)
     step 2: on reading, calculate the absolute paths for the sources and instances
 
 """
+DEVELOP = False
+
+if DEVELOP:
+    pathForBundle = os.path.dirname(__file__)
+    resourcePathForBundle = os.path.join(os.path.dirname(pathForBundle), "resources")
+    designspaceBundle = mojo.extensions.ExtensionBundle(path=pathForBundle, resourcesName=resourcePathForBundle)
+else:
+    designspaceBundle = mojo.extensions.ExtensionBundle("DesignspaceEditor")
+
 
 #NSOBject Hack, please remove before release.
 def ClassNameIncrementer(clsName, bases, dct):
@@ -697,7 +707,9 @@ class DesignSpaceEditor(BaseWindowController):
         ]
 
     def __init__(self, designSpacePath=None):
-        print("running from", __file__)
+        self._documentIconImagePath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_designspace.pdf")
+        self._documentIconImage = AppKit.NSImage.alloc().initWithContentsOfFile_(self._documentIconImagePath)
+        print("self._documentIconImage", self._documentIconImage)
         self.settingsIdentifier = "%s.%s" % (designSpaceEditorSettings.settingsIdentifier, "general")
         self.updateFromSettings()        
         self.designSpacePath = designSpacePath
@@ -729,7 +741,7 @@ class DesignSpaceEditor(BaseWindowController):
                 'itemIdentifier': "toolbarSave",
                 'label': 'Save',
                 'callback': self.save,
-                'imageNamed': "toolbarScriptOpen",
+                'imagePath': self._documentIconImagePath,
             },
             {
                 'itemIdentifier': "addOpenFonts",
