@@ -8,7 +8,7 @@
 			<key>path</key>
 			<string>openDesignSpaceFile.py</string>
 			<key>preferredName</key>
-			<string>Open DesignSpace</string>
+			<string>Open</string>
 			<key>shortKey</key>
 			<string></string>
 		</dict>
@@ -16,7 +16,7 @@
 			<key>path</key>
 			<string>newDesignSpaceFile.py</string>
 			<key>preferredName</key>
-			<string>New DesignSpace</string>
+			<string>New</string>
 			<key>shortKey</key>
 			<string></string>
 		</dict>
@@ -32,14 +32,14 @@
 	<key>mainScript</key>
 	<string>addDesignSpaceFileHandler.py</string>
 	<key>name</key>
-	<string>DesignSpaceEditor</string>
+	<string>DesignSpace</string>
 	<key>requiresVersionMajor</key>
 	<string>3</string>
 	<key>requiresVersionMinor</key>
-	<string>0</string>
+	<string>1</string>
 	<key>timeStamp</key>
-	<real>1528661728.32</real>
+	<real>1531168218.27</real>
 	<key>version</key>
-	<string>1.5</string>
+	<string>1.6</string>
 </dict>
 </plist>
