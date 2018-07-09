@@ -32,7 +32,7 @@
 	<key>mainScript</key>
 	<string>addDesignSpaceFileHandler.py</string>
 	<key>name</key>
-	<string>DesignSpace</string>
+	<string>DesignSpaceEdit</string>
 	<key>requiresVersionMajor</key>
 	<string>3</string>
 	<key>requiresVersionMinor</key>
