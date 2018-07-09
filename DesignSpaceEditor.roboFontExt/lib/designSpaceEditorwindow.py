@@ -198,7 +198,7 @@ class KeyedSourceDescriptor(AppKit.NSObject,
     
     @python_method
     def callbackCleanup(self):
-        print("sourcedescriptor callbackCleanup")
+        #print("sourcedescriptor callbackCleanup")
         self.wasEditedCallback = None
         
     @python_method
@@ -207,7 +207,7 @@ class KeyedSourceDescriptor(AppKit.NSObject,
         if self.path is not None:
             reader = ufoLib.UFOReader(self.path)
             return reader.getLayerNames()
-        print("no path, no layers")
+        #print("no path, no layers")
         return []
 
     @python_method
@@ -351,12 +351,12 @@ class KeyedSourceDescriptor(AppKit.NSObject,
                 AppKit.NSBeep()
         elif key == "sourceLayerNameKey":
             self.layerName = value
-        else:
-            print("KeyedSourceDescriptor", key, value)
+        #else:
+        #    print("KeyedSourceDescriptor", key, value)
         if self.wasEditedCallback is not None:
             self.wasEditedCallback(self)
-        else:
-            print("KeyedSourceDescriptor.setValue_forUndefinedKey_ no wasEditedCallback")
+        #else:
+        #    print("KeyedSourceDescriptor.setValue_forUndefinedKey_ no wasEditedCallback")
     
     
 class KeyedInstanceDescriptor(AppKit.NSObject,
@@ -517,8 +517,8 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
                 self.location[axisName] = float(value)
             except ValueError:
                 NSBeep()
-        else:
-            print("KeyedInstanceDescriptor", key, value)
+        #else:
+        #    print("KeyedInstanceDescriptor", key, value)
             
     def instanceFamilyNameKey(self):
         return self.familyName
@@ -672,11 +672,11 @@ class ConditionDict(object):
     def __getitem__(self, key):
         if not key in self.data:
             raise IndexError
-        print("ConditionDict getting key", key)
+        #print("ConditionDict getting key", key)
     
     def __setitem__(self, key, value):
         self.data[key] = value
-        print("ConditionDict setting key", key, value)
+        #print("ConditionDict setting key", key, value)
 
 #a = ConditionDict()
 #a['a'] = 10
@@ -709,7 +709,7 @@ class DesignSpaceEditor(BaseWindowController):
     def __init__(self, designSpacePath=None):
         self._documentIconImagePath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_designspace.pdf")
         self._documentIconImage = AppKit.NSImage.alloc().initWithContentsOfFile_(self._documentIconImagePath)
-        print("self._documentIconImage", self._documentIconImage)
+        #print("self._documentIconImage", self._documentIconImage)
         self.settingsIdentifier = "%s.%s" % (designSpaceEditorSettings.settingsIdentifier, "general")
         self.updateFromSettings()        
         self.designSpacePath = designSpacePath
@@ -1517,8 +1517,8 @@ class DesignSpaceEditor(BaseWindowController):
         self.updatePaths()
         #for item in self.mastersItem:
         #    item.setName()
-        for des in self.doc.instances:
-            print(des)
+        #for des in self.doc.instances:
+        #    print(des)
         self.doc.write(self.designSpacePath)
         self.w.getNSWindow().setRepresentedURL_(AppKit.NSURL.fileURLWithPath_(self.designSpacePath))
         self.w.setTitle(os.path.basename(self.designSpacePath))
@@ -1567,8 +1567,8 @@ class DesignSpaceEditor(BaseWindowController):
         if not self._selectedRule: return
         if self._selectedConditionSetIndex is None:
             return
-        print("callbackEditRuleCondition", sender.getSelection(), sender.get())
-        print("editing", self._selectedConditionSetIndex)
+        #print("callbackEditRuleCondition", sender.getSelection(), sender.get())
+        #print("editing", self._selectedConditionSetIndex)
         edited = []
         for item in sender.get():
             d = {'minimum':None, 'maximum':None}
@@ -1590,12 +1590,12 @@ class DesignSpaceEditor(BaseWindowController):
                 d['maximum'] = v
             d['name'] = item['name']
             edited.append(d)
-        print("edited", edited)
+        #print("edited", edited)
         self._selectedRule.conditionSets[self._selectedConditionSetIndex] = edited
 
     def callbackSelectedConditionSet(self, sender=None):
         # vanilla callback for selecting a rule condition set
-        print("callbackSelectedConditionSet", sender.getSelection())
+        #print("callbackSelectedConditionSet", sender.getSelection())
         sel = sender.getSelection()
         if len(sel) != 1:
             # empty the conditions on display
@@ -1603,7 +1603,7 @@ class DesignSpaceEditor(BaseWindowController):
             self._selectedConditionSetIndex = None
             self.rulesGroup.conditions.set([])
             self.rulesGroup.conditions.setSelection([])
-            print("\tnothing selected, skipping")
+            #print("\tnothing selected, skipping")
             return
         sel = sel[0]
         self._selectedConditionSetIndex = sel
@@ -1620,9 +1620,9 @@ class DesignSpaceEditor(BaseWindowController):
                     v = ""
                 d[k]=v
             newThing.append(d)
-        print('setting thing:', thing, newThing)
+        #print('setting thing:', thing, newThing)
         self.rulesGroup.conditions.set(newThing)
-        print("callbackSelectedConditionSet thing", newThing)
+        #print("callbackSelectedConditionSet thing", newThing)
 
     def callbackRuleNameSelection(self, sender):
         selection = sender.getSelection()
@@ -1669,7 +1669,7 @@ class DesignSpaceEditor(BaseWindowController):
     
     def callbackConditionSetTools(self, sender):
         # vanilla callback for the +- button above the conditionsets
-        print("callbackConditionSetTools")
+        #print("callbackConditionSetTools")
         if sender.get() == 0:
             # + button
             if not self._selectedRule:
