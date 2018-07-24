@@ -1964,7 +1964,7 @@ class DesignSpaceEditor(BaseWindowController):
         # add the open fonts
         weHave = [s.path for s in self.doc.sources]
         for f in AllFonts():
-            if f.path not in weHave:
+            if f.path and f.path not in weHave:
                 self.addSourceFromFont(f)
         self.enableInstanceList()
         self.validate()
