@@ -427,10 +427,10 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
 
     def instanceHasFileKey(self):
         if self.path is None:
-            return u""
+            return ""
         if os.path.exists(self.path):
             return checkSymbol
-        return u""
+        return ""
     
     @python_method
     def getAxisValue(self, axisIndex):
@@ -888,7 +888,7 @@ class DesignSpaceEditor(BaseWindowController):
             ]
         axisNameColumnWidth = 100
         axisColDescriptions = [
-                {   'title': u"®",
+                {   'title': "®",
                     'key':'registeredTagKey',
                     'width':2*fileIconWidth,
                     'editable':False,
@@ -992,7 +992,7 @@ class DesignSpaceEditor(BaseWindowController):
             selectionStyle="momentary",
             callback=self.callbackAxisTools)
         self.axesGroup.axesFromMastersButton = Button(
-            first_and_secondButtonSize, u"Deduce from Masters",
+            first_and_secondButtonSize, "Deduce from Masters",
             callback=self.callbackAxesFromSources,
             sizeStyle="small")
         
@@ -1363,7 +1363,7 @@ class DesignSpaceEditor(BaseWindowController):
         if self.designSpacePath is None:
             return
         self.doc.problems = []
-        progress = ProgressWindow(u"Generating instance UFO’s…", 10, parentWindow=self.w)
+        progress = ProgressWindow("Generating instance UFO’s…", 10, parentWindow=self.w)
         try:
             messages = self.doc.generateUFO()
         except ufoProcessor.UFOProcessorError:
@@ -1401,7 +1401,7 @@ class DesignSpaceEditor(BaseWindowController):
             try:
                 newTitle = names[col-sourceColumnTitleOffset]
             except IndexError:
-                newTitle = u""
+                newTitle = ""
             column.setTitle_(newTitle)
         self.mastersItem.getNSTableView().reloadData()
 
@@ -1412,7 +1412,7 @@ class DesignSpaceEditor(BaseWindowController):
             try:
                 newTitle = names[col-instancesColumnTitleOffset]
             except IndexError:
-                newTitle = u""
+                newTitle = ""
             column.setTitle_(newTitle)
         self.instancesItem.getNSTableView().reloadData()
         
@@ -1890,7 +1890,7 @@ class DesignSpaceEditor(BaseWindowController):
     def callbackMasterTools(self, sender):
         if sender.get() == 0:
             # add a master
-            getFile(messageText=u"Add new UFO",
+            getFile(messageText="Add new UFO",
                 allowsMultipleSelection=True,
                 fileTypes=["ufo"],
                 parentWindow=self.w,
@@ -2099,7 +2099,7 @@ if __name__ == "__main__":
         aD.renameAxis("aaa", "bbb")
         assert aD.name == "bbb"
     
-        results = getFile(messageText=u"Select a DesignSpace file:", allowsMultipleSelection=True, fileTypes=["designspace"])
+        results = getFile(messageText="Select a DesignSpace file:", allowsMultipleSelection=True, fileTypes=["designspace"])
         if results is not None:
            for path in results:
                DesignSpaceEditor(path)
