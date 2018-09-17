@@ -6,7 +6,6 @@ from objc import python_method
 from defconAppKit.windows.baseWindow import BaseWindowController
 from mojo.extensions import getExtensionDefault, setExtensionDefault, ExtensionBundle
 from defconAppKit.windows.progressWindow import ProgressWindow
-from vanilla import *
 import vanilla
 from vanilla.dialogs import getFile, putFile, askYesNo
 from mojo.UI import AccordionView
@@ -18,8 +17,6 @@ if version[0] == '2':
     import fontParts.nonelab.font
 
 import logging
-
-from vanilla import *
 
 import ufoProcessor
 import fontTools.designspaceLib as dsd
@@ -60,21 +57,21 @@ else:
 
 
 #NSOBject Hack, please remove before release.
-# def ClassNameIncrementer(clsName, bases, dct):
-#    import objc
-#    orgName = clsName
-#    counter = 0
-#    while 1:
-#        try:
-#            objc.lookUpClass(clsName)
-#        except objc.nosuchclass_error:
-#            break
-#        counter += 1
-#        clsName = orgName + str(counter)
-#    return type(clsName, bases, dct)
+def ClassNameIncrementer(clsName, bases, dct):
+   import objc
+   orgName = clsName
+   counter = 0
+   while 1:
+       try:
+           objc.lookUpClass(clsName)
+       except objc.nosuchclass_error:
+           break
+       counter += 1
+       clsName = orgName + str(counter)
+   return type(clsName, bases, dct)
 
 class KeyedGlyphDescriptor(AppKit.NSObject,
-        # metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -135,7 +132,7 @@ def renameAxis(oldName, newName, location):
     return newLocation
 
 class KeyedRuleDescriptor(AppKit.NSObject,
-        # metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -171,7 +168,7 @@ class KeyedRuleDescriptor(AppKit.NSObject,
         return "rule: %s with %d conditionsets" % (self.name, len(self.conditionSets))
 
 class KeyedSourceDescriptor(AppKit.NSObject,
-        # metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -310,6 +307,7 @@ class KeyedSourceDescriptor(AppKit.NSObject,
         return self.getAxisValue(4)
 
     def setValue_forUndefinedKey_(self, value=None, key=None):
+        print("setValue_forUndefinedKey_ self.axisOrder", self.axisOrder)
         if key == "sourceFamilyNameKey":
             self.familyName = value
         elif key == "sourceUFONameKey":
@@ -360,7 +358,7 @@ class KeyedSourceDescriptor(AppKit.NSObject,
     
     
 class KeyedInstanceDescriptor(AppKit.NSObject,
-        # metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -533,7 +531,7 @@ def intOrFloat(num):
 
 
 class KeyedAxisDescriptor(AppKit.NSObject,
-        # metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
@@ -711,7 +709,7 @@ class DesignSpaceEditor(BaseWindowController):
         self._documentIconImage = AppKit.NSImage.alloc().initWithContentsOfFile_(self._documentIconImagePath)
         #print("self._documentIconImage", self._documentIconImage)
         self.settingsIdentifier = "%s.%s" % (designSpaceEditorSettings.settingsIdentifier, "general")
-        self.updateFromSettings()        
+        self.updateFromSettings()
         self.designSpacePath = designSpacePath
         self.doc = None
         self._newInstanceCounter = 1
@@ -724,7 +722,7 @@ class DesignSpaceEditor(BaseWindowController):
             fileNameTitle = "Untitled.designspace"
         else:
             fileNameTitle = os.path.basename(self.designSpacePath)
-        self.w = Window((940, 800), fileNameTitle)
+        self.w = vanilla.Window((940, 800), fileNameTitle)
         self._updatingTheAxesNames = False
         
         if version[0] == '2':
@@ -733,7 +731,6 @@ class DesignSpaceEditor(BaseWindowController):
             thisFontClass = None
         self.doc = LiveDesignSpaceProcessor(readerClass=KeyedDocReader, writerClass=KeyedDocWriter)
         self.doc.useVarlib = True
-
         _numberFormatter = AppKit.NSNumberFormatter.alloc().init()
 
         toolbarItems = [
@@ -767,7 +764,7 @@ class DesignSpaceEditor(BaseWindowController):
         ]
         self.w.addToolbar("DesignSpaceToolbar", toolbarItems)
         
-        fileIconWidth = 20
+        fileIconWidth = 30
         ufoNameWidth = 220
         axisValueWidth = 80
         familyNameWidth = 130
@@ -930,7 +927,7 @@ class DesignSpaceEditor(BaseWindowController):
                     'key':'hiddenKey',
                     'width':30,
                     #'editable':True,
-                    "cell": CheckBoxListCell()
+                    "cell": vanilla.CheckBoxListCell()
                 },
                 
                 {   'title': 'Map',
@@ -971,9 +968,9 @@ class DesignSpaceEditor(BaseWindowController):
         buttonHeight = 20
         titleOffset = 100
         sectionTitleSize = (50, 3, 100, 20)
-        self.axesGroup = self.w.axesGroup = Group((0,axesGroupStart,0,axesGroupHeight))
-        self.axesItem = List((0, toolbarHeight, -0, -0), [], columnDescriptions=axisColDescriptions, editCallback=self.callbackAxesListEdit)
-        self.axesGroup.title = TextBox(sectionTitleSize, "Axes")
+        self.axesGroup = self.w.axesGroup = vanilla.Group((0,axesGroupStart,0,axesGroupHeight))
+        self.axesItem = vanilla.List((0, toolbarHeight, -0, -0), [], columnDescriptions=axisColDescriptions, editCallback=self.callbackAxesListEdit)
+        self.axesGroup.title = vanilla.TextBox(sectionTitleSize, "Axes")
         self.axesGroup.l = self.axesItem
         linkButtonSize = (titleOffset+48, buttonMargin+1, 30, buttonHeight)
         firstButtonSize = (titleOffset+78,buttonMargin+1,50,buttonHeight)
@@ -986,34 +983,34 @@ class DesignSpaceEditor(BaseWindowController):
             {'title': "+", 'width': 20,},
             {'title': "-", 'width': 20}
             ]
-        self.axesGroup.tools = SegmentedButton(
+        self.axesGroup.tools = vanilla.SegmentedButton(
             (buttonMargin,buttonMargin,100,buttonHeight),
             segmentDescriptions=axisToolDescriptions,
             selectionStyle="momentary",
             callback=self.callbackAxisTools)
-        self.axesGroup.axesFromMastersButton = Button(
-            first_and_secondButtonSize, "Deduce from Masters",
-            callback=self.callbackAxesFromSources,
-            sizeStyle="small")
+        #self.axesGroup.axesFromMastersButton = Button(
+        #    first_and_secondButtonSize, "Deduce from Masters",
+        #    callback=self.callbackAxesFromSources,
+        #    sizeStyle="small")
         
-        self.mastersGroup = self.w.mastersGroup = Group((0,masterGroupStart,0,masterGroupHeight))
-        self.mastersGroup.title = TextBox(sectionTitleSize, "Masters")
+        self.mastersGroup = self.w.mastersGroup = vanilla.Group((0,masterGroupStart,0,masterGroupHeight))
+        self.mastersGroup.title = vanilla.TextBox(sectionTitleSize, "Masters")
         masterToolDescriptions = [
             {'title': "+", 'width': 20,},
             {'title': "-", 'width': 20},
             ]
-        self.mastersItem = List((0, toolbarHeight, -0, -0), [],
+        self.mastersItem = vanilla.List((0, toolbarHeight, -0, -0), [],
             columnDescriptions=masterColDescriptions,
             #doubleClickCallback=self.callbackMastersDblClick
             selectionCallback=self.callbackMasterSelection
             )
         self.mastersGroup.l = self.mastersItem
-        self.mastersGroup.tools = SegmentedButton(
+        self.mastersGroup.tools = vanilla.SegmentedButton(
             (buttonMargin, buttonMargin,100,buttonHeight),
             segmentDescriptions=masterToolDescriptions,
             selectionStyle="momentary",
             callback=self.callbackMasterTools)
-        self.mastersGroup.openButton = Button(
+        self.mastersGroup.openButton = vanilla.Button(
             firstButtonSize, "Open",
             callback=self.callbackOpenMaster,
             sizeStyle="small")
@@ -1023,19 +1020,19 @@ class DesignSpaceEditor(BaseWindowController):
         #    callback=self.callbackMakeDefaultMaster,
         #    sizeStyle="small")
         #self.mastersGroup.makeDefaultButton.enable(False)
-        self.mastersGroup.loadNamesFromSourceButton = Button(
+        self.mastersGroup.loadNamesFromSourceButton = vanilla.Button(
             thirdButtonSize, "Load Names",
             callback=self.callbackGetNamesFromSources,
             sizeStyle="small")
         self.mastersGroup.loadNamesFromSourceButton.enable(False)
         
-        self.instancesGroup = self.w.instancesGroup = Group((0,instanceGroupStart,0,instanceGroupHeight))
-        self.instancesGroup.title = TextBox(sectionTitleSize, "Instances")
-        self.instancesItem = List((0, toolbarHeight, -0, -0), [],
+        self.instancesGroup = self.w.instancesGroup = vanilla.Group((0,instanceGroupStart,0,instanceGroupHeight))
+        self.instancesGroup.title = vanilla.TextBox(sectionTitleSize, "Instances")
+        self.instancesItem = vanilla.List((0, toolbarHeight, -0, -0), [],
             columnDescriptions=instanceColDescriptions,
             selectionCallback=self.callbackInstanceSelection,
         )
-        self.instancesGroup.duplicateButton = Button(
+        self.instancesGroup.duplicateButton = vanilla.Button(
             secondButtonSize, "Duplicate",
             callback=self.callbackDuplicateInstance,
             sizeStyle="small")
@@ -1046,20 +1043,20 @@ class DesignSpaceEditor(BaseWindowController):
             {'title': "-", 'width': 20},
             ]
 
-        self.instancesGroup.tools = SegmentedButton(
+        self.instancesGroup.tools = vanilla.SegmentedButton(
             (buttonMargin, buttonMargin,100,buttonHeight),
             segmentDescriptions=instancesToolDescriptions,
             selectionStyle="momentary",
             callback=self.callbackInstanceTools)
         self.instancesGroup.l = self.instancesItem
-        self.instancesGroup.openButton = Button(
+        self.instancesGroup.openButton = vanilla.Button(
             firstButtonSize, "Open",
             callback=self.callbackOpenInstance,
             sizeStyle="small")
         self.instancesGroup.openButton.enable(False)
         
-        self.glyphsGroup = Group((0,0,0,0))
-        self.glyphsItem = List((0, toolbarHeight, -0, -0), [],
+        self.glyphsGroup = vanilla.Group((0,0,0,0))
+        self.glyphsItem = vanilla.List((0, toolbarHeight, -0, -0), [],
             columnDescriptions=glyphsColDescriptions,
             #selectionCallback=self.callbackInstanceSelection,
         )
@@ -1113,8 +1110,8 @@ class DesignSpaceEditor(BaseWindowController):
             ]
         
         listMargin = 5
-        self.rulesGroup = self.w.ruleGroup = Group((0,ruleGroupStart,0,ruleGroupHeight))
-        self.rulesGroup.title = TextBox((50, 3, 150, 20), "Rules")
+        self.rulesGroup = self.w.ruleGroup = vanilla.Group((0,ruleGroupStart,0,ruleGroupHeight))
+        self.rulesGroup.title = vanilla.TextBox((50, 3, 150, 20), "Rules")
         ruleToolbarHeight = 25
         self.rulesNames = vanilla.List((0,ruleToolbarHeight, 200,-0), [],
             columnDescriptions=ruleNameColDescriptions,
@@ -1124,16 +1121,17 @@ class DesignSpaceEditor(BaseWindowController):
         )
 
         ruleGlyphListLeftMargin = 200+listMargin
-        self.rulesGroup.title3 = TextBox((ruleGlyphListLeftMargin + 50, 3, 150, 20), "Subs")
+        self.rulesGroup.title3 = vanilla.TextBox((ruleGlyphListLeftMargin + 50, 3, 150, 20), "Subs")
         self.rulesGlyphs = vanilla.List((ruleGlyphListLeftMargin,ruleToolbarHeight, 200,-0), [],
             columnDescriptions=ruleGlyphsColDescriptions,
             editCallback = self.callbackEditRuleGlyphs,
+            selectionCallback = self.callbackGlyphsSubsSelection,
             drawFocusRing = False,
             showColumnTitles = False
         )
 
         ruleConditionSetListLeftMargin = 400+3*listMargin
-        self.rulesGroup.title2 = TextBox((ruleConditionSetListLeftMargin + 50, 3, 250, 20), "Conditionsets")
+        self.rulesGroup.title2 = vanilla.TextBox((ruleConditionSetListLeftMargin + 50, 3, 250, 20), "Conditionsets")
         self.rulesConditionSets = vanilla.List((ruleConditionSetListLeftMargin,ruleToolbarHeight, 100-listMargin,-0), [],
             #columnDescriptions=ruleConditionSetColDescriptions,
             selectionCallback = self.callbackSelectedConditionSet,
@@ -1150,28 +1148,29 @@ class DesignSpaceEditor(BaseWindowController):
             allowsMultipleSelection = False,
         )
 
-        self.rulesGroup.names = self.rulesNames
+        self.rulesGroup.rulesNameList = self.rulesNames
         self.rulesGroup.conditionSets = self.rulesConditionSets
         self.rulesGroup.conditions = self.rulesConditions
         self.rulesGroup.glyphs = self.rulesGlyphs
-        self.rulesGroup.tools = SegmentedButton(
+        # segmented button for + - rules
+        self.rulesGroup.tools = vanilla.SegmentedButton(
             (buttonMargin, buttonMargin,100,buttonHeight),
             segmentDescriptions=instancesToolDescriptions,
             selectionStyle="momentary",
             callback=self.callbackRulesTools)
-        self.rulesGroup.conditionSetTools = SegmentedButton(
+        self.rulesGroup.conditionSetTools = vanilla.SegmentedButton(
             (ruleConditionSetListLeftMargin, buttonMargin,100,buttonHeight),
             segmentDescriptions=instancesToolDescriptions,
             selectionStyle="momentary",
             callback=self.callbackConditionSetTools)
-        self.rulesGroup.glyphTools = SegmentedButton(
+        self.rulesGroup.glyphTools = vanilla.SegmentedButton(
             (ruleGlyphListLeftMargin, buttonMargin,100,buttonHeight),
             segmentDescriptions=instancesToolDescriptions,
             selectionStyle="momentary",
             callback=self.callbackRuleGlyphTools)
         
-        self.reportGroup = self.w.reportGroup = Group((0,reportGroupStart,0,-5))
-        self.reportGroup.text = EditText((0,toolbarHeight,-0,0), 'hehe')
+        self.reportGroup = self.w.reportGroup = vanilla.Group((0,reportGroupStart,0,-5))
+        self.reportGroup.text = vanilla.EditText((0,toolbarHeight,-0,0), 'hehe')
         
         descriptions = [
            dict(label="Axes", view=self.axesGroup, size=138, collapsed=False, canResize=False),
@@ -1185,7 +1184,6 @@ class DesignSpaceEditor(BaseWindowController):
         
         if self.designSpacePath is not None:
             self.read(self.designSpacePath)
-        #self.w.accordionView = AccordionView((0, 0, -0, -0), descriptions)
             self.updateAxesColumns()
         self.enableInstanceList()
         for sourceDescriptor in self.doc.sources:
@@ -1368,6 +1366,7 @@ class DesignSpaceEditor(BaseWindowController):
             messages = self.doc.generateUFO()
         except ufoProcessor.UFOProcessorError:
             error_type, error_instance, traceback = sys.exc_info()
+            print("xx error_instance.msg", type(error_instance.msg))
             self.doc.problems.append(str(error_instance.msg))
         except:
             import traceback
@@ -1375,7 +1374,7 @@ class DesignSpaceEditor(BaseWindowController):
         finally:
             progress.close()
         if self.doc.problems:
-            self.reportGroup.text.set("\n".join(self.doc.problems))
+            self.reportGroup.text.set("\n".join([str(s) for s in self.doc.problems]))
             
     def callbackBecameMain(self, sender):
         self.validate()
@@ -1389,6 +1388,8 @@ class DesignSpaceEditor(BaseWindowController):
         names = []
         for axis in self.doc.axes:
             names.append(axis.name)
+        print("updateAxesColumns", self.doc.axes)
+        print("updateAxesColumns", names)
         for descriptor in self.doc.instances:
             descriptor.setAxisOrder(names)
         for descriptor in self.doc.sources:
@@ -1426,8 +1427,8 @@ class DesignSpaceEditor(BaseWindowController):
         self.axesItem.set(self.doc.axes)
         self.mastersItem.set(self.doc.sources)
         self.instancesItem.set(self.doc.instances)
-        self.rulesGroup.names.set(self.doc.rules)
-        self.rulesGroup.names.setSelection([0])
+        self.rulesGroup.rulesNameList.set(self.doc.rules)
+        self.rulesGroup.rulesNameList.setSelection([0])
         self.updatePaths()
         self.doc.loadFonts()
         self.findDefault()
@@ -1598,21 +1599,29 @@ class DesignSpaceEditor(BaseWindowController):
         #print("callbackSelectedConditionSet", sender.getSelection())
         sel = sender.getSelection()
         if len(sel) != 1:
+            # no selected items
             # empty the conditions on display
-            # ZZZ
             self._selectedConditionSetIndex = None
             self.rulesGroup.conditions.set([])
             self.rulesGroup.conditions.setSelection([])
+            # disable the "-" segment
+            self.rulesGroup.conditionSetTools._nsObject.setEnabled_forSegment_(False, 1)
             #print("\tnothing selected, skipping")
             return
+        # selected items
+        # enable the "-" item
+        self.rulesGroup.conditionSetTools._nsObject.setEnabled_forSegment_(True, 1)
         sel = sel[0]
         self._selectedConditionSetIndex = sel
         self._setConditionsFromSelectedConditionSet()
     
     def _setConditionsFromSelectedConditionSet(self):
         # set the conditions from the selected condition set
+        if self._selectedConditionSetIndex is None:
+            return
         thing = self._selectedRule.conditionSets[self._selectedConditionSetIndex]
         newThing = []
+        # XXX make sure we add all the axes here
         for item in thing:
             d = {}
             for k, v in item.items():
@@ -1624,6 +1633,15 @@ class DesignSpaceEditor(BaseWindowController):
         self.rulesGroup.conditions.set(newThing)
         #print("callbackSelectedConditionSet thing", newThing)
 
+    def callbackGlyphsSubsSelection(self, sender):
+        # vanilla callback for selection in the rules subs / glyphs list
+        selection = sender.getSelection()
+        #print("callbackGlyphsSubsSelection", selection)
+        if not selection:
+            self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(False, 1)
+        else:            
+            self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(True, 1)
+        
     def callbackRuleNameSelection(self, sender):
         selection = sender.getSelection()
         self._selectedRule = None
@@ -1642,8 +1660,11 @@ class DesignSpaceEditor(BaseWindowController):
             self._selectedConditionSetIndex = None
             self.rulesGroup.glyphs.enable(False)
             self.rulesGroup.glyphTools.enable(False)
+            # ZZZ
+            self.rulesGroup.tools._nsObject.setEnabled_forSegment_(False, 1)
+            self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(False, 1)
         else:
-            self._selectedRule = self.rulesGroup.names[selection[0]]
+            self._selectedRule = self.rulesGroup.rulesNameList[selection[0]]
             self._selectedConditionSetIndex = 0
             self.rulesGroup.conditions.enable(True)
             self.rulesGroup.conditionSets.enable(True)
@@ -1654,11 +1675,13 @@ class DesignSpaceEditor(BaseWindowController):
             self._setGlyphNamesToList()
             self._settingGlyphsFlag = False
             self.rulesGroup.glyphTools.enable(True)
+            self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(False, 1)
+            self.rulesGroup.tools._nsObject.setEnabled_forSegment_(True, 1)
             
     def _updateConditionSetsList(self):
         conditionSetsForThisRule = []
         for i, conditionSet in enumerate(self._selectedRule.conditionSets):
-            conditionSetsForThisRule.append("set %d" % i)
+            conditionSetsForThisRule.append("set %d" % (i+1))
         self.rulesGroup.conditionSets.set(conditionSetsForThisRule)
     
     def _setGlyphNamesToList(self):
@@ -1683,6 +1706,19 @@ class DesignSpaceEditor(BaseWindowController):
                 newConditions.append(d)
             self._selectedRule.conditionSets.append(newConditions)
             self._setConditionsFromSelectedConditionSet()
+            self._updateConditionSetsList()
+        elif sender.get() == 1:
+            #print("callbackConditionSetTools delete conditionset")
+            # + button
+            if not self._selectedRule:
+                return
+            #print("self._selectedRule", self._selectedRule)
+            #print("self.rulesConditionSets", self.rulesConditionSets.getSelection())
+            selectedConditionSet = self.rulesConditionSets.getSelection()
+            #print("self._selectedRule.conditionSets 1", self._selectedRule.conditionSets)
+            for index in selectedConditionSet:
+                del self._selectedRule.conditionSets[index]
+            #print("self._selectedRule.conditionSets 2", self._selectedRule.conditionSets)
             self._updateConditionSetsList()
         # things
                 
@@ -1712,12 +1748,12 @@ class DesignSpaceEditor(BaseWindowController):
             return
         if not names in self._selectedRule.subs:
             self._selectedRule.subs.append(names)
-            self.rulesGroup.names.set(self.doc.rules)
+            self.rulesGroup.rulesNameList.set(self.doc.rules)
             
     def _checkRuleGlyphListHasEditableEmpty(self):
         if self._selectedRule is None:
             return
-        self.rulesGroup.names.set(self.doc.rules)
+        self.rulesGroup.rulesNameList.set(self.doc.rules)
 
     def callbackRulesTools(self, sender):
         # add or remove a rule
@@ -1733,9 +1769,9 @@ class DesignSpaceEditor(BaseWindowController):
             newRuleDescriptor.conditionSets.append(oneNewConditionSet)                    
             self._newRuleCounter += 1
             self.doc.addRule(newRuleDescriptor)
-            self.rulesGroup.names.set(self.doc.rules)
+            self.rulesGroup.rulesNameList.set(self.doc.rules)
         else:
-            selection = self.rulesGroup.names.getSelection()
+            selection = self.rulesGroup.rulesNameList.getSelection()
             if not selection:
                 # no selected rules, nothing to delete
                 return
@@ -1749,16 +1785,16 @@ class DesignSpaceEditor(BaseWindowController):
         if result != 1:
             return
         removeThese = []
-        for index in self.rulesGroup.names.getSelection():
-            removeThese.append(id(self.rulesGroup.names[index]))
+        for index in self.rulesGroup.rulesNameList.getSelection():
+            removeThese.append(id(self.rulesGroup.rulesNameList[index]))
         keepThese = []
         for item in self.doc.rules:
             if id(item) not in removeThese:
                 keepThese.append(item)
         self.doc.rules = keepThese
         self.updateRules()
-        #self.rulesGroup.names.set(self.doc.rules)
-        #self.rulesGroup.names.setSelection([])
+        #self.rulesGroup.rulesNameList.set(self.doc.rules)
+        #self.rulesGroup.rulesNameList.setSelection([])
     
     def _updateConditions(self, ruleDescriptor, defaults):
         # this is called when the axes have changed. More, fewer
@@ -1772,8 +1808,8 @@ class DesignSpaceEditor(BaseWindowController):
         
     def updateRules(self):
         # update the presentation of the rules
-        self.rulesGroup.names.set(self.doc.rules)
-        self.rulesGroup.names.setSelection([])
+        self.rulesGroup.rulesNameList.set(self.doc.rules)
+        self.rulesGroup.rulesNameList.setSelection([])
         
     def callbackAxesListEdit(self, sender):
         if self._updatingTheAxesNames == False:
