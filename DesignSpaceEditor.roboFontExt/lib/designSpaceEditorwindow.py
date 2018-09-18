@@ -57,21 +57,21 @@ else:
 
 
 #NSOBject Hack, please remove before release.
-def ClassNameIncrementer(clsName, bases, dct):
-   import objc
-   orgName = clsName
-   counter = 0
-   while 1:
-       try:
-           objc.lookUpClass(clsName)
-       except objc.nosuchclass_error:
-           break
-       counter += 1
-       clsName = orgName + str(counter)
-   return type(clsName, bases, dct)
+# def ClassNameIncrementer(clsName, bases, dct):
+#    import objc
+#    orgName = clsName
+#    counter = 0
+#    while 1:
+#        try:
+#            objc.lookUpClass(clsName)
+#        except objc.nosuchclass_error:
+#            break
+#        counter += 1
+#        clsName = orgName + str(counter)
+#    return type(clsName, bases, dct)
 
 class KeyedGlyphDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -132,7 +132,7 @@ def renameAxis(oldName, newName, location):
     return newLocation
 
 class KeyedRuleDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -168,7 +168,7 @@ class KeyedRuleDescriptor(AppKit.NSObject,
         return "rule: %s with %d conditionsets" % (self.name, len(self.conditionSets))
 
 class KeyedSourceDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -358,7 +358,7 @@ class KeyedSourceDescriptor(AppKit.NSObject,
     
     
 class KeyedInstanceDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -531,7 +531,7 @@ def intOrFloat(num):
 
 
 class KeyedAxisDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
@@ -1183,8 +1183,11 @@ class DesignSpaceEditor(BaseWindowController):
         ]
         
         if self.designSpacePath is not None:
+            print("Axes 1")
             self.read(self.designSpacePath)
+            print("Axes 2")
             self.updateAxesColumns()
+            print("Axes 3")
         self.enableInstanceList()
         for sourceDescriptor in self.doc.sources:
             sourceDescriptor.wasEditedCallback = self.sourceDescriptorWasEditedCallback
