@@ -5,6 +5,7 @@ import AppKit
 from objc import python_method
 from defconAppKit.windows.baseWindow import BaseWindowController
 from mojo.extensions import getExtensionDefault, setExtensionDefault, ExtensionBundle
+from mojo.events import publishEvent
 from defconAppKit.windows.progressWindow import ProgressWindow
 import vanilla
 from vanilla.dialogs import getFile, putFile, askYesNo
@@ -26,6 +27,12 @@ import ufoLib
 
 checkSymbol = chr(10003)
 defaultSymbol = chr(128313)
+
+try:
+    from variableFontGenerator import BatchDesignSpaceProcessor
+    hasVariableFontGenerator = True
+except ImportError:
+    hasVariableFontGenerator = False
 
 """
 
@@ -57,21 +64,21 @@ else:
 
 
 #NSOBject Hack, please remove before release.
-# def ClassNameIncrementer(clsName, bases, dct):
-#    import objc
-#    orgName = clsName
-#    counter = 0
-#    while 1:
-#        try:
-#            objc.lookUpClass(clsName)
-#        except objc.nosuchclass_error:
-#            break
-#        counter += 1
-#        clsName = orgName + str(counter)
-#    return type(clsName, bases, dct)
+def ClassNameIncrementer(clsName, bases, dct):
+   import objc
+   orgName = clsName
+   counter = 0
+   while 1:
+       try:
+           objc.lookUpClass(clsName)
+       except objc.nosuchclass_error:
+           break
+       counter += 1
+       clsName = orgName + str(counter)
+   return type(clsName, bases, dct)
 
 class KeyedGlyphDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -132,7 +139,7 @@ def renameAxis(oldName, newName, location):
     return newLocation
 
 class KeyedRuleDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -162,13 +169,14 @@ class KeyedRuleDescriptor(AppKit.NSObject,
             # rename this axis
             if len(value)>0:
                 self.name = value
+                self.setDocumentNeedSave(True)
     
     @python_method
     def __repr__(self):
         return "rule: %s with %d conditionsets" % (self.name, len(self.conditionSets))
 
 class KeyedSourceDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -358,7 +366,7 @@ class KeyedSourceDescriptor(AppKit.NSObject,
     
     
 class KeyedInstanceDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -531,7 +539,7 @@ def intOrFloat(num):
 
 
 class KeyedAxisDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
@@ -706,12 +714,18 @@ class DesignSpaceEditor(BaseWindowController):
 
     def __init__(self, designSpacePath=None):
         self._documentIconImagePath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_designspace.pdf")
-        self._documentIconImage = AppKit.NSImage.alloc().initWithContentsOfFile_(self._documentIconImagePath)
-        #print("self._documentIconImage", self._documentIconImage)
+        self._axesPath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_axes.pdf")
+        self._sourcesPath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_sources.pdf")
+        self._instancesPath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_instances.pdf")
+        self._rulesPath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_rules.pdf")
+        self._reportPath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_report.pdf")
+        self._savePath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_save.pdf")
+        self._generatePath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_generate.pdf")
         self.settingsIdentifier = "%s.%s" % (designSpaceEditorSettings.settingsIdentifier, "general")
         self.updateFromSettings()
         self.designSpacePath = designSpacePath
         self.doc = None
+        self.documentNeedSave = False
         self._newInstanceCounter = 1
         self._newRuleCounter = 1
         self._selectedRule = None
@@ -722,9 +736,8 @@ class DesignSpaceEditor(BaseWindowController):
             fileNameTitle = "Untitled.designspace"
         else:
             fileNameTitle = os.path.basename(self.designSpacePath)
-        self.w = vanilla.Window((940, 800), fileNameTitle)
+        self.w = vanilla.Window((940, 350), fileNameTitle)
         self._updatingTheAxesNames = False
-        
         if version[0] == '2':
             thisFontClass = fontParts.nonelab.font.RFont
         else:
@@ -732,25 +745,52 @@ class DesignSpaceEditor(BaseWindowController):
         self.doc = LiveDesignSpaceProcessor(readerClass=KeyedDocReader, writerClass=KeyedDocWriter)
         self.doc.useVarlib = True
         _numberFormatter = AppKit.NSNumberFormatter.alloc().init()
-
         toolbarItems = [
+            {
+                'itemIdentifier': "toolbarAxes",
+                'label': 'Axes',
+                'callback': self.showTab,
+                'imagePath': self._axesPath,
+            },
+            {
+                'itemIdentifier': "toolbarSources",
+                'label': 'Sources',
+                'callback': self.showTab,
+                'imagePath': self._sourcesPath,
+            },
+
+            {
+                'itemIdentifier': "toolbarInstances",
+                'label': 'Instances',
+                'callback': self.showTab,
+                'imagePath': self._instancesPath,
+            },
+            {
+                'itemIdentifier': "toolbarRules",
+                'label': 'Rules',
+                'callback': self.showTab,
+                'imagePath': self._rulesPath,
+            },
+            {
+                'itemIdentifier': "toolbarReport",
+                'label': 'Report',
+                'callback': self.showTab,
+                'imagePath': self._reportPath,
+            },
+            {
+                'itemIdentifier': AppKit.NSToolbarFlexibleSpaceItemIdentifier,
+            },
             {
                 'itemIdentifier': "toolbarSave",
                 'label': 'Save',
                 'callback': self.save,
-                'imagePath': self._documentIconImagePath,
-            },
-            {
-                'itemIdentifier': "addOpenFonts",
-                'label': 'Add Open Fonts',
-                'callback': self.callbackAddOpenFonts,
-                'imageNamed': "toolbarScriptOpen",
+                'imagePath': self._savePath,
             },
             {
                 'itemIdentifier': "generate",
                 'label': 'Generate',
                 'callback': self.callbackGenerate,
-                'imageNamed': "prefToolbarMisc",
+                'imagePath': self._generatePath,
             },
             {
                 'itemIdentifier': AppKit.NSToolbarFlexibleSpaceItemIdentifier,
@@ -765,7 +805,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.w.addToolbar("DesignSpaceToolbar", toolbarItems)
         
         fileIconWidth = 30
-        ufoNameWidth = 220
+        ufoNameWidth = 250
         axisValueWidth = 80
         familyNameWidth = 130
         masterColDescriptions = [
@@ -954,21 +994,17 @@ class DesignSpaceEditor(BaseWindowController):
                 },
         ]
         toolbarHeight = 24
-        axesGroupStart = 0
-        axesGroupHeight = 120
-        masterGroupStart = axesGroupHeight
-        instanceGroupHeight = masterGroupHeight = 175
-        instanceGroupStart = masterGroupStart + masterGroupHeight
-        ruleGroupStart = instanceGroupStart + instanceGroupHeight
-        ruleGroupHeight = 120
-        reportGroupStart = ruleGroupStart + ruleGroupHeight
-        
+        groupStart = 30
+        axesGroupHeight = 300
+        masterGroupHeight = 300
+        instanceGroupHeight = 300
+        ruleGroupHeight = 300
         
         buttonMargin = 2
         buttonHeight = 20
         titleOffset = 100
         sectionTitleSize = (50, 3, 100, 20)
-        self.axesGroup = self.w.axesGroup = vanilla.Group((0,axesGroupStart,0,axesGroupHeight))
+        self.axesGroup = self.w.axesGroup = vanilla.Group((0, groupStart,0, -30))
         self.axesItem = vanilla.List((0, toolbarHeight, -0, -0), [], columnDescriptions=axisColDescriptions, editCallback=self.callbackAxesListEdit)
         self.axesGroup.title = vanilla.TextBox(sectionTitleSize, "Axes")
         self.axesGroup.l = self.axesItem
@@ -993,7 +1029,7 @@ class DesignSpaceEditor(BaseWindowController):
         #    callback=self.callbackAxesFromSources,
         #    sizeStyle="small")
         
-        self.mastersGroup = self.w.mastersGroup = vanilla.Group((0,masterGroupStart,0,masterGroupHeight))
+        self.mastersGroup = self.w.mastersGroup = vanilla.Group((0,groupStart,0, -30))
         self.mastersGroup.title = vanilla.TextBox(sectionTitleSize, "Masters")
         masterToolDescriptions = [
             {'title': "+", 'width': 20,},
@@ -1015,6 +1051,10 @@ class DesignSpaceEditor(BaseWindowController):
             callback=self.callbackOpenMaster,
             sizeStyle="small")
         self.mastersGroup.openButton.enable(False)
+        self.mastersGroup.addOpenFontsButton = vanilla.Button(
+            first_and_secondButtonSize, "Add Open UFOs",
+            callback=self.callbackAddOpenFonts,
+            sizeStyle="small")
         #self.mastersGroup.makeDefaultButton = Button(
         #    secondButtonSize, "Make Default",
         #    callback=self.callbackMakeDefaultMaster,
@@ -1026,7 +1066,7 @@ class DesignSpaceEditor(BaseWindowController):
             sizeStyle="small")
         self.mastersGroup.loadNamesFromSourceButton.enable(False)
         
-        self.instancesGroup = self.w.instancesGroup = vanilla.Group((0,instanceGroupStart,0,instanceGroupHeight))
+        self.instancesGroup = self.w.instancesGroup = vanilla.Group((0,groupStart,0, -30))
         self.instancesGroup.title = vanilla.TextBox(sectionTitleSize, "Instances")
         self.instancesItem = vanilla.List((0, toolbarHeight, -0, -0), [],
             columnDescriptions=instanceColDescriptions,
@@ -1110,7 +1150,7 @@ class DesignSpaceEditor(BaseWindowController):
             ]
         
         listMargin = 5
-        self.rulesGroup = self.w.ruleGroup = vanilla.Group((0,ruleGroupStart,0,ruleGroupHeight))
+        self.rulesGroup = self.w.ruleGroup = vanilla.Group((0,groupStart,0, -30))
         self.rulesGroup.title = vanilla.TextBox((50, 3, 150, 20), "Rules")
         ruleToolbarHeight = 25
         self.rulesNames = vanilla.List((0,ruleToolbarHeight, 200,-0), [],
@@ -1169,7 +1209,7 @@ class DesignSpaceEditor(BaseWindowController):
             selectionStyle="momentary",
             callback=self.callbackRuleGlyphTools)
         
-        self.reportGroup = self.w.reportGroup = vanilla.Group((0,reportGroupStart,0,-5))
+        self.reportGroup = self.w.reportGroup = vanilla.Group((0,groupStart,0,-30))
         self.reportGroup.text = vanilla.EditText((0,toolbarHeight,-0,0), 'hehe')
         
         descriptions = [
@@ -1200,7 +1240,62 @@ class DesignSpaceEditor(BaseWindowController):
         
         self.w.vanillaWrapper = weakref.ref(self)
         self.setUpBaseWindowBehavior()
-            
+        
+        
+        # @@
+        self.axesGroup.show(True)
+        self.mastersGroup.show(False)
+        self.instancesGroup.show(False)
+        self.rulesGroup.show(False)
+        self.reportGroup.show(False)
+    
+    def showTab(self, sender):
+        print("showTab", sender.label())
+        wantTab = sender.label()
+        if wantTab == "Axes":
+            self.axesGroup.show(True)
+            self.mastersGroup.show(False)
+            self.instancesGroup.show(False)
+            self.rulesGroup.show(False)
+            self.reportGroup.show(False)
+        elif wantTab == "Sources":
+            self.axesGroup.show(False)
+            self.mastersGroup.show(True)
+            self.instancesGroup.show(False)
+            self.rulesGroup.show(False)
+            self.reportGroup.show(False)
+        elif wantTab == "Instances":
+            self.axesGroup.show(False)
+            self.mastersGroup.show(False)
+            self.instancesGroup.show(True)
+            self.rulesGroup.show(False)
+            self.reportGroup.show(False)
+        elif wantTab == "Rules":
+            self.axesGroup.show(False)
+            self.mastersGroup.show(False)
+            self.instancesGroup.show(False)
+            self.rulesGroup.show(True)
+            self.reportGroup.show(False)
+        elif wantTab == "Report":
+            self.axesGroup.show(False)
+            self.mastersGroup.show(False)
+            self.instancesGroup.show(False)
+            self.rulesGroup.show(False)
+            self.reportGroup.show(True)
+
+    def setDocumentNeedSave(self, state=True):
+        self.documentNeedSave = state
+        if state:
+            #self.w.file.saveButton.enable(True)
+            self.w.getNSWindow().setDocumentEdited_(True)
+        else:
+            #self.w.file.saveButton.enable(False)
+            self.w.getNSWindow().setDocumentEdited_(False)
+
+    def close(self):
+        # close the window
+        self.w.close()
+        
     def callbackCleanup(self, sender=None):
         self.w.document = None
         for source in self.doc.sources:
@@ -1223,6 +1318,7 @@ class DesignSpaceEditor(BaseWindowController):
         #self.updateDocumentPath()
         self.updatePaths()
         self.validate()
+        self.setDocumentNeedSave(True)
     
     def _getAxisNames(self):
         # return a list of current axis names
@@ -1463,7 +1559,7 @@ class DesignSpaceEditor(BaseWindowController):
             return paths[0]
         return None
             
-    def save(self, sender):
+    def save(self, sender=None):
         if self.designSpacePath is None:
             # get a filepath first
             saveToDir = self.getSaveDirFromMasters()    # near the masters
@@ -2076,10 +2172,6 @@ class DesignSpaceEditor(BaseWindowController):
         self.validate()
 
     def callbackMasterSelection(self, sender):
-        #if len(sender.getSelection()) == 1:
-        #    self.mastersGroup.makeDefaultButton.enable(True)
-        #else:
-        #    self.mastersGroup.makeDefaultButton.enable(False)
         for i in sender.getSelection():
             selectedItem = self.doc.sources[i]
             if selectedItem.sourceHasFileKey():
