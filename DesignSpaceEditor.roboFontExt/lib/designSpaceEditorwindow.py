@@ -5,6 +5,7 @@ import AppKit
 from objc import python_method
 from defconAppKit.windows.baseWindow import BaseWindowController
 from mojo.extensions import getExtensionDefault, setExtensionDefault, ExtensionBundle
+from mojo.events import publishEvent
 from defconAppKit.windows.progressWindow import ProgressWindow
 import vanilla
 from vanilla.dialogs import getFile, putFile, askYesNo
@@ -26,6 +27,12 @@ import ufoLib
 
 checkSymbol = chr(10003)
 defaultSymbol = chr(128313)
+
+try:
+    from variableFontGenerator import BatchDesignSpaceProcessor
+    hasVariableFontGenerator = True
+except ImportError:
+    hasVariableFontGenerator = False
 
 """
 
@@ -57,21 +64,21 @@ else:
 
 
 #NSOBject Hack, please remove before release.
-# def ClassNameIncrementer(clsName, bases, dct):
-#    import objc
-#    orgName = clsName
-#    counter = 0
-#    while 1:
-#        try:
-#            objc.lookUpClass(clsName)
-#        except objc.nosuchclass_error:
-#            break
-#        counter += 1
-#        clsName = orgName + str(counter)
-#    return type(clsName, bases, dct)
+def ClassNameIncrementer(clsName, bases, dct):
+   import objc
+   orgName = clsName
+   counter = 0
+   while 1:
+       try:
+           objc.lookUpClass(clsName)
+       except objc.nosuchclass_error:
+           break
+       counter += 1
+       clsName = orgName + str(counter)
+   return type(clsName, bases, dct)
 
 class KeyedGlyphDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -87,14 +94,6 @@ class KeyedGlyphDescriptor(AppKit.NSObject,
 
 
 class LiveDesignSpaceProcessor(ufoProcessor.DesignSpaceProcessor):
-    # def _instantiateFont(self, path):
-    #     """ Return a instance of a font object with all the given subclasses"""
-    #     for f in AllFonts():
-    #         if f.path == path:
-    #             return f
-    #     print("LiveDesignSpaceProcessor._instantiateFont with", self.fontClass)
-    #     # still needs to be a RF class
-    #     return RFont(path, showInterface=False)
 
     def loadFonts(self, reload=False):
         # Load the fonts and find the default candidate based on the info flag
@@ -132,7 +131,7 @@ def renameAxis(oldName, newName, location):
     return newLocation
 
 class KeyedRuleDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -167,8 +166,9 @@ class KeyedRuleDescriptor(AppKit.NSObject,
     def __repr__(self):
         return "rule: %s with %d conditionsets" % (self.name, len(self.conditionSets))
 
+
 class KeyedSourceDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -195,7 +195,6 @@ class KeyedSourceDescriptor(AppKit.NSObject,
     
     @python_method
     def callbackCleanup(self):
-        #print("sourcedescriptor callbackCleanup")
         self.wasEditedCallback = None
         
     @python_method
@@ -204,7 +203,6 @@ class KeyedSourceDescriptor(AppKit.NSObject,
         if self.path is not None:
             reader = ufoLib.UFOReader(self.path)
             return reader.getLayerNames()
-        #print("no path, no layers")
         return []
 
     @python_method
@@ -307,7 +305,6 @@ class KeyedSourceDescriptor(AppKit.NSObject,
         return self.getAxisValue(4)
 
     def setValue_forUndefinedKey_(self, value=None, key=None):
-        print("setValue_forUndefinedKey_ self.axisOrder", self.axisOrder)
         if key == "sourceFamilyNameKey":
             self.familyName = value
         elif key == "sourceUFONameKey":
@@ -349,16 +346,14 @@ class KeyedSourceDescriptor(AppKit.NSObject,
                 AppKit.NSBeep()
         elif key == "sourceLayerNameKey":
             self.layerName = value
-        #else:
-        #    print("KeyedSourceDescriptor", key, value)
         if self.wasEditedCallback is not None:
             self.wasEditedCallback(self)
-        #else:
-        #    print("KeyedSourceDescriptor.setValue_forUndefinedKey_ no wasEditedCallback")
-    
+
+    def setDocumentNeedSave(self, something=None):
+        xx
     
 class KeyedInstanceDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -515,8 +510,6 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
                 self.location[axisName] = float(value)
             except ValueError:
                 NSBeep()
-        #else:
-        #    print("KeyedInstanceDescriptor", key, value)
             
     def instanceFamilyNameKey(self):
         return self.familyName
@@ -531,7 +524,7 @@ def intOrFloat(num):
 
 
 class KeyedAxisDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
@@ -669,12 +662,9 @@ class ConditionDict(object):
         
     def __getitem__(self, key):
         if not key in self.data:
-            raise IndexError
-        #print("ConditionDict getting key", key)
-    
+            raise IndexError    
     def __setitem__(self, key, value):
         self.data[key] = value
-        #print("ConditionDict setting key", key, value)
 
 #a = ConditionDict()
 #a['a'] = 10
@@ -705,9 +695,16 @@ class DesignSpaceEditor(BaseWindowController):
         ]
 
     def __init__(self, designSpacePath=None):
+        self.documentNeedSave = False
         self._documentIconImagePath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_designspace.pdf")
-        self._documentIconImage = AppKit.NSImage.alloc().initWithContentsOfFile_(self._documentIconImagePath)
-        #print("self._documentIconImage", self._documentIconImage)
+        self._axesPath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_icon_axes.pdf")
+        self._sourcesPath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_icon_sources.pdf")
+        self._instancesPath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_icon_instances.pdf")
+        self._rulesPath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_icon_rules.pdf")
+        self._reportPath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_icon_report.pdf")
+        self._savePath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_icon_save.pdf")
+        self._generatePath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_icon_generate.pdf")
+        self._settingsIconPath = os.path.join(designspaceBundle.resourcesPath(), "toolbar_icon_settings.pdf")
         self.settingsIdentifier = "%s.%s" % (designSpaceEditorSettings.settingsIdentifier, "general")
         self.updateFromSettings()
         self.designSpacePath = designSpacePath
@@ -722,9 +719,13 @@ class DesignSpaceEditor(BaseWindowController):
             fileNameTitle = "Untitled.designspace"
         else:
             fileNameTitle = os.path.basename(self.designSpacePath)
-        self.w = vanilla.Window((940, 800), fileNameTitle)
+        self.w = vanilla.Window((940, 350),
+                fileNameTitle,
+                minSize=(800,300),
+                autosaveName = "com.letterror.designspaceeditor",
+                fullScreenMode = None,
+                )
         self._updatingTheAxesNames = False
-        
         if version[0] == '2':
             thisFontClass = fontParts.nonelab.font.RFont
         else:
@@ -732,25 +733,52 @@ class DesignSpaceEditor(BaseWindowController):
         self.doc = LiveDesignSpaceProcessor(readerClass=KeyedDocReader, writerClass=KeyedDocWriter)
         self.doc.useVarlib = True
         _numberFormatter = AppKit.NSNumberFormatter.alloc().init()
-
         toolbarItems = [
+            {
+                'itemIdentifier': "toolbarAxes",
+                'label': 'Axes',
+                'callback': self.showTab,
+                'imagePath': self._axesPath,
+            },
+            {
+                'itemIdentifier': "toolbarSources",
+                'label': 'Sources',
+                'callback': self.showTab,
+                'imagePath': self._sourcesPath,
+            },
+
+            {
+                'itemIdentifier': "toolbarInstances",
+                'label': 'Instances',
+                'callback': self.showTab,
+                'imagePath': self._instancesPath,
+            },
+            {
+                'itemIdentifier': "toolbarRules",
+                'label': 'Rules',
+                'callback': self.showTab,
+                'imagePath': self._rulesPath,
+            },
+            {
+                'itemIdentifier': AppKit.NSToolbarFlexibleSpaceItemIdentifier,
+            },
             {
                 'itemIdentifier': "toolbarSave",
                 'label': 'Save',
                 'callback': self.save,
-                'imagePath': self._documentIconImagePath,
-            },
-            {
-                'itemIdentifier': "addOpenFonts",
-                'label': 'Add Open Fonts',
-                'callback': self.callbackAddOpenFonts,
-                'imageNamed': "toolbarScriptOpen",
+                'imagePath': self._savePath,
             },
             {
                 'itemIdentifier': "generate",
                 'label': 'Generate',
                 'callback': self.callbackGenerate,
-                'imageNamed': "prefToolbarMisc",
+                'imagePath': self._generatePath,
+            },
+            {
+                'itemIdentifier': "toolbarReport",
+                'label': 'Report',
+                'callback': self.showTab,
+                'imagePath': self._reportPath,
             },
             {
                 'itemIdentifier': AppKit.NSToolbarFlexibleSpaceItemIdentifier,
@@ -759,13 +787,13 @@ class DesignSpaceEditor(BaseWindowController):
                 'itemIdentifier': "settings",
                 'label': 'Settings',
                 'callback': self.toolbarSettings,
-                'imageNamed': "prefToolbarMisc",
+                'imagePath': self._settingsIconPath,
             },
         ]
         self.w.addToolbar("DesignSpaceToolbar", toolbarItems)
         
         fileIconWidth = 30
-        ufoNameWidth = 220
+        ufoNameWidth = 250
         axisValueWidth = 80
         familyNameWidth = 130
         masterColDescriptions = [
@@ -954,21 +982,12 @@ class DesignSpaceEditor(BaseWindowController):
                 },
         ]
         toolbarHeight = 24
-        axesGroupStart = 0
-        axesGroupHeight = 120
-        masterGroupStart = axesGroupHeight
-        instanceGroupHeight = masterGroupHeight = 175
-        instanceGroupStart = masterGroupStart + masterGroupHeight
-        ruleGroupStart = instanceGroupStart + instanceGroupHeight
-        ruleGroupHeight = 120
-        reportGroupStart = ruleGroupStart + ruleGroupHeight
-        
-        
+        groupStart = 30
         buttonMargin = 2
         buttonHeight = 20
         titleOffset = 100
-        sectionTitleSize = (50, 3, 100, 20)
-        self.axesGroup = self.w.axesGroup = vanilla.Group((0,axesGroupStart,0,axesGroupHeight))
+        sectionTitleSize = (65, 3, 100, 20)
+        self.axesGroup = self.w.axesGroup = vanilla.Group((0, groupStart,0, -30))
         self.axesItem = vanilla.List((0, toolbarHeight, -0, -0), [], columnDescriptions=axisColDescriptions, editCallback=self.callbackAxesListEdit)
         self.axesGroup.title = vanilla.TextBox(sectionTitleSize, "Axes")
         self.axesGroup.l = self.axesItem
@@ -993,8 +1012,8 @@ class DesignSpaceEditor(BaseWindowController):
         #    callback=self.callbackAxesFromSources,
         #    sizeStyle="small")
         
-        self.mastersGroup = self.w.mastersGroup = vanilla.Group((0,masterGroupStart,0,masterGroupHeight))
-        self.mastersGroup.title = vanilla.TextBox(sectionTitleSize, "Masters")
+        self.mastersGroup = self.w.mastersGroup = vanilla.Group((0,groupStart,0, -30))
+        self.mastersGroup.title = vanilla.TextBox(sectionTitleSize, "Sources: UFOs and Layers")
         masterToolDescriptions = [
             {'title': "+", 'width': 20,},
             {'title': "-", 'width': 20},
@@ -1015,6 +1034,10 @@ class DesignSpaceEditor(BaseWindowController):
             callback=self.callbackOpenMaster,
             sizeStyle="small")
         self.mastersGroup.openButton.enable(False)
+        self.mastersGroup.addOpenFontsButton = vanilla.Button(
+            first_and_secondButtonSize, "Add Open UFOs",
+            callback=self.callbackAddOpenFonts,
+            sizeStyle="small")
         #self.mastersGroup.makeDefaultButton = Button(
         #    secondButtonSize, "Make Default",
         #    callback=self.callbackMakeDefaultMaster,
@@ -1026,7 +1049,7 @@ class DesignSpaceEditor(BaseWindowController):
             sizeStyle="small")
         self.mastersGroup.loadNamesFromSourceButton.enable(False)
         
-        self.instancesGroup = self.w.instancesGroup = vanilla.Group((0,instanceGroupStart,0,instanceGroupHeight))
+        self.instancesGroup = self.w.instancesGroup = vanilla.Group((0,groupStart,0, -30))
         self.instancesGroup.title = vanilla.TextBox(sectionTitleSize, "Instances")
         self.instancesItem = vanilla.List((0, toolbarHeight, -0, -0), [],
             columnDescriptions=instanceColDescriptions,
@@ -1110,7 +1133,7 @@ class DesignSpaceEditor(BaseWindowController):
             ]
         
         listMargin = 5
-        self.rulesGroup = self.w.ruleGroup = vanilla.Group((0,ruleGroupStart,0,ruleGroupHeight))
+        self.rulesGroup = self.w.ruleGroup = vanilla.Group((0,groupStart,0, -30))
         self.rulesGroup.title = vanilla.TextBox((50, 3, 150, 20), "Rules")
         ruleToolbarHeight = 25
         self.rulesNames = vanilla.List((0,ruleToolbarHeight, 200,-0), [],
@@ -1169,7 +1192,7 @@ class DesignSpaceEditor(BaseWindowController):
             selectionStyle="momentary",
             callback=self.callbackRuleGlyphTools)
         
-        self.reportGroup = self.w.reportGroup = vanilla.Group((0,reportGroupStart,0,-5))
+        self.reportGroup = self.w.reportGroup = vanilla.Group((0,groupStart,0,-30))
         self.reportGroup.text = vanilla.EditText((0,toolbarHeight,-0,0), 'hehe')
         
         descriptions = [
@@ -1183,11 +1206,8 @@ class DesignSpaceEditor(BaseWindowController):
         ]
         
         if self.designSpacePath is not None:
-            print("Axes 1")
             self.read(self.designSpacePath)
-            print("Axes 2")
             self.updateAxesColumns()
-            print("Axes 3")
         self.enableInstanceList()
         for sourceDescriptor in self.doc.sources:
             sourceDescriptor.wasEditedCallback = self.sourceDescriptorWasEditedCallback
@@ -1200,7 +1220,61 @@ class DesignSpaceEditor(BaseWindowController):
         
         self.w.vanillaWrapper = weakref.ref(self)
         self.setUpBaseWindowBehavior()
-            
+        
+        
+        # @@
+        self.axesGroup.show(True)
+        self.mastersGroup.show(False)
+        self.instancesGroup.show(False)
+        self.rulesGroup.show(False)
+        self.reportGroup.show(False)
+    
+    def showTab(self, sender):
+        wantTab = sender.label()
+        if wantTab == "Axes":
+            self.axesGroup.show(True)
+            self.mastersGroup.show(False)
+            self.instancesGroup.show(False)
+            self.rulesGroup.show(False)
+            self.reportGroup.show(False)
+        elif wantTab == "Sources":
+            self.axesGroup.show(False)
+            self.mastersGroup.show(True)
+            self.instancesGroup.show(False)
+            self.rulesGroup.show(False)
+            self.reportGroup.show(False)
+        elif wantTab == "Instances":
+            self.axesGroup.show(False)
+            self.mastersGroup.show(False)
+            self.instancesGroup.show(True)
+            self.rulesGroup.show(False)
+            self.reportGroup.show(False)
+        elif wantTab == "Rules":
+            self.axesGroup.show(False)
+            self.mastersGroup.show(False)
+            self.instancesGroup.show(False)
+            self.rulesGroup.show(True)
+            self.reportGroup.show(False)
+        elif wantTab == "Report":
+            self.axesGroup.show(False)
+            self.mastersGroup.show(False)
+            self.instancesGroup.show(False)
+            self.rulesGroup.show(False)
+            self.reportGroup.show(True)
+
+    def setDocumentNeedSave(self, state=True):
+        self.documentNeedSave = state
+        if state:
+            #self.w.file.saveButton.enable(True)
+            self.w.getNSWindow().setDocumentEdited_(True)
+        else:
+            #self.w.file.saveButton.enable(False)
+            self.w.getNSWindow().setDocumentEdited_(False)
+
+    def close(self):
+        # close the window
+        self.w.close()
+        
     def callbackCleanup(self, sender=None):
         self.w.document = None
         for source in self.doc.sources:
@@ -1223,6 +1297,7 @@ class DesignSpaceEditor(BaseWindowController):
         #self.updateDocumentPath()
         self.updatePaths()
         self.validate()
+        self.setDocumentNeedSave(True)
     
     def _getAxisNames(self):
         # return a list of current axis names
@@ -1369,7 +1444,6 @@ class DesignSpaceEditor(BaseWindowController):
             messages = self.doc.generateUFO()
         except ufoProcessor.UFOProcessorError:
             error_type, error_instance, traceback = sys.exc_info()
-            print("xx error_instance.msg", type(error_instance.msg))
             self.doc.problems.append(str(error_instance.msg))
         except:
             import traceback
@@ -1391,8 +1465,6 @@ class DesignSpaceEditor(BaseWindowController):
         names = []
         for axis in self.doc.axes:
             names.append(axis.name)
-        print("updateAxesColumns", self.doc.axes)
-        print("updateAxesColumns", names)
         for descriptor in self.doc.instances:
             descriptor.setAxisOrder(names)
         for descriptor in self.doc.sources:
@@ -1463,7 +1535,7 @@ class DesignSpaceEditor(BaseWindowController):
             return paths[0]
         return None
             
-    def save(self, sender):
+    def save(self, sender=None):
         if self.designSpacePath is None:
             # get a filepath first
             saveToDir = self.getSaveDirFromMasters()    # near the masters
@@ -1519,10 +1591,6 @@ class DesignSpaceEditor(BaseWindowController):
                 instanceDescriptor.filename = os.path.relpath(instanceDescriptor.filename, os.path.dirname(self.designSpacePath))
                 instanceDescriptor.makePath()
         self.updatePaths()
-        #for item in self.mastersItem:
-        #    item.setName()
-        #for des in self.doc.instances:
-        #    print(des)
         self.doc.write(self.designSpacePath)
         self.w.getNSWindow().setRepresentedURL_(AppKit.NSURL.fileURLWithPath_(self.designSpacePath))
         self.w.setTitle(os.path.basename(self.designSpacePath))
@@ -1571,8 +1639,6 @@ class DesignSpaceEditor(BaseWindowController):
         if not self._selectedRule: return
         if self._selectedConditionSetIndex is None:
             return
-        #print("callbackEditRuleCondition", sender.getSelection(), sender.get())
-        #print("editing", self._selectedConditionSetIndex)
         edited = []
         for item in sender.get():
             d = {'minimum':None, 'maximum':None}
@@ -1594,12 +1660,9 @@ class DesignSpaceEditor(BaseWindowController):
                 d['maximum'] = v
             d['name'] = item['name']
             edited.append(d)
-        #print("edited", edited)
         self._selectedRule.conditionSets[self._selectedConditionSetIndex] = edited
 
     def callbackSelectedConditionSet(self, sender=None):
-        # vanilla callback for selecting a rule condition set
-        #print("callbackSelectedConditionSet", sender.getSelection())
         sel = sender.getSelection()
         if len(sel) != 1:
             # no selected items
@@ -1609,7 +1672,6 @@ class DesignSpaceEditor(BaseWindowController):
             self.rulesGroup.conditions.setSelection([])
             # disable the "-" segment
             self.rulesGroup.conditionSetTools._nsObject.setEnabled_forSegment_(False, 1)
-            #print("\tnothing selected, skipping")
             return
         # selected items
         # enable the "-" item
@@ -1632,14 +1694,11 @@ class DesignSpaceEditor(BaseWindowController):
                     v = ""
                 d[k]=v
             newThing.append(d)
-        #print('setting thing:', thing, newThing)
         self.rulesGroup.conditions.set(newThing)
-        #print("callbackSelectedConditionSet thing", newThing)
 
     def callbackGlyphsSubsSelection(self, sender):
         # vanilla callback for selection in the rules subs / glyphs list
         selection = sender.getSelection()
-        #print("callbackGlyphsSubsSelection", selection)
         if not selection:
             self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(False, 1)
         else:            
@@ -1695,7 +1754,6 @@ class DesignSpaceEditor(BaseWindowController):
     
     def callbackConditionSetTools(self, sender):
         # vanilla callback for the +- button above the conditionsets
-        #print("callbackConditionSetTools")
         if sender.get() == 0:
             # + button
             if not self._selectedRule:
@@ -1711,17 +1769,12 @@ class DesignSpaceEditor(BaseWindowController):
             self._setConditionsFromSelectedConditionSet()
             self._updateConditionSetsList()
         elif sender.get() == 1:
-            #print("callbackConditionSetTools delete conditionset")
             # + button
             if not self._selectedRule:
                 return
-            #print("self._selectedRule", self._selectedRule)
-            #print("self.rulesConditionSets", self.rulesConditionSets.getSelection())
             selectedConditionSet = self.rulesConditionSets.getSelection()
-            #print("self._selectedRule.conditionSets 1", self._selectedRule.conditionSets)
             for index in selectedConditionSet:
                 del self._selectedRule.conditionSets[index]
-            #print("self._selectedRule.conditionSets 2", self._selectedRule.conditionSets)
             self._updateConditionSetsList()
         # things
                 
@@ -2058,7 +2111,6 @@ class DesignSpaceEditor(BaseWindowController):
             # that means we can't make a relative path
             # what to do? absolute path to the source?
             sourceDescriptor.filename = font.path
-        #print("XXX", sourceDescriptor.filename, sourceDescriptor.path)
         if len(self.mastersItem)==0:
             # this is the first master we're adding
             # make this the default so we have one.
@@ -2076,10 +2128,6 @@ class DesignSpaceEditor(BaseWindowController):
         self.validate()
 
     def callbackMasterSelection(self, sender):
-        #if len(sender.getSelection()) == 1:
-        #    self.mastersGroup.makeDefaultButton.enable(True)
-        #else:
-        #    self.mastersGroup.makeDefaultButton.enable(False)
         for i in sender.getSelection():
             selectedItem = self.doc.sources[i]
             if selectedItem.sourceHasFileKey():

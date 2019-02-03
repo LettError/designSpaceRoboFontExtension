@@ -46,7 +46,11 @@ class DesignSpaceOpener(object):
         DesignSpaceEditor(path)
         fileHandler["opened"] = True
 
+# install the designspace opener, but only if we don't have skateboard installed already
 try:
-    DesignSpaceOpener()
-except:
-    print("Could not add DesignSpaceOpener.")
+    import skateboard
+except ImportError:
+    try:
+        DesignSpaceOpener()
+    except:
+        print("Could not add DesignSpaceOpener.")
