@@ -8,15 +8,12 @@ from mojo.extensions import getExtensionDefault, setExtensionDefault, ExtensionB
 from mojo.events import publishEvent
 from defconAppKit.windows.progressWindow import ProgressWindow
 import vanilla
-from vanilla.dialogs import getFile, putFile, askYesNo
+from vanilla.dialogs import getFile, putFile, askYesNo, message
 from mojo.UI import AccordionView
 from mojo.roboFont import *
 import mojo.extensions
 import ufoLib
 import designspaceProblems
-print(designspaceProblems.__file__)
-#from importlib import reload
-#reload(designspaceProblems)
 from designspaceProblems import DesignSpaceChecker
 
 if version[0] == '2':
@@ -1234,6 +1231,10 @@ class DesignSpaceEditor(BaseWindowController):
         
         if self.designSpacePath is not None:
             self.read(self.designSpacePath)
+            if self.doc is None:
+                self.w.close()
+                message("DesignSpaceEdit: Something wrong with that file!")
+                return
             self.updateAxesColumns()
         self.enableInstanceList()
         for sourceDescriptor in self.doc.sources:
@@ -1288,14 +1289,13 @@ class DesignSpaceEditor(BaseWindowController):
             self.instancesGroup.show(False)
             self.rulesGroup.show(False)
             self.reportGroup.show(True)
+            self.validate()
 
     def setDocumentNeedSave(self, state=True):
         self.documentNeedSave = state
         if state:
-            #self.w.file.saveButton.enable(True)
             self.w.getNSWindow().setDocumentEdited_(True)
         else:
-            #self.w.file.saveButton.enable(False)
             self.w.getNSWindow().setDocumentEdited_(False)
 
     def close(self):
@@ -1341,15 +1341,13 @@ class DesignSpaceEditor(BaseWindowController):
         return self._getDefaultValue("%s.general" % settingsIdentifier, "instanceFolderName")
     
     def validate(self):
-        # validate with the designspaceErrors checker
+        # validate with the designspaceProblems checker
         checker = DesignSpaceChecker(self.doc)
         checker.checkEverything()
-        print(checker.problems)
         report = []
         for problem in checker.problems:
             icon=""
             cat, desc = problem.getDescription()
-            print('cat', cat)
             if problem.category in [0,1,2]:
                 icon="❗️"
             elif problem.category in [3,4,5]:
@@ -1363,87 +1361,7 @@ class DesignSpaceEditor(BaseWindowController):
             d = dict(problemIcon=icon, problemClass=cat, problemDescription=desc, problemData=data)
             report.append(d)
         self.reportGroup.text.set(report)
-        
-    def old_validate(self):
-        # validate all data and write a report here.
-        report = []
-        
-        # document and path
-        if self.designSpacePath is None:
-            if len(self.doc.sources)>0:
-                masterFolder = self.getSaveDirFromMasters()
-                report.append("Make sure to save this document in %s."%masterFolder)
-        else:
-            report.append("Document source folder:")
-            report.append("\t%s"%os.path.dirname(self.designSpacePath))
-
-        # axes
-        if len(self.doc.axes)==0:
-            report.append("Define one or more axes")
-        else:
-            report.append("Axes:")
-            for axis in self.doc.axes:
-                if axis.registeredTagKey():
-                    report.append("\t\"%s\" registered OpenType axis name."%axis.name)
-                else:
-                    report.append("\t\"%s\" is a non-standard axis name."%axis.name)
-                    for k, v in axis.labelNames.items():
-                        report.append("\t\tlabel name %s: \"%s\""%(k,v))
-        # masters
-        if len(self.doc.sources)==0:
-            report.append("Add two or more UFOs.")
-        else:
-            report.append("Masters:")
-            for master in self.doc.sources:
-                report.append("\t%s"%master.path)
-                if self.designSpacePath is not None:
-                    if os.path.dirname(master.path)!=os.path.dirname(self.designSpacePath):
-                        report.append("\tPlease move to the same folder as this document.")
-                if master.defaultMasterKey():
-                    report.append("\t\tThis master is the default.")
-        
-        # instances
-        if self.instanceFolderName is None:
-            report.append("No instance folder name set.")
-        else:
-            if self.designSpacePath is None:
-                path = "<document folder>"
-            else:
-                path = os.path.dirname(self.designSpacePath)
-            report.append("Instance folder:\n\t%s/%s"%(path, self.instanceFolderName))
             
-        if len(self.doc.instances)==0:
-            report.append("Define an instance.")
-        else:
-            report.append("Instances:")
-            for instance in self.doc.instances:
-                report.append("\t%s"%instance.path)
-        
-        # rules XXXX
-        axisData = {}
-        axisNames = []
-        for axis in self.doc.axes:
-            axisData[axis.name] = (axis.minimum, axis.maximum)
-            axisNames.append(axis.name)
-        if len(self.doc.rules)==0:
-            report.append("No rules defined.")
-        else:
-            report.append("Rules:")
-            for rule in self.doc.rules:
-                for cd in rule.conditions:
-                    conditionAxis = cd['name']
-                    if conditionAxis not in axisNames:
-                        report.append("\tCondition in rule %s references unknown axis %s"%(rule.name, cd['name']))
-                    if conditionAxis in axisData:
-                        axisMin, axisMax = axisData[conditionAxis]
-                        if cd.get('minimum') is None:
-                            report.append("\tCondition in rule %s has no minimum on axis %s, will use %3.3f from axis"%(rule.name, conditionAxis, axisMin))
-                        elif cd.get('maximum') is None:
-                            report.append("\tCondition in rule %s has no maximum on axis %s, will use %3.3f from axis"%(rule.name, conditionAxis, axisMax))
-                                
-        
-        self.reportGroup.text.set("\n".join(report))
-    
     def updateFromSettings(self):
         extensionSettings = getExtensionDefault(self.settingsIdentifier, dict())
         self.instanceFolderName = extensionSettings.get('instanceFolderName', "instances")
@@ -1514,6 +1432,8 @@ class DesignSpaceEditor(BaseWindowController):
     def updateAxesColumns(self):
         # present the axis names above all the columns.
         names = []
+        if self.doc is None:
+            return
         for axis in self.doc.axes:
             names.append(axis.name)
         for descriptor in self.doc.instances:
