@@ -13,6 +13,11 @@ from mojo.UI import AccordionView
 from mojo.roboFont import *
 import mojo.extensions
 import ufoLib
+import designspaceProblems
+print(designspaceProblems.__file__)
+#from importlib import reload
+#reload(designspaceProblems)
+from designspaceProblems import DesignSpaceChecker
 
 if version[0] == '2':
     import fontParts.nonelab.font
@@ -776,7 +781,7 @@ class DesignSpaceEditor(BaseWindowController):
             },
             {
                 'itemIdentifier': "toolbarReport",
-                'label': 'Report',
+                'label': 'Problems',
                 'callback': self.showTab,
                 'imagePath': self._reportPath,
             },
@@ -1193,7 +1198,29 @@ class DesignSpaceEditor(BaseWindowController):
             callback=self.callbackRuleGlyphTools)
         
         self.reportGroup = self.w.reportGroup = vanilla.Group((0,groupStart,0,-30))
-        self.reportGroup.text = vanilla.EditText((0,toolbarHeight,-0,0), 'hehe')
+        reportColumns = [
+                {   'title': '',
+                    'key':'problemIcon',
+                    'width':2*fileIconWidth,
+                    'editable':False,
+                },
+                {   'title': 'Data',
+                    'key':'problemClass',
+                    'width':160,
+                    'editable':False,
+                },
+                {   'title': 'Description',
+                    'key':'problemDescription',
+                    'width':400,
+                    'editable':False,
+                },
+                {   'title': 'Data',
+                    'key':'problemData',
+                    'width':500,
+                    'editable':False,
+                },
+            ]
+        self.reportGroup.text = vanilla.List((0,toolbarHeight,-0,0), columnDescriptions=reportColumns, items=[])
         
         descriptions = [
            dict(label="Axes", view=self.axesGroup, size=138, collapsed=False, canResize=False),
@@ -1255,7 +1282,7 @@ class DesignSpaceEditor(BaseWindowController):
             self.instancesGroup.show(False)
             self.rulesGroup.show(True)
             self.reportGroup.show(False)
-        elif wantTab == "Report":
+        elif wantTab == "Problems":
             self.axesGroup.show(False)
             self.mastersGroup.show(False)
             self.instancesGroup.show(False)
@@ -1314,6 +1341,30 @@ class DesignSpaceEditor(BaseWindowController):
         return self._getDefaultValue("%s.general" % settingsIdentifier, "instanceFolderName")
     
     def validate(self):
+        # validate with the designspaceErrors checker
+        checker = DesignSpaceChecker(self.doc)
+        checker.checkEverything()
+        print(checker.problems)
+        report = []
+        for problem in checker.problems:
+            icon=""
+            cat, desc = problem.getDescription()
+            print('cat', cat)
+            if problem.category in [0,1,2]:
+                icon="❗️"
+            elif problem.category in [3,4,5]:
+                icon="❕"
+            data = ""
+            if problem.data:
+                t = []
+                for k, v in problem.data.items():
+                    t.append("%s: %s" % (k, str(v)))
+                data = ", ".join(t)
+            d = dict(problemIcon=icon, problemClass=cat, problemDescription=desc, problemData=data)
+            report.append(d)
+        self.reportGroup.text.set(report)
+        
+    def old_validate(self):
         # validate all data and write a report here.
         report = []
         
@@ -1494,9 +1545,14 @@ class DesignSpaceEditor(BaseWindowController):
         
     def read(self, designSpacePath):
         if designSpacePath is not None:
-            self.doc.read(designSpacePath)
-        if len(self.doc.axes)==0:
-            self.doc.checkAxes()
+            try:
+                self.doc.read(designSpacePath)
+            except:
+                self.doc = None
+                self.validate()
+                return
+        #if len(self.doc.axes)==0:
+        #    self.doc.checkAxes()
         for item in self.doc.axes:
             item.controller = weakref.ref(self)
         self.axesItem.set(self.doc.axes)
