@@ -1,5 +1,5 @@
 # generated from problems.py
-from errors import DesignSpaceProblem
+from designspaceProblems.problems import DesignSpaceProblem
 def fileCorruptProblem(**kwargs):
     # file corrupt, (0, 0)
     return DesignSpaceProblem(0,0,data=kwargs)
@@ -108,9 +108,13 @@ def multipleInstancesOnLocationProblem(**kwargs):
     # multiple instances on location, (3, 4)
     return DesignSpaceProblem(3,4,data=kwargs)
 
-def instanceLocationIsAnisotropicProblem(**kwargs):
-    # instance location is anisotropic, (3, 5)
+def instanceLocationRequiresExtrapolationProblem(**kwargs):
+    # instance location requires extrapolation, (3, 5)
     return DesignSpaceProblem(3,5,data=kwargs)
+
+def instanceLocationIsAnisotropicProblem(**kwargs):
+    # instance location is anisotropic, (3, 9)
+    return DesignSpaceProblem(3,9,data=kwargs)
 
 def missingFamilyNameProblem(**kwargs):
     # missing family name, (3, 6)
@@ -124,10 +128,6 @@ def missingOutputPathProblem(**kwargs):
     # missing output path, (3, 8)
     return DesignSpaceProblem(3,8,data=kwargs)
 
-def duplicateInstancesProblem(**kwargs):
-    # duplicate instances, (3, 9)
-    return DesignSpaceProblem(3,9,data=kwargs)
-
 def noInstancesDefinedProblem(**kwargs):
     # no instances defined, (3, 10)
     return DesignSpaceProblem(3,10,data=kwargs)
@@ -136,12 +136,12 @@ def differentNumberOfContoursInGlyphProblem(**kwargs):
     # different number of contours in glyph, (4, 0)
     return DesignSpaceProblem(4,0,data=kwargs)
 
-def differentNumberOfComponentsInGlyphProblem(**kwargs):
-    # different number of components in glyph, (4, 1)
+def differentComponentsInGlyphProblem(**kwargs):
+    # different components in glyph, (4, 1)
     return DesignSpaceProblem(4,1,data=kwargs)
 
-def differentNumberOfAnchorsInGlyphProblem(**kwargs):
-    # different number of anchors in glyph, (4, 2)
+def differentAnchorsInGlyphProblem(**kwargs):
+    # different anchors in glyph, (4, 2)
     return DesignSpaceProblem(4,2,data=kwargs)
 
 def differentNumberOfOncurvePointsOnContourProblem(**kwargs):
@@ -255,3 +255,7 @@ def conditionValuesAreTheSameProblem(**kwargs):
 def duplicateConditionsProblem(**kwargs):
     # duplicate conditions, (7, 8)
     return DesignSpaceProblem(7,8,data=kwargs)
+
+def ruleWithoutANameProblem(**kwargs):
+    # rule without a name, (7, 9)
+    return DesignSpaceProblem(7,9,data=kwargs)

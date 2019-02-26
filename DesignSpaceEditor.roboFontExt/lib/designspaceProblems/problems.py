@@ -54,17 +54,16 @@ class DesignSpaceProblem(object):
         (3,3): "instance location has out of bounds value",
         (3,4): "multiple instances on location",
         (3,5): "instance location requires extrapolation",
-        (3,5): "instance location is anisotropic",
+        (3,9): "instance location is anisotropic",
         (3,6): "missing family name",
         (3,7): "missing style name",
         (3,8): "missing output path",
-        (3,9): "duplicate instances",
         (3,10): "no instances defined",
         
         # 4 glyphs
         (4,0): 'different number of contours in glyph',
-        (4,1): 'different number of components in glyph',
-        (4,2): 'different number of anchors in glyph',
+        (4,1): 'different components in glyph',
+        (4,2): 'different anchors in glyph',
         (4,3): 'different number of on-curve points on contour',
         (4,4): 'different number of off-curve points on contour',
         (4,5): 'curve has wrong type',
@@ -163,7 +162,7 @@ def makeErrorDocumentationTable():
     
 def makeFunctions(whiteSpace=None):
     # make descriptive function names
-    modl = ["# generated from problems.py", 'from errors import DesignSpaceProblem']
+    modl = ["# generated from problems.py", 'from designspaceProblems.problems import DesignSpaceProblem']
     if whiteSpace is None:
         whiteSpace = "    "
     text = []
