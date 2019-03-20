@@ -28,7 +28,7 @@
 	<key>html</key>
 	<false/>
 	<key>launchAtStartUp</key>
-	<true/>
+	<integer>1</integer>
 	<key>mainScript</key>
 	<string>addDesignSpaceFileHandler.py</string>
 	<key>name</key>
@@ -36,10 +36,10 @@
 	<key>requiresVersionMajor</key>
 	<string>3</string>
 	<key>requiresVersionMinor</key>
-	<string>2</string>
+	<string>1</string>
 	<key>timeStamp</key>
-	<real>1553085999.9040201</real>
+	<real>1550074156.428573</real>
 	<key>version</key>
-	<string>1.6.5</string>
+	<string>1.6.4</string>
 </dict>
 </plist>
