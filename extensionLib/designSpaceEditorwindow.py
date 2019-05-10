@@ -351,8 +351,8 @@ class KeyedSourceDescriptor(AppKit.NSObject,
         if self.wasEditedCallback is not None:
             self.wasEditedCallback(self)
 
-    def setDocumentNeedSave(self, something=None):
-        xx
+    #def setDocumentNeedSave(self, something=None):
+    #    xx
     
 class KeyedInstanceDescriptor(AppKit.NSObject,
         metaclass=ClassNameIncrementer
@@ -1211,6 +1211,7 @@ class DesignSpaceEditor(BaseWindowController):
             callback=self.callbackRuleGlyphTools)
         
         self.reportGroup = self.w.reportGroup = vanilla.Group((0,groupStart,0,-30))
+
         reportColumns = [
                 {   'title': '',
                     'key':'problemIcon',
@@ -1233,7 +1234,9 @@ class DesignSpaceEditor(BaseWindowController):
                     'editable':False,
                 },
             ]
+
         self.reportGroup.text = vanilla.List((0,toolbarHeight,-0,0), columnDescriptions=reportColumns, items=[])
+
         
         descriptions = [
            dict(label="Axes", view=self.axesGroup, size=138, collapsed=False, canResize=False),
@@ -1265,13 +1268,14 @@ class DesignSpaceEditor(BaseWindowController):
         self.w.vanillaWrapper = weakref.ref(self)
         self.setUpBaseWindowBehavior()
         
-        
-        # @@
         self.axesGroup.show(True)
         self.mastersGroup.show(False)
         self.instancesGroup.show(False)
         self.rulesGroup.show(False)
         self.reportGroup.show(False)
+
+        self.updateAxesColumns()
+        self.updateLocations()
     
     def showTab(self, sender):
         wantTab = sender.label()
@@ -1877,6 +1881,7 @@ class DesignSpaceEditor(BaseWindowController):
             # add axis button
             if len(self.doc.axes)<5:
                 axisDescriptor = KeyedAxisDescriptor()
+                print("axisDescriptor", axisDescriptor)
                 axisDescriptor.controller = weakref.ref(self)
                 axisDescriptor.name = "newAxis%d"%len(self.doc.axes)
                 axisDescriptor.tag = "nwx%d"%len(self.doc.axes)
@@ -1884,6 +1889,8 @@ class DesignSpaceEditor(BaseWindowController):
                 axisDescriptor.maximum = 1000
                 axisDescriptor.default = 0
                 self.doc.axes.append(axisDescriptor)
+                if self.doc.defaultLoc is None:
+                    self.doc.defaultLoc = {}
                 self.doc.defaultLoc[axisDescriptor.name] = axisDescriptor.default
                 self.updateAxesColumns()
                 self.updateLocations()

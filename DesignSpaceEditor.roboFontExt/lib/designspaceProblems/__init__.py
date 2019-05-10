@@ -7,7 +7,7 @@ import ufoProcessor
 from ufoProcessor import DesignSpaceProcessor, getUFOVersion, getLayer
 from ufoProcessor.varModels import AxisMapper
 from fontParts.fontshell import RFont
-from pprint import pprint
+#evefrom pprint import pprint
 from fontPens.digestPointPen import DigestPointStructurePen
 
 
@@ -31,6 +31,10 @@ def getUFOLayers(ufoPath):
 
 class DesignSpaceChecker(object):
     _registeredTags = dict(wght = 'weight', wdth = 'width', slnt = 'slant', opsz = 'optical', ital = 'italic')
+    _structuralProblems = [
+        
+    ]
+
     def __init__(self, pathOrObject):
         # check things
         self.problems = []
@@ -148,6 +152,7 @@ class DesignSpaceChecker(object):
             else:
                 if ad.tag in self._registeredTags:
                     regName = self._registeredTags[ad.tag]
+                    # no casing preference
                     if regName not in axisName.lower():
                         self.problems.append(DesignSpaceProblem(1,6, dict(axisName=axisName)))
                         axisOK = False
@@ -253,6 +258,7 @@ class DesignSpaceChecker(object):
         # check if all axes have on-axis masters
         for i, sd in enumerate(self.ds.sources):
             name = self.isOnAxis(sd.location)
+            #print("--", name, sd.location)
             if name:
                 onAxis |= set([name])
         for axisName in axisValues:
@@ -263,14 +269,14 @@ class DesignSpaceChecker(object):
         # test of a location is on-axis
         axisValues = self.data_getAxisValues()
         checks = []
-        whichAxis = None
+        lastAxis = None
         for axisName in axisValues.keys():
-            whichAxis = axisName
             default = axisValues.get(axisName)[1]
             if loc.get(axisName, default) != default:
                 checks.append(1)
+                lastAxis = axisName
         if sum(checks)<=1:
-            return whichAxis
+            return lastAxis
         return False
     
     def checkInstances(self):
@@ -298,7 +304,7 @@ class DesignSpaceChecker(object):
                                 self.problems.append(DesignSpaceProblem(3,3, dict(axisMinimum=mn, axisMaximum=mx, locationValue=axisValue)))
                                 self.problems.append(DesignSpaceProblem(3,5, dict(axisMinimum=mn, axisMaximum=mx, locationValue=axisValue)))
                         else:
-                            # doesn;t happen as ufoprocessor won't read add undefined axes to the locations
+                            # doesn't happen as ufoprocessor won't read add undefined axes to the locations
                             # 3,2   instance location has value for undefined axis
                             self.problems.append(DesignSpaceProblem(3,2, dict(axisName=axisName)))
         allLocations = {}
@@ -347,8 +353,8 @@ class DesignSpaceChecker(object):
                 self.problems.append(DesignSpaceProblem(4,7, dict(glyphName=name)))
             self.checkGlyph(name)
 
-
     def checkGlyph(self, glyphName):
+        # For this test all glyphs will be loaded.
         # 4.6 non-default glyph is empty
         # 4.8 contour has wrong direction
         items = self.ds.collectMastersForGlyph(glyphName)
@@ -358,7 +364,7 @@ class DesignSpaceChecker(object):
         anchors = {}
         for loc, mg, masters in items:
             pp = DigestPointStructurePen()
-            # get the structure of the glyph, count a couple of thing
+            # get the structure of the glyph, count a couple of things
             mg.drawPoints(pp)
             pat = pp.getDigest()
             for cm in mg.components:
@@ -406,7 +412,7 @@ class DesignSpaceChecker(object):
             # 4.3 different number of on-curve points on contour
             # 4.4 different number of off-curve points on contour
             # 4.5 curve has wrong type
-    
+
     def checkKerning(self):
         # 5,4 kerning pair missing
         # 5,1 no kerning in default
@@ -420,6 +426,9 @@ class DesignSpaceChecker(object):
             if fontObj == self.nf:
                 continue
             # 5,0 no kerning in source
+            #print("------ fontObj", fontObj.path)
+            #print("------ fontObj", fontObj.kerning)
+            #print("------ fontObj", fontObj.kerning.keys())
             if len(fontObj.kerning.keys()) == 0:
                 self.problems.append(DesignSpaceProblem(5,0, dict(fontObj=self.nf)))
             # 5,6 no kerning groups in source

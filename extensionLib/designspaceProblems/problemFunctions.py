@@ -60,8 +60,8 @@ def sourceUFOMissingProblem(**kwargs):
     # source UFO missing, (2, 1)
     return DesignSpaceProblem(2,1,data=kwargs)
 
-def sourceUFOFormatTooOldProblem(**kwargs):
-    # source UFO format too old, (2, 2)
+def sourceUFOFormatTooOldRecommendUpdateProblem(**kwargs):
+    # source UFO format too old, recommend update., (2, 2)
     return DesignSpaceProblem(2,2,data=kwargs)
 
 def sourceLayerMissingProblem(**kwargs):

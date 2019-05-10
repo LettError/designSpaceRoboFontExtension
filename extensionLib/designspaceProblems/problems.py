@@ -39,7 +39,7 @@ class DesignSpaceProblem(object):
         # 2 sources
         (2,0): "no sources defined",
         (2,1): "source UFO missing",
-        (2,2): "source UFO format too old",
+        (2,2): "source UFO format too old, recommend update.",
         (2,3): "source layer missing",
         (2,4): "source location missing",
         (2,5): "source location has value for undefined axis",
@@ -179,6 +179,8 @@ def makeFunctions(whiteSpace=None):
         new.append("Problem")
         new = ''.join(new)
         new = new.replace('-', '')
+        new = new.replace(',', '')
+        new = new.replace('.', '')
         func = "def %s(**kwargs):\n%s# %s, %s\n%sreturn DesignSpaceProblem(%d,%d,data=kwargs)\n" % (''.join(new), whiteSpace, desc, key, whiteSpace, key[0], key[1])
         modl.append(func)
     path = "./problemFunctions.py"
