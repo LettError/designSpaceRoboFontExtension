@@ -7,3 +7,4 @@ automatic_testfonts
 *.pyc
 DesignSpaceEditor.roboFontExt/lib/.pytest_cache
 drawbot
+issues

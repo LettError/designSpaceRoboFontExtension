@@ -46,8 +46,12 @@ class Settings(BaseWindowController):
 
         self.w.closeButton = Button((-190, y, -110, 20), "Cancel", callback=self.closeCallback, sizeStyle="small")
         self.w.closeButton.bind(".", ["command"])
-        self.w.closeButton.bind(chr(27), [])
 
+        try:
+            escChar = unichr(27)
+        except:
+            escChar = chr(27)
+        self.w.closeButton.bind(escChar, [])
         self.w.resetButton = Button((-280, y, -200, 20), "Reset", callback=self.resetCallback, sizeStyle="small")
 
         y += 30
