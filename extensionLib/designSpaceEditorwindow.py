@@ -1881,7 +1881,7 @@ class DesignSpaceEditor(BaseWindowController):
             # add axis button
             if len(self.doc.axes)<5:
                 axisDescriptor = KeyedAxisDescriptor()
-                print("axisDescriptor", axisDescriptor)
+                #print("axisDescriptor", axisDescriptor)
                 axisDescriptor.controller = weakref.ref(self)
                 axisDescriptor.name = "newAxis%d"%len(self.doc.axes)
                 axisDescriptor.tag = "nwx%d"%len(self.doc.axes)
