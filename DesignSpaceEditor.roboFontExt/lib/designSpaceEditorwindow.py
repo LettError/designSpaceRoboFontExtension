@@ -13,6 +13,7 @@ from mojo.UI import AccordionView
 from mojo.roboFont import *
 import mojo.extensions
 import ufoLib
+
 import designspaceProblems
 from designspaceProblems import DesignSpaceChecker
 
@@ -305,6 +306,16 @@ class KeyedSourceDescriptor(AppKit.NSObject,
         return self.getAxisValue(3)
     def sourceAxis_5(self):
         return self.getAxisValue(4)
+    def sourceAxis_6(self):
+        return self.getAxisValue(5)
+    def sourceAxis_7(self):
+        return self.getAxisValue(6)
+    def sourceAxis_8(self):
+        return self.getAxisValue(7)
+    def sourceAxis_9(self):
+        return self.getAxisValue(8)
+    def sourceAxis_10(self):
+        return self.getAxisValue(9)
 
     def setValue_forUndefinedKey_(self, value=None, key=None):
         if key == "sourceFamilyNameKey":
@@ -340,6 +351,46 @@ class KeyedSourceDescriptor(AppKit.NSObject,
                 AppKit.NSBeep()
         elif key == "sourceAxis_5":
             axisName = self.axisOrder[4]
+            try:
+                self.location[axisName] = float(value)
+                if self.wasEditedCallback:
+                    self.wasEditedCallback(self)
+            except (TypeError, ValueError):
+                AppKit.NSBeep()
+        elif key == "sourceAxis_6":
+            axisName = self.axisOrder[5]
+            try:
+                self.location[axisName] = float(value)
+                if self.wasEditedCallback:
+                    self.wasEditedCallback(self)
+            except (TypeError, ValueError):
+                AppKit.NSBeep()
+        elif key == "sourceAxis_7":
+            axisName = self.axisOrder[6]
+            try:
+                self.location[axisName] = float(value)
+                if self.wasEditedCallback:
+                    self.wasEditedCallback(self)
+            except (TypeError, ValueError):
+                AppKit.NSBeep()
+        elif key == "sourceAxis_8":
+            axisName = self.axisOrder[7]
+            try:
+                self.location[axisName] = float(value)
+                if self.wasEditedCallback:
+                    self.wasEditedCallback(self)
+            except (TypeError, ValueError):
+                AppKit.NSBeep()
+        elif key == "sourceAxis_9":
+            axisName = self.axisOrder[8]
+            try:
+                self.location[axisName] = float(value)
+                if self.wasEditedCallback:
+                    self.wasEditedCallback(self)
+            except (TypeError, ValueError):
+                AppKit.NSBeep()
+        elif key == "sourceAxis_10":
+            axisName = self.axisOrder[9]
             try:
                 self.location[axisName] = float(value)
                 if self.wasEditedCallback:
@@ -448,6 +499,16 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
         return self.getAxisValue(3)
     def instanceAxis_5(self):
         return self.getAxisValue(4)
+    def instanceAxis_6(self):
+        return self.getAxisValue(5)
+    def instanceAxis_7(self):
+        return self.getAxisValue(6)
+    def instanceAxis_8(self):
+        return self.getAxisValue(7)
+    def instanceAxis_9(self):
+        return self.getAxisValue(8)
+    def instanceAxis_10(self):
+        return self.getAxisValue(9)
 
     def instanceUFONameKey(self):
         if self.filename is not None:
@@ -508,6 +569,36 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
                 NSBeep()
         elif key == "instanceAxis_5":
             axisName = self.axisOrder[4]
+            try:
+                self.location[axisName] = float(value)
+            except ValueError:
+                NSBeep()
+        elif key == "instanceAxis_6":
+            axisName = self.axisOrder[5]
+            try:
+                self.location[axisName] = float(value)
+            except ValueError:
+                NSBeep()
+        elif key == "instanceAxis_7":
+            axisName = self.axisOrder[6]
+            try:
+                self.location[axisName] = float(value)
+            except ValueError:
+                NSBeep()
+        elif key == "instanceAxis_8":
+            axisName = self.axisOrder[7]
+            try:
+                self.location[axisName] = float(value)
+            except ValueError:
+                NSBeep()
+        elif key == "instanceAxis_9":
+            axisName = self.axisOrder[8]
+            try:
+                self.location[axisName] = float(value)
+            except ValueError:
+                NSBeep()
+        elif key == "instanceAxis_10":
+            axisName = self.axisOrder[9]
             try:
                 self.location[axisName] = float(value)
             except ValueError:
@@ -812,7 +903,7 @@ class DesignSpaceEditor(BaseWindowController):
         
         fileIconWidth = 30
         ufoNameWidth = 250
-        axisValueWidth = 80
+        axisValueWidth = 70
         familyNameWidth = 130
         masterColDescriptions = [
                 {   'title': '',
@@ -875,6 +966,36 @@ class DesignSpaceEditor(BaseWindowController):
                     'editable':True,
                     'formatter': _numberFormatter,
                 },
+                {   'title': 'Axis 6',
+                    'key':'sourceAxis_6',
+                    'width':axisValueWidth,
+                    'editable':True,
+                    'formatter': _numberFormatter,
+                },
+                {   'title': 'Axis 7',
+                    'key':'sourceAxis_7',
+                    'width':axisValueWidth,
+                    'editable':True,
+                    'formatter': _numberFormatter,
+                },
+                {   'title': 'Axis 8',
+                    'key':'sourceAxis_8',
+                    'width':axisValueWidth,
+                    'editable':True,
+                    'formatter': _numberFormatter,
+                },
+                {   'title': 'Axis 9',
+                    'key':'sourceAxis_9',
+                    'width':axisValueWidth,
+                    'editable':True,
+                    'formatter': _numberFormatter,
+                },
+                {   'title': 'Axis 10',
+                    'key':'sourceAxis_10',
+                    'width':axisValueWidth,
+                    'editable':True,
+                    'formatter': _numberFormatter,
+                },
         ]
         instanceColDescriptions = [
                 {   'title': '',
@@ -924,6 +1045,36 @@ class DesignSpaceEditor(BaseWindowController):
                 },
                 {   'title': 'Axis 5',
                     'key':'instanceAxis_5',
+                    'width':axisValueWidth,
+                    'editable':True,
+                    'formatter': _numberFormatter,
+                },
+                {   'title': 'Axis 6',
+                    'key':'instanceAxis_6',
+                    'width':axisValueWidth,
+                    'editable':True,
+                    'formatter': _numberFormatter,
+                },
+                {   'title': 'Axis 7',
+                    'key':'instanceAxis_7',
+                    'width':axisValueWidth,
+                    'editable':True,
+                    'formatter': _numberFormatter,
+                },
+                {   'title': 'Axis 8',
+                    'key':'instanceAxis_8',
+                    'width':axisValueWidth,
+                    'editable':True,
+                    'formatter': _numberFormatter,
+                },
+                {   'title': 'Axis 9',
+                    'key':'instanceAxis_9',
+                    'width':axisValueWidth,
+                    'editable':True,
+                    'formatter': _numberFormatter,
+                },
+                {   'title': 'Axis 10',
+                    'key':'instanceAxis_10',
                     'width':axisValueWidth,
                     'editable':True,
                     'formatter': _numberFormatter,
@@ -1340,7 +1491,6 @@ class DesignSpaceEditor(BaseWindowController):
             rule.renameAxis(oldName, newName)
         for axis in self.doc.axes:
             axis.renameAxis(oldName, newName)
-        #@@
         self.doc.defaultLoc = renameAxis(oldName, newName, self.doc.defaultLoc)
         self.updateRules()
         #self.updateDocumentPath()
@@ -1362,6 +1512,12 @@ class DesignSpaceEditor(BaseWindowController):
     def getInstancesFolder(self):
         return self._getDefaultValue("%s.general" % settingsIdentifier, "instanceFolderName")
     
+    def documentHasStructuralProblems(self):
+        checker = DesignSpaceChecker(self.doc)
+        checker.checkEverything()
+        r = checker.hasStructuralProblems()
+        return r
+
     def validate(self):
         # validate with the designspaceProblems checker
         checker = DesignSpaceChecker(self.doc)
@@ -1370,9 +1526,9 @@ class DesignSpaceEditor(BaseWindowController):
         for problem in checker.problems:
             icon=""
             cat, desc = problem.getDescription()
-            if problem.category in [0,1,2]:
+            if problem.isStructural():
                 icon="❗️"
-            elif problem.category in [3,4,5]:
+            else:
                 icon="❕"
             data = ""
             if problem.data:
@@ -1429,6 +1585,10 @@ class DesignSpaceEditor(BaseWindowController):
         #from mutatorMath.ufo import build
         if self.designSpacePath is None:
             return
+        if self.documentHasStructuralProblems():
+            AppKit.NSBeep()
+            message("This document had structural problems and can not generate UFOs.")
+            return
         self.doc.problems = []
         progress = ProgressWindow("Generating instance UFO’s…", 10, parentWindow=self.w)
         try:
@@ -1450,18 +1610,30 @@ class DesignSpaceEditor(BaseWindowController):
     def setInstanceFolderName(self, value):
         self.instanceFolderName = value
         self.validate()
-                
-    def updateAxesColumns(self):
-        # present the axis names above all the columns.
+    
+    def updateAxisOrders(self):
+        # we need to make an effort to make the axis order available to all the descriptors
         names = []
-        if self.doc is None:
-            return
         for axis in self.doc.axes:
             names.append(axis.name)
         for descriptor in self.doc.instances:
             descriptor.setAxisOrder(names)
         for descriptor in self.doc.sources:
             descriptor.setAxisOrder(names)
+        return names
+        
+    def updateAxesColumns(self):
+        # present the axis names above all the columns.
+        names = []
+        if self.doc is None:
+            return
+        names = self.updateAxisOrders()
+        # for axis in self.doc.axes:
+        #     names.append(axis.name)
+        # for descriptor in self.doc.instances:
+        #     descriptor.setAxisOrder(names)
+        # for descriptor in self.doc.sources:
+        #     descriptor.setAxisOrder(names)
         # clear the old names
         columns = self.mastersItem.getNSTableView().tableColumns()
         sourceColumnTitleOffset = 6    # index of the column where we can start messing with the names
@@ -1594,6 +1766,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.w.setTitle(os.path.basename(self.designSpacePath))
         self.instancesItem.set(self.doc.instances)
         self.validate()
+        print('saved at', self.designSpacePath)
     
     def updateLocations(self):
         # update all the displayed locations, we might have more or fewer axes
@@ -1879,9 +2052,8 @@ class DesignSpaceEditor(BaseWindowController):
     def callbackAxisTools(self, sender):
         if sender.get() == 0:
             # add axis button
-            if len(self.doc.axes)<5:
+            if len(self.doc.axes)<10:
                 axisDescriptor = KeyedAxisDescriptor()
-                #print("axisDescriptor", axisDescriptor)
                 axisDescriptor.controller = weakref.ref(self)
                 axisDescriptor.name = "newAxis%d"%len(self.doc.axes)
                 axisDescriptor.tag = "nwx%d"%len(self.doc.axes)
@@ -1962,6 +2134,7 @@ class DesignSpaceEditor(BaseWindowController):
             else:
                 text = "Do you want to delete %d instances?"%instanceCount
             result = askYesNo(messageText=text, informativeText="There is no undo.", parentWindow=self.w, resultCallback=self.finallyDeleteInstance)
+        self.updateAxisOrders()
         self.validate()
 
     def finallyDeleteInstance(self, result):
@@ -2119,6 +2292,8 @@ class DesignSpaceEditor(BaseWindowController):
             sourceDescriptor.makeDefault(True)
         self.doc.addSource(sourceDescriptor)
         self.mastersItem.set(self.doc.sources)
+        self.updateAxisOrders()
+        self.validate()
 
     def finalizeAddMaster(self, paths):
         for path in paths:

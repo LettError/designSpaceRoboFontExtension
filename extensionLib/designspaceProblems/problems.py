@@ -17,6 +17,14 @@ class DesignSpaceProblem(object):
         6: "font info",
         7: "rules",
         }
+    # problems that should prevent the designspace from doing anything
+    _structural = [
+        (0,0),
+        (1,0),(1,1),(1,2),(1,3),(1,4),(1,5),
+        (1,9),(1,10),(1,11), (1,12),
+        (2,0),(2,4),(2,7), (2,8),(2,9),(2,10),
+        ]
+
     _problems = {
         # 0 file 
         (0,0): "file corrupt",
@@ -114,6 +122,11 @@ class DesignSpaceProblem(object):
             return otherProblem == (self.category, self.problem)
         return (otherProblem.category,  otherProblem.error) == (self.category, self.problem)
 
+    def isStructural(self):
+        # return True if the problem is "structural"
+        # this means: the designspace is too broken to perform any kind of calculation
+        return (self.category, self.problem) in self._structural
+
     def getDescription(self):
         t = []
         key = (self.category, self.problem)
@@ -198,8 +211,26 @@ def testCompare():
                 print(key1, key2, e1 == e2)
                 print(e1.data)
 
+def showStructuralProblems():
+    # show which problems are marked as structural and which arent
+    e = DesignSpaceProblem()
+    s = []
+    ns = []
+    for k, v in e._problems.items():
+        if k in e._structural:
+            s.append((k, v))
+        else:
+            ns.append((k,v))
+    print("These problems are marked as structural, and will prevent the file from opening")
+    for k, v in s:
+        print("\t%s:\t%s" %(k, v))
+    print("\nThese problems are NOT marked as structural")
+    for k, v in ns:
+        print("\t%s:\t%s" %(k, v))
+
 if __name__ == "__main__":
     makeFunctions()
     makeErrorDocumentationTable()
+    showStructuralProblems()
     #testCompare()
     pass
