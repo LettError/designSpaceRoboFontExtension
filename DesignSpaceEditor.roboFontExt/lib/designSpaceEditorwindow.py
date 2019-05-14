@@ -1491,7 +1491,7 @@ class DesignSpaceEditor(BaseWindowController):
             rule.renameAxis(oldName, newName)
         for axis in self.doc.axes:
             axis.renameAxis(oldName, newName)
-        self.doc.defaultLoc = renameAxis(oldName, newName, self.doc.defaultLoc)
+        #self.doc.defaultLoc = renameAxis(oldName, newName, self.doc.defaultLoc)
         self.updateRules()
         #self.updateDocumentPath()
         self.updatePaths()
@@ -2061,9 +2061,9 @@ class DesignSpaceEditor(BaseWindowController):
                 axisDescriptor.maximum = 1000
                 axisDescriptor.default = 0
                 self.doc.axes.append(axisDescriptor)
-                if self.doc.defaultLoc is None:
-                    self.doc.defaultLoc = {}
-                self.doc.defaultLoc[axisDescriptor.name] = axisDescriptor.default
+                #if self.doc.defaultLoc is None:
+                #    self.doc.defaultLoc = {}
+                #self.doc.defaultLoc[axisDescriptor.name] = axisDescriptor.default
                 self.updateAxesColumns()
                 self.updateLocations()
                 self.axesItem.set(self.doc.axes)
