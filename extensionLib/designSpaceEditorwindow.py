@@ -1662,6 +1662,9 @@ class DesignSpaceEditor(BaseWindowController):
             try:
                 self.doc.read(designSpacePath)
             except:
+                #@@
+                error_type, error_instance, traceback = sys.exc_info()
+                print(str(error_instance.msg))
                 self.doc = None
                 self.validate()
                 return
@@ -1706,7 +1709,13 @@ class DesignSpaceEditor(BaseWindowController):
         return None
             
     def save(self, sender=None):
+        if len(self.doc.axes) == 0:
+            #@@ 
+            message(messageText="No axes defined!", informativeText="The designspace needs at least one axis before saving.")
+            return
         if self.designSpacePath is None:
+            # check if w have defined any axes
+            # can't save without axes
             # get a filepath first
             saveToDir = self.getSaveDirFromMasters()    # near the masters
             putFile(messageText="Save designspace:",
@@ -1766,6 +1775,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.w.setTitle(os.path.basename(self.designSpacePath))
         self.instancesItem.set(self.doc.instances)
         self.validate()
+        self.setDocumentNeedSave(False)
         print('saved at', self.designSpacePath)
     
     def updateLocations(self):
@@ -1939,6 +1949,7 @@ class DesignSpaceEditor(BaseWindowController):
             self._selectedRule.conditionSets.append(newConditions)
             self._setConditionsFromSelectedConditionSet()
             self._updateConditionSetsList()
+            self.setDocumentNeedSave(True)
         elif sender.get() == 1:
             # + button
             if not self._selectedRule:
@@ -1947,6 +1958,7 @@ class DesignSpaceEditor(BaseWindowController):
             for index in selectedConditionSet:
                 del self._selectedRule.conditionSets[index]
             self._updateConditionSetsList()
+            self.setDocumentNeedSave(True)
         # things
                 
     def callbackRuleGlyphTools(self, sender):
@@ -1957,6 +1969,7 @@ class DesignSpaceEditor(BaseWindowController):
             self._appendGlyphNameToRuleGlyphList(("#name", "#name"))
             #self._selectedRule.subs.append(("<glyph>", "<glyph>"))
             self._setGlyphNamesToList()
+            self.setDocumentNeedSave(True)
         else:
             if not self._selectedRule:
                 return
@@ -1968,6 +1981,7 @@ class DesignSpaceEditor(BaseWindowController):
         self._selectedRule.subs = keepThese
         self._checkRuleGlyphListHasEditableEmpty()
         self._setGlyphNamesToList()
+        self.setDocumentNeedSave(True)
     
     def _appendGlyphNameToRuleGlyphList(self, names):
         # and make sure the last one remains empty and editable
@@ -2067,6 +2081,7 @@ class DesignSpaceEditor(BaseWindowController):
                 self.updateAxesColumns()
                 self.updateLocations()
                 self.axesItem.set(self.doc.axes)
+                self.setDocumentNeedSave(True)
         elif sender.get() == 1:
             axisCount = len(self.axesItem.getSelection())
             if axisCount == 0:
@@ -2076,6 +2091,7 @@ class DesignSpaceEditor(BaseWindowController):
             else:
                 text = "Do you want to delete %d axes?"%axisCount
             result = askYesNo(messageText=text, informativeText="It will disappear from all masters and instances. There is no undo.", parentWindow=self.w, resultCallback=self.finallyDeleteAxis)
+            self.setDocumentNeedSave(True)
         self.validate()
 
     def finallyDeleteAxis(self, result):
@@ -2096,6 +2112,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.axesItem.set(self.doc.axes)
         self.findDefault()
         self.validate()
+        self.setDocumentNeedSave(True)
     
     def callbackInstanceTools(self, sender):
         if sender.get() == 0:
@@ -2136,6 +2153,7 @@ class DesignSpaceEditor(BaseWindowController):
             result = askYesNo(messageText=text, informativeText="There is no undo.", parentWindow=self.w, resultCallback=self.finallyDeleteInstance)
         self.updateAxisOrders()
         self.validate()
+        self.setDocumentNeedSave(True)
 
     def finallyDeleteInstance(self, result):
         if result != 1:
@@ -2150,6 +2168,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.doc.instances = keepThese
         self.instancesItem.set(self.doc.instances)
         self.validate()
+        self.setDocumentNeedSave(True)
             
     def callbackOpenInstance(self, sender):
         self.openSelectedItem(self.instancesItem)
@@ -2234,6 +2253,7 @@ class DesignSpaceEditor(BaseWindowController):
             if f.path not in weHave:
                 self.addSourceFromFont(f)
         self.enableInstanceList()
+        self.setDocumentNeedSave(True)
         self.validate()
 
     def enableInstanceList(self):
@@ -2261,6 +2281,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.mastersItem.set(self.doc.sources)
         self.enableInstanceList()
         self.validate()
+        self.setDocumentNeedSave(True)
     
     def sourceDescriptorWasEditedCallback(self, sd):
         # callback to be given to keyedSourceDescriptor when values are edited.
@@ -2294,6 +2315,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.mastersItem.set(self.doc.sources)
         self.updateAxisOrders()
         self.validate()
+        self.setDocumentNeedSave(True)
 
     def finalizeAddMaster(self, paths):
         for path in paths:
@@ -2313,6 +2335,7 @@ class DesignSpaceEditor(BaseWindowController):
                 return
         self.mastersGroup.openButton.enable(False)
         self.mastersGroup.loadNamesFromSourceButton.enable(False)
+        self.setDocumentNeedSave(True)
                 
     def callbackDuplicateInstance(self, sender):
         # duplicate the selected instance
@@ -2322,6 +2345,7 @@ class DesignSpaceEditor(BaseWindowController):
         for item in copies:
             self.doc.instances.append(item)
         self.instancesItem.set(self.doc.instances)
+        self.setDocumentNeedSave(True)
         
     def callbackInstanceSelection(self, sender):
         if len(sender.getSelection())>0:
