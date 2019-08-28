@@ -1,4 +1,4 @@
-import os, glob, plistlib
+import os, glob, plistlib, math
 import designspaceProblems.problems
 from importlib import reload
 reload(designspaceProblems.problems)
@@ -49,7 +49,7 @@ class DesignSpaceChecker(object):
         else:
             self.ds = pathOrObject
 
-    def data_getAxisValues(self, axisName=None):
+    def data_getAxisValues(self, axisName=None, mapped=True):
         # return the minimum / default / maximum for the axis
         # it's possible we ask for an axis that is not in the document.
         if self.ds is None:
@@ -58,11 +58,19 @@ class DesignSpaceChecker(object):
             # get all of them
             axes = {}
             for ad in self.ds.axes:
-                axes[ad.name] = (ad.minimum, ad.default, ad.maximum)
+                # should these be mapped?
+                #$$
+                if mapped:
+                    axes[ad.name] = (ad.map_forward(ad.minimum), ad.map_forward(ad.default), ad.map_forward(ad.maximum))
+                else:
+                    axes[ad.name] = (ad.minimum, ad.default, ad.maximum)
             return axes
         for ad in self.ds.axes:
             if ad.name == axisName:
-                return ad.minimum, ad.default, ad.maximum
+                if mapped:
+                    return (ad.map_forward(ad.minimum), ad.map_forward(ad.default), ad.map_forward(ad.maximum))
+                else:
+                    return ad.minimum, ad.default, ad.maximum
         return None
     
     def hasStructuralProblems(self):
@@ -106,7 +114,7 @@ class DesignSpaceChecker(object):
             self.checkFontInfo()
             self.checkGlyphs()
             self.checkRules()
-    
+            
     def checkDesignSpaceGeometry(self):
         # 1.0	no axes defined
         if len(self.ds.axes) == 0:
@@ -157,6 +165,7 @@ class DesignSpaceChecker(object):
                         axisOK = False
             allAxes.append(axisOK)
             if axisOK:
+                # get the mapped values
                 # check the map for this axis
                 # 1.8	mapping table has overlaps
                 inputs = []
@@ -173,6 +182,8 @@ class DesignSpaceChecker(object):
                         outputs.append(db)
                         last = a,b
                 if inputs:
+                    # the graph can only be positive or negative
+                    # it can't be both, so that's what we test for
                     if min(inputs)<0 and max(inputs)>0:
                         self.problems.append(DesignSpaceProblem(1,11, dict(axisName=axisName, axisMap=ad.map)))
                 if outputs:
@@ -180,10 +191,8 @@ class DesignSpaceChecker(object):
                         self.problems.append(DesignSpaceProblem(1,12, dict(axisName=axisName, axisMap=ad.map)))
 
         # XX
-        #print('allAxes', allAxes)
-        #if not False in allAxes:
-        #    self.mapper = AxisMapper(self.ds.axes)
-        #    print('self.mapper', self.mapper)
+        if not False in allAxes:
+           self.mapper = AxisMapper(self.ds.axes)
 
     def checkSources(self):
         axisValues = self.data_getAxisValues()
@@ -226,7 +235,7 @@ class DesignSpaceChecker(object):
                             else:
                                 # 2,5 source location has value for undefined axis
                                 self.problems.append(DesignSpaceProblem(2,5, dict(axisName=axisName)))
-        defaultLocation = self.ds.newDefaultLocation()
+        defaultLocation = self.ds.newDefaultLocation(bend=True)
         defaultCandidates = []
         for i, sd in enumerate(self.ds.sources):
             if sd.location == defaultLocation:
@@ -257,8 +266,7 @@ class DesignSpaceChecker(object):
         # check if all axes have on-axis masters
         for i, sd in enumerate(self.ds.sources):
             name = self.isOnAxis(sd.location)
-            #print("--", name, sd.location)
-            if name:
+            if name is not None and name is not False:
                 onAxis |= set([name])
         for axisName in axisValues:
             if axisName not in onAxis:
@@ -266,12 +274,27 @@ class DesignSpaceChecker(object):
 
     def isOnAxis(self, loc):
         # test of a location is on-axis
-        axisValues = self.data_getAxisValues()
+        # if a location is on the default, this will return None.
+        axisValues = self.data_getAxisValues(mapped=True)
         checks = []
         lastAxis = None
         for axisName in axisValues.keys():
             default = axisValues.get(axisName)[1]
-            if loc.get(axisName, default) != default:
+            if not axisName in loc:
+                # the axisName is not in the location
+                # assume it is the default, we don't need to test
+                isClose = False
+            elif type(loc[axisName]) is tuple:
+                # let's think about what we're testing here
+                # we want to find out whether this location is on an axis
+                # in case of an anisotropic value one of the values
+                # could be on the default and the other could be somewhere else.
+                # That would qualify as an on-axis.
+                vx, vy = loc[axisName]
+                isClose = math.isclose(vx, default) or math.isclose(vy, default)
+            else:
+                isClose = math.isclose(loc.get(axisName, default), default)
+            if not isClose:
                 checks.append(1)
                 lastAxis = axisName
         if sum(checks)<=1:
@@ -280,7 +303,7 @@ class DesignSpaceChecker(object):
     
     def checkInstances(self):
         axisValues = self.data_getAxisValues()
-        defaultLocation = self.ds.newDefaultLocation()
+        defaultLocation = self.ds.newDefaultLocation(bend=True)
         defaultCandidates = []
         if len(self.ds.instances) == 0:
             self.problems.append(DesignSpaceProblem(3, 10))
@@ -344,16 +367,16 @@ class DesignSpaceChecker(object):
         # 4.7 default glyph is empty
         for fontName, fontObj in self.ds.fonts.items():
             if fontObj is None:
-                #print('-------------- fontName', fontName)
                 continue
             for glyphName in fontObj.keys():
                 if not glyphName in glyphs:
                     glyphs[glyphName] = []
                 glyphs[glyphName].append(fontObj)
         for name in glyphs.keys():
-            if name not in self.nf:
-                self.problems.append(DesignSpaceProblem(4,7, dict(glyphName=name)))
-            self.checkGlyph(name)
+            if self.nf is not None:
+                if name not in self.nf:
+                    self.problems.append(DesignSpaceProblem(4,7, dict(glyphName=name)))
+                self.checkGlyph(name)
 
     def checkGlyph(self, glyphName):
         # For this test all glyphs will be loaded.
@@ -441,12 +464,8 @@ class DesignSpaceChecker(object):
             if fontObj == self.nf:
                 continue
             if fontObj is None:
-                #print('-------------- fontName kerning', fontName)
                 continue
             # 5,0 no kerning in source
-            #print("------ fontObj", fontObj.path)
-            #print("------ fontObj", fontObj.kerning)
-            #print("------ fontObj", fontObj.kerning.keys())
             if len(fontObj.kerning.keys()) == 0:
                 self.problems.append(DesignSpaceProblem(5,0, dict(fontObj=self.nf)))
             # 5,6 no kerning groups in source
@@ -486,7 +505,6 @@ class DesignSpaceChecker(object):
             if fontObj == self.nf:
                 continue
             if fontObj is None:
-                #print('-------------- fontName info', fontName)
                 continue
             # 6,4 source font unitsPerEm value different from default unitsPerEm
             if fontObj.info.unitsPerEm != self.nf.info.unitsPerEm:

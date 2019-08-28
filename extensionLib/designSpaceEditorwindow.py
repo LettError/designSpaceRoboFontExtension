@@ -55,6 +55,10 @@ except ImportError:
     ufo, we can write the document identical to how it was read.
     step 2: on reading, calculate the absolute paths for the sources and instances
 
+
+    # instances: doet niks - eerst saven, sluiten en dan weer openen
+    # axes toevoegen moet updaten bij rules
+    
 """
 DEVELOP = False
 
@@ -144,6 +148,13 @@ class KeyedRuleDescriptor(AppKit.NSObject,
         self.subs = []
         return self
 
+    @python_method
+    def updateAxes(self, axes):
+        #@@ this needs to update the axes references in the conditionsets
+        # new axis, deleted axis
+        print("updateAxes {} conditionsets{}".format(id(self), self.conditionSets))
+        pass
+        
     @python_method
     def renameAxis(self, oldName, newName=None):
         renamedConditions = []
@@ -828,6 +839,23 @@ class DesignSpaceEditor(BaseWindowController):
             fileNameTitle = "Untitled.designspace"
         else:
             fileNameTitle = os.path.basename(self.designSpacePath)
+
+        # read the document before building the window
+        if version[0] == '2':
+            thisFontClass = fontParts.nonelab.font.RFont
+        else:
+            thisFontClass = None
+        self.doc = LiveDesignSpaceProcessor(readerClass=KeyedDocReader, writerClass=KeyedDocWriter)
+        self.doc.useVarlib = True
+        if self.designSpacePath is not None:
+            try:
+                self.doc.read(self.designSpacePath)
+            except:
+                error_type, error_instance, traceback = sys.exc_info()
+                message("DesignSpaceEdit can't open this file", informativeText="Error reading {}.\n{}.".format(os.path.basename(self.designSpacePath), error_instance.msg))
+                return
+        
+        # so we have a document, now build a window
         self.w = vanilla.Window((940, 350),
                 fileNameTitle,
                 minSize=(800,300),
@@ -835,12 +863,6 @@ class DesignSpaceEditor(BaseWindowController):
                 fullScreenMode = None,
                 )
         self._updatingTheAxesNames = False
-        if version[0] == '2':
-            thisFontClass = fontParts.nonelab.font.RFont
-        else:
-            thisFontClass = None
-        self.doc = LiveDesignSpaceProcessor(readerClass=KeyedDocReader, writerClass=KeyedDocWriter)
-        self.doc.useVarlib = True
         _numberFormatter = AppKit.NSNumberFormatter.alloc().init()
         toolbarItems = [
             {
@@ -1176,11 +1198,6 @@ class DesignSpaceEditor(BaseWindowController):
             segmentDescriptions=axisToolDescriptions,
             selectionStyle="momentary",
             callback=self.callbackAxisTools)
-        #self.axesGroup.axesFromMastersButton = Button(
-        #    first_and_secondButtonSize, "Deduce from Masters",
-        #    callback=self.callbackAxesFromSources,
-        #    sizeStyle="small")
-        
         self.mastersGroup = self.w.mastersGroup = vanilla.Group((0,groupStart,0, -30))
         self.mastersGroup.title = vanilla.TextBox(sectionTitleSize, "Sources: UFOs and Layers")
         masterToolDescriptions = [
@@ -1207,11 +1224,6 @@ class DesignSpaceEditor(BaseWindowController):
             first_and_secondButtonSize, "Add Open UFOs",
             callback=self.callbackAddOpenFonts,
             sizeStyle="small")
-        #self.mastersGroup.makeDefaultButton = Button(
-        #    secondButtonSize, "Make Default",
-        #    callback=self.callbackMakeDefaultMaster,
-        #    sizeStyle="small")
-        #self.mastersGroup.makeDefaultButton.enable(False)
         self.mastersGroup.loadNamesFromSourceButton = vanilla.Button(
             thirdButtonSize, "Load Names",
             callback=self.callbackGetNamesFromSources,
@@ -1387,29 +1399,22 @@ class DesignSpaceEditor(BaseWindowController):
             ]
 
         self.reportGroup.text = vanilla.List((0,toolbarHeight,-0,0), columnDescriptions=reportColumns, items=[])
-
-        
         descriptions = [
            dict(label="Axes", view=self.axesGroup, size=138, collapsed=False, canResize=False),
            dict(label="Masters", view=self.mastersGroup, size=135, collapsed=False, canResize=True),
            dict(label="Instances", view=self.instancesGroup, size=135, collapsed=False, canResize=True),
            dict(label="Rules", view=self.rulesGroup, size=135, collapsed=False, canResize=True),
            dict(label="Report", view=self.reportGroup, size=170, collapsed=True, canResize=True),
-           #dict(label="Glyphs", view=self.glyphsGroup, size=250, collapsed=False, canResize=True),
-           # this panel will show glyphs and compatibiility.
         ]
         
-        if self.designSpacePath is not None:
-            self.read(self.designSpacePath)
-            if self.doc is None:
-                self.w.close()
-                message("DesignSpaceEdit: Something wrong with that file!")
-                return
-            self.updateAxesColumns()
         self.enableInstanceList()
         for sourceDescriptor in self.doc.sources:
             sourceDescriptor.wasEditedCallback = self.sourceDescriptorWasEditedCallback
         self.w.open()
+        
+        #@@
+        self.fillInterfaceWithDocumentData()
+        
         if self.designSpacePath is not None:
             self.w.getNSWindow().setRepresentedURL_(AppKit.NSURL.fileURLWithPath_(self.designSpacePath))
 
@@ -1418,13 +1423,11 @@ class DesignSpaceEditor(BaseWindowController):
         
         self.w.vanillaWrapper = weakref.ref(self)
         self.setUpBaseWindowBehavior()
-        
         self.axesGroup.show(True)
         self.mastersGroup.show(False)
         self.instancesGroup.show(False)
         self.rulesGroup.show(False)
         self.reportGroup.show(False)
-
         self.updateAxesColumns()
         self.updateLocations()
     
@@ -1657,19 +1660,7 @@ class DesignSpaceEditor(BaseWindowController):
             column.setTitle_(newTitle)
         self.instancesItem.getNSTableView().reloadData()
         
-    def read(self, designSpacePath):
-        if designSpacePath is not None:
-            try:
-                self.doc.read(designSpacePath)
-            except:
-                #@@
-                error_type, error_instance, traceback = sys.exc_info()
-                print(str(error_instance.msg))
-                self.doc = None
-                self.validate()
-                return
-        #if len(self.doc.axes)==0:
-        #    self.doc.checkAxes()
+    def fillInterfaceWithDocumentData(self):
         for item in self.doc.axes:
             item.controller = weakref.ref(self)
         self.axesItem.set(self.doc.axes)
@@ -1781,9 +1772,12 @@ class DesignSpaceEditor(BaseWindowController):
     def updateLocations(self):
         # update all the displayed locations, we might have more or fewer axes
         defaults = {}
+        values = {}
         # find the defined names
         for axisDescriptor in self.doc.axes:
+            print("updateLocations axisDescriptor", axisDescriptor.name)
             defaults[axisDescriptor.name] = axisDescriptor.default
+            values[axisDescriptor.name] = axisDescriptor.minimum, axisDescriptor.default, axisDescriptor.maximum
         for instanceDescriptor in self.doc.instances:
             self._updateLocation(instanceDescriptor, defaults)
         for sourceDescriptor in self.doc.sources:
@@ -2041,10 +2035,16 @@ class DesignSpaceEditor(BaseWindowController):
         # this is called when the axes have changed. More, fewer
         # so check the conditions and update them
         keepThese = []
+        print("_updateConditions {}\n{}".format(id(self), ruleDescriptor.conditionSets))
         for cd in ruleDescriptor.conditions:
             if cd.get('name') in defaults:
                 # we're good
                 keepThese.append(cd)
+        # but what about the new axes
+        print('keepThese', keepThese)
+        for axisName, default in defaults.items():
+            if not axisName in keepThese:
+                print('new axis for condition', axisName, default)
         ruleDescriptor.conditions = keepThese
         
     def updateRules(self):
@@ -2391,3 +2391,4 @@ if __name__ == "__main__":
         if results is not None:
            for path in results:
                DesignSpaceEditor(path)
+ 
