@@ -8,3 +8,4 @@ automatic_testfonts
 DesignSpaceEditor.roboFontExt/lib/.pytest_cache
 drawbot
 issues
+.DS_Store
