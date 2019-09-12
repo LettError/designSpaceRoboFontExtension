@@ -109,6 +109,8 @@ class DesignSpaceProblem(object):
         (7,7): 'condition values are the same',
         (7,8): 'duplicate conditions',
         (7,9): 'rule without a name',
+        (7,10): 'condition with missing minimum',
+        (7,11): 'condition with missing maximum',
         }
         
     def __init__(self, category=None, error=None, data=None):

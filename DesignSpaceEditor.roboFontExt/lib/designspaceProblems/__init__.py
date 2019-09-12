@@ -142,13 +142,20 @@ class DesignSpaceChecker(object):
             if ad.default is None:
                 self.problems.append(DesignSpaceProblem(1,4, dict(axisName=axisName)))
                 axisOK = False
+
+            # problem: in order to check the validity of the axis values
+            # we need to get the mapped values for minimum, default and maximum. 
+            # but any problems in the axis map can only be determined if we
+            # are sure the axis is valid.
+            mappedMin, mappedDef, mappedMax = self.data_getAxisValues(axisName, mapped=True)
+
             # 1,9 minimum and maximum value are the same and not None
-            if (ad.minimum == ad.maximum) and ad.minimum != None:
+            if (mappedMin == mappedMax) and mappedMin != None:
                 self.problems.append(DesignSpaceProblem(1,9, dict(axisName=axisName)))
                 axisOK = False
             # 1,10 default not between minimum and maximum
-            if ad.minimum is not None and ad.maximum is not None and ad.default is not None:
-                if not ((ad.minimum < ad.default <= ad.maximum) or (ad.minimum <= ad.default < ad.maximum)):
+            if mappedMin is not None and mappedMax is not None and mappedDef is not None:
+                if not ((mappedMin < mappedDef <= mappedMax) or (mappedMin <= mappedDef < mappedMax)):
                     self.problems.append(DesignSpaceProblem(1,10, dict(axisName=axisName)))
                     axisOK = False
             # 1.6	axis tag missing
@@ -544,16 +551,23 @@ class DesignSpaceChecker(object):
                         patterns[pat] = True
                     else:
                         self.problems.append(DesignSpaceProblem(7,8, data=dict(rule=name)))
+
                     if cd['minimum'] == cd['maximum']:
                         # 7.7 condition values are the same
                         self.problems.append(DesignSpaceProblem(7,7, data=dict(rule=name)))
-                    if cd['name'] not in axisValues.keys():
-                        # 7.5 condition values on unknown axis
-                        self.problems.append(DesignSpaceProblem(7,5, data=dict(rule=name, axisName=cd['name'])))
+                    if cd['minimum'] != None and cd['maximum'] != None:
+                        if cd['name'] not in axisValues.keys():
+                            # 7.5 condition values on unknown axis
+                            self.problems.append(DesignSpaceProblem(7,5, data=dict(rule=name, axisName=cd['name'])))
+                        else:
+                            if cd['minimum'] < min(axisValues[cd['name']]) or cd['maximum'] > max(axisValues[cd['name']]):
+                                # 7.6 condition values out of axis bounds
+                                self.problems.append(DesignSpaceProblem(7,6, data=dict(rule=name, axisValues=axisValues[cd['name']])))
                     else:
-                        if cd['minimum'] < min(axisValues[cd['name']]) or cd['maximum'] > max(axisValues[cd['name']]):
-                            # 7.6 condition values out of axis bounds
-                            self.problems.append(DesignSpaceProblem(7,6, data=dict(rule=name, axisValues=axisValues[cd['name']])))
+                        if cd['minimum'] == None:
+                            self.problems.append(DesignSpaceProblem(7,10, data=dict(rule=name, axisValues=axisValues[cd['name']])))
+                        if cd['maximum'] == None:
+                            self.problems.append(DesignSpaceProblem(7,11, data=dict(rule=name, axisValues=axisValues[cd['name']])))
 
 
 if __name__ == "__main__":

@@ -267,3 +267,11 @@ def duplicateConditionsProblem(**kwargs):
 def ruleWithoutANameProblem(**kwargs):
     # rule without a name, (7, 9)
     return DesignSpaceProblem(7,9,data=kwargs)
+
+def conditionWithMissingMinimumProblem(**kwargs):
+    # condition with missing minimum, (7, 10)
+    return DesignSpaceProblem(7,10,data=kwargs)
+
+def conditionWithMissingMaximumProblem(**kwargs):
+    # condition with missing maximum, (7, 11)
+    return DesignSpaceProblem(7,11,data=kwargs)

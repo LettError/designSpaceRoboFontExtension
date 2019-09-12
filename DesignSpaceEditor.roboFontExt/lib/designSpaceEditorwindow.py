@@ -12,7 +12,7 @@ from vanilla.dialogs import getFile, putFile, askYesNo, message
 from mojo.UI import AccordionView
 from mojo.roboFont import *
 import mojo.extensions
-import fontTools.ufoLib as ufoLib
+import fontTools.ufoLib
 
 import designspaceProblems
 from designspaceProblems import DesignSpaceChecker
@@ -43,12 +43,12 @@ except ImportError:
     Paths
     the document reader and writer need an absolute path
     when a source is added, this is an absolute path, why?
-
+    
     write to document: ufo paths are written relative to the document path
-
+    
     assumption: .designspace document is always at the same or a higher level than the ufos.
     adobe: .designspace document can be higher up.
-
+    
     what to do?
     step 1: keep the string of the filename attribute so that if there are no changes to the
     ufo, we can write the document identical to how it was read.
@@ -57,7 +57,7 @@ except ImportError:
 
     # instances: doet niks - eerst saven, sluiten en dan weer openen
     # axes toevoegen moet updaten bij rules
-
+    
 """
 DEVELOP = False
 
@@ -91,10 +91,10 @@ class KeyedGlyphDescriptor(AppKit.NSObject,
         self.glyphName = None
         self.patterns = {}
         return self
-
+    
     def glyphNameKey(self):
         return self.glyphName
-
+    
     def workingKey(self):
         return len(self.patterns)==1
 
@@ -153,7 +153,7 @@ class KeyedRuleDescriptor(AppKit.NSObject,
         # new axis, deleted axis
         print("updateAxes {} conditionsets{}".format(id(self), self.conditionSets))
         pass
-
+        
     @python_method
     def renameAxis(self, oldName, newName=None):
         renamedConditions = []
@@ -165,7 +165,7 @@ class KeyedRuleDescriptor(AppKit.NSObject,
                     if newName is not None:
                         renamedConditions.append(cd)
         self.conditions = renamedConditions
-
+    
     def nameKey(self):
         return self.name
 
@@ -174,7 +174,7 @@ class KeyedRuleDescriptor(AppKit.NSObject,
             # rename this axis
             if len(value)>0:
                 self.name = value
-
+    
     @python_method
     def __repr__(self):
         return "rule: %s with %d conditionsets" % (self.name, len(self.conditionSets))
@@ -205,23 +205,23 @@ class KeyedSourceDescriptor(AppKit.NSObject,
         self.isDefault = False
         self.wasEditedCallback = None
         return self
-
+    
     @python_method
     def callbackCleanup(self):
         self.wasEditedCallback = None
-
+        
     @python_method
     def getLayerNames(self):
         # see if we can get the layernames
         if self.path is not None:
-            reader = ufoLib.UFOReader(self.path)
+            reader = fontTools.ufoLib.UFOReader(self.path)
             return reader.getLayerNames()
         return []
 
     @python_method
     def renameAxis(self, oldName, newName):
         self.location = renameAxis(oldName, newName, self.location)
-
+        
     @python_method
     def makeDefault(self, state):
         # make this master the default
@@ -238,7 +238,7 @@ class KeyedSourceDescriptor(AppKit.NSObject,
             self.copyFeatures = False
             self.copyLib = False
             self.isDefault = False
-
+            
     def setName(self):
         # make a name attribute based on the location
         # this will overwrite things that the source file might already contain.
@@ -248,11 +248,11 @@ class KeyedSourceDescriptor(AppKit.NSObject,
         if None in name:
             return
         self.name = "_".join(name)
-
+    
     @python_method
     def setAxisOrder(self, names):
         self.axisOrder = names
-
+    
     def defaultMasterKey(self):
         # apparently this is uses to indicate that this master
         # might be intended to be the default font in this system.
@@ -268,13 +268,13 @@ class KeyedSourceDescriptor(AppKit.NSObject,
         # let the descriptor know what the document folder is
         # so that the descriptor can do some validation if the paths
         self.dir = docFolder
-
+    
     def makePath(self):
         # using the document folder and the file name
         # we should be able to make an absolute path
         if self.filename is not None and self.dir is not None:
             self.path = os.path.abspath(os.path.join(self.dir, self.filename))
-
+        
     def sourceUFONameKey(self):
         if self.filename is not None:
             if self.dir is not None:
@@ -283,18 +283,18 @@ class KeyedSourceDescriptor(AppKit.NSObject,
 
     def sourceLayerNameKey(self):
         return self.layerName
-
+        
     def sourceHasFileKey(self):
         if os.path.exists(self.path):
             return checkSymbol
         return ""
-
+    
     def sourceFamilyNameKey(self):
         return self.familyName
-
+    
     def sourceStyleNameKey(self):
         return self.styleName
-
+        
     @python_method
     def getAxisValue(self, axisIndex):
         if 0 <= axisIndex < len(self.axisOrder):
@@ -414,7 +414,7 @@ class KeyedSourceDescriptor(AppKit.NSObject,
 
     #def setDocumentNeedSave(self, something=None):
     #    xx
-
+    
 class KeyedInstanceDescriptor(AppKit.NSObject,
         metaclass=ClassNameIncrementer
         ):
@@ -451,7 +451,7 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
             else:
                 newAxisOrder.append(name)
         self.axisorder = newAxisOrder
-
+    
     def copy(self):
         # construct and return a duplicate of this instance
         # umme, what to do with duplicate paths? these things could then overwrite!?
@@ -469,14 +469,14 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
         copy.name = self.name
         #copy.setName()
         return copy
-
+        
     def setName(self):
         # make a name attribute based on the location
         name = ['instance', self.familyName, self.styleName]
         for k, v in self.location.items():
             name.append("%s_%3.3f"%(k, v))
         self.name = "_".join(name)
-
+        
     @python_method
     def setAxisOrder(self, names):
         self.axisOrder = names
@@ -487,7 +487,7 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
         if os.path.exists(self.path):
             return checkSymbol
         return ""
-
+    
     @python_method
     def getAxisValue(self, axisIndex):
         if 0 <= axisIndex < len(self.axisOrder):
@@ -498,7 +498,7 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
                     return v[0]
                 return v
         return ""
-
+        
     def instanceAxis_1(self):
         return self.getAxisValue(0)
     def instanceAxis_2(self):
@@ -525,20 +525,20 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
             if self.dir is not None:
                 return self.filename
         return "[pending save]"
-
+    
     @python_method
     def setDocumentFolder(self, docFolder):
         # let the descriptor know what the document folder is
         # so that the descriptor can do some validation if the paths
         self.dir = docFolder
-
+    
     @python_method
     def makePath(self):
         # using the document folder and the file name
         # we should be able to make an absolute path
         if self.filename is not None and self.dir is not None:
             self.path = os.path.abspath(os.path.join(self.dir, self.filename))
-
+        
     @python_method
     def setPathRelativeTo(self, docFolder, instancesFolderName):
         self.dir = os.path.join(docFolder, instancesFolderName)
@@ -613,7 +613,7 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
                 self.location[axisName] = float(value)
             except ValueError:
                 NSBeep()
-
+            
     def instanceFamilyNameKey(self):
         return self.familyName
     def instanceStyleNameKey(self):
@@ -639,7 +639,7 @@ class KeyedAxisDescriptor(AppKit.NSObject,
         ]
 
     defaultLabelNameLanguageTag = "en"
-
+    
     def __new__(cls):
         self = cls.alloc().init()
         self.tag = None     # opentype tag for this axis
@@ -671,17 +671,17 @@ class KeyedAxisDescriptor(AppKit.NSObject,
     def renameAxis(self, oldName, newName):
         if self.name == oldName:
             self.name = newName
-
+    
     def hiddenKey(self):
         if self.hidden: return "1"
         return "0"
-
+        
     def registeredTagKey(self):
         for name, tag in self.registeredTags:
             if name == self.name and tag == self.tag:
                 return checkSymbol
         return ""
-
+        
     def setValue_forUndefinedKey_(self, value=None, key=None):
         if key == "axisNameKey":
             self.controller().callbackRenameAxes(self.name, value)
@@ -713,7 +713,7 @@ class KeyedAxisDescriptor(AppKit.NSObject,
         elif key == "hiddenKey":
             self.hidden = value
         elif key == "mapKey":
-            # interpret the string of numbers as
+            # interpret the string of numbers as 
             # <input1>, <output1>, <input2>, <output2>,...
             # empty string, indicates a wish for an empty list
             if value is None or value == "-":
@@ -732,12 +732,12 @@ class KeyedAxisDescriptor(AppKit.NSObject,
                 self.map = newMapValues
             except:
                 pass
-
+    
     def labelNameKey(self):
         if self.registeredTagKey():
             return "-"
         return self.labelNames.get("en", "New Axis Label Name")
-
+        
     def axisNameKey(self):
         return self.name
     def axisTagKey(self):
@@ -778,22 +778,22 @@ class ConditionDict(object):
     def __init__(self, callback=None):
         self.data = {}
         self.callback = callback
-
+        
     def __getitem__(self, key):
         if not key in self.data:
-            raise IndexError
+            raise IndexError    
     def __setitem__(self, key, value):
         self.data[key] = value
 
 #a = ConditionDict()
 #a['a'] = 10
-
+        
 class KeyedDocReader(dsd.BaseDocReader):
     ruleDescriptorClass = KeyedRuleDescriptor
     axisDescriptorClass = KeyedAxisDescriptor
     sourceDescriptorClass = KeyedSourceDescriptor
     instanceDescriptorClass = KeyedInstanceDescriptor
-
+    
 class KeyedDocWriter(dsd.BaseDocWriter):
     ruleDescriptorClass = KeyedRuleDescriptor
     axisDescriptorClass = KeyedAxisDescriptor
@@ -812,6 +812,8 @@ class DesignSpaceEditor(BaseWindowController):
         ("width", "wdth", 0, 1000, 0),
         ("optical", "opsz", 3, 1000, 16),
         ]
+
+    mathModelPrefKey = "com.letterror.mathModelPref"
 
     def __init__(self, designSpacePath=None):
         self.documentNeedSave = False
@@ -845,7 +847,11 @@ class DesignSpaceEditor(BaseWindowController):
         else:
             thisFontClass = None
         self.doc = LiveDesignSpaceProcessor(readerClass=KeyedDocReader, writerClass=KeyedDocWriter)
-        self.doc.useVarlib = True
+        self.mathModelPref = "previewVarLib"
+        if self.mathModelPrefKey in self.doc.lib:
+            self.mathModelPref = self.doc.lib[self.mathModelPrefKey]
+        
+        self.doc.useVarlib = self.mathModelPref == "previewVarLib"
         if self.designSpacePath is not None:
             try:
                 self.doc.read(self.designSpacePath)
@@ -853,7 +859,7 @@ class DesignSpaceEditor(BaseWindowController):
                 error_type, error_instance, traceback = sys.exc_info()
                 message("DesignSpaceEdit can't open this file", informativeText="Error reading {}.\n{}.".format(os.path.basename(self.designSpacePath), error_instance.msg))
                 return
-
+        
         # so we have a document, now build a window
         self.w = vanilla.Window((940, 350),
                 fileNameTitle,
@@ -863,6 +869,10 @@ class DesignSpaceEditor(BaseWindowController):
                 )
         self._updatingTheAxesNames = False
         _numberFormatter = AppKit.NSNumberFormatter.alloc().init()
+        #_numberFormatter.setFormatterBehavior_(AppKit.NSNumberFormatterBehaviorDefault)
+        _numberFormatter.setNumberStyle_(AppKit.NSNumberFormatterDecimalStyle)
+        _numberFormatter.setAllowsFloats_(True)
+
         toolbarItems = [
             {
                 'itemIdentifier': "toolbarAxes",
@@ -921,7 +931,7 @@ class DesignSpaceEditor(BaseWindowController):
             },
         ]
         self.w.addToolbar("DesignSpaceToolbar", toolbarItems)
-
+        
         fileIconWidth = 30
         ufoNameWidth = 250
         axisValueWidth = 70
@@ -1147,7 +1157,7 @@ class DesignSpaceEditor(BaseWindowController):
                     #'editable':True,
                     "cell": vanilla.CheckBoxListCell()
                 },
-
+                
                 {   'title': 'Map',
                     'key':'mapKey',
                     'width':250,
@@ -1186,6 +1196,7 @@ class DesignSpaceEditor(BaseWindowController):
         secondButtonSize = (titleOffset+130,buttonMargin+1,100,buttonHeight)
         first_and_secondButtonSize = (titleOffset+78,buttonMargin+1,150,buttonHeight)
         thirdButtonSize = (titleOffset+232,buttonMargin+1,100,buttonHeight)
+        mathPickerButtonSize = (titleOffset+232,buttonMargin+1,200,buttonHeight)
         statusTextSize = (titleOffset+165, buttonMargin+4,-10,buttonHeight)
         addButtonSize = (titleOffset+102,buttonMargin+1,50,buttonHeight)
         axisToolDescriptions = [
@@ -1228,7 +1239,7 @@ class DesignSpaceEditor(BaseWindowController):
             callback=self.callbackGetNamesFromSources,
             sizeStyle="small")
         self.mastersGroup.loadNamesFromSourceButton.enable(False)
-
+        
         self.instancesGroup = self.w.instancesGroup = vanilla.Group((0,groupStart,0, -30))
         self.instancesGroup.title = vanilla.TextBox(sectionTitleSize, "Instances")
         self.instancesItem = vanilla.List((0, toolbarHeight, -0, -0), [],
@@ -1240,6 +1251,18 @@ class DesignSpaceEditor(BaseWindowController):
             callback=self.callbackDuplicateInstance,
             sizeStyle="small")
         self.instancesGroup.duplicateButton.enable(False)
+
+        mathModelDescriptions = [
+            dict(title="MutatorMath"),
+            dict(title="VarLib"),
+            ]
+
+        self.instancesGroup.mathModelPicker = vanilla.SegmentedButton(
+            mathPickerButtonSize,
+            segmentDescriptions=mathModelDescriptions, selectionStyle="one",
+            callback = self.switchMathModelCallback)
+        self.instancesGroup.mathModelPicker.enable(True)
+        self.instancesGroup.mathModelPicker.set(1)
 
         instancesToolDescriptions = [
             {'title': "+", 'width': 20,},
@@ -1257,14 +1280,14 @@ class DesignSpaceEditor(BaseWindowController):
             callback=self.callbackOpenInstance,
             sizeStyle="small")
         self.instancesGroup.openButton.enable(False)
-
+        
         self.glyphsGroup = vanilla.Group((0,0,0,0))
         self.glyphsItem = vanilla.List((0, toolbarHeight, -0, -0), [],
             columnDescriptions=glyphsColDescriptions,
             #selectionCallback=self.callbackInstanceSelection,
         )
         self.glyphsGroup.l = self.glyphsItem
-
+        
         ruleNameColDescriptions = [
                 {   'title': 'Rule',
                     'key':'nameKey',
@@ -1279,7 +1302,7 @@ class DesignSpaceEditor(BaseWindowController):
                     'editable':False,
                 },
             ]
-
+        
         ruleConditionColDescriptions = [
                 {   'title': 'Axis',
                     'key':'name',
@@ -1311,7 +1334,7 @@ class DesignSpaceEditor(BaseWindowController):
                     'editable':True,
                 },
             ]
-
+        
         listMargin = 5
         self.rulesGroup = self.w.ruleGroup = vanilla.Group((0,groupStart,0, -30))
         self.rulesGroup.title = vanilla.TextBox((50, 3, 150, 20), "Rules")
@@ -1371,7 +1394,7 @@ class DesignSpaceEditor(BaseWindowController):
             segmentDescriptions=instancesToolDescriptions,
             selectionStyle="momentary",
             callback=self.callbackRuleGlyphTools)
-
+        
         self.reportGroup = self.w.reportGroup = vanilla.Group((0,groupStart,0,-30))
 
         reportColumns = [
@@ -1405,21 +1428,20 @@ class DesignSpaceEditor(BaseWindowController):
            dict(label="Rules", view=self.rulesGroup, size=135, collapsed=False, canResize=True),
            dict(label="Report", view=self.reportGroup, size=170, collapsed=True, canResize=True),
         ]
-
-        self.enableInstanceList()
+        
         for sourceDescriptor in self.doc.sources:
             sourceDescriptor.wasEditedCallback = self.sourceDescriptorWasEditedCallback
         self.w.open()
-
+        
         #@@
         self.fillInterfaceWithDocumentData()
-
+        
         if self.designSpacePath is not None:
             self.w.getNSWindow().setRepresentedURL_(AppKit.NSURL.fileURLWithPath_(self.designSpacePath))
 
         self.w.bind("became main", self.callbackBecameMain)
         self.w.bind("close", self.callbackCleanup)
-
+        
         self.w.vanillaWrapper = weakref.ref(self)
         self.setUpBaseWindowBehavior()
         self.axesGroup.show(True)
@@ -1429,7 +1451,8 @@ class DesignSpaceEditor(BaseWindowController):
         self.reportGroup.show(False)
         self.updateAxesColumns()
         self.updateLocations()
-
+        self.enableInstanceList()
+    
     def showTab(self, sender):
         wantTab = sender.label()
         if wantTab == "Axes":
@@ -1474,12 +1497,23 @@ class DesignSpaceEditor(BaseWindowController):
     def close(self):
         # close the window
         self.w.close()
-
+        
     def callbackCleanup(self, sender=None):
         self.w.document = None
         for source in self.doc.sources:
             source.callbackCleanup()
-
+    
+    def switchMathModelCallback(self, sender):
+        # vanilla callback for segmented button switching the math model
+        #@@
+        wouldLikeToUseVarLib = sender.get() == 1
+        print('switchMathModelCallback', wouldLikeToUseVarLib)
+        self.doc.useVarlib = wouldLikeToUseVarLib
+        if wouldLikeToUseVarLib:
+            self.mathModelPref = 'previewVarLib'
+        else:          
+            self.mathModelPref = "previewMutatorMath"
+    
     def callbackRenameAxes(self, oldName, newName):
         # validate the new name, make sure we don't duplicate an existing name
         for axis in self.doc.axes:
@@ -1499,21 +1533,21 @@ class DesignSpaceEditor(BaseWindowController):
         self.updatePaths()
         self.validate()
         self.setDocumentNeedSave(True)
-
+    
     def _getAxisNames(self):
         # return a list of current axis names
         names = []
         for axis in self.doc.axes:
             names.append(axis.name)
         return names
-
+        
     def _getDefaultValue(self, identifier, key):
         data = getExtensionDefault(identifier, dict())
         return data.get(key, defaultOptions[key])
 
     def getInstancesFolder(self):
         return self._getDefaultValue("%s.general" % settingsIdentifier, "instanceFolderName")
-
+    
     def documentHasStructuralProblems(self):
         checker = DesignSpaceChecker(self.doc)
         checker.checkEverything()
@@ -1541,7 +1575,7 @@ class DesignSpaceEditor(BaseWindowController):
             d = dict(problemIcon=icon, problemClass=cat, problemDescription=desc, problemData=data)
             report.append(d)
         self.reportGroup.text.set(report)
-
+            
     def updateFromSettings(self):
         extensionSettings = getExtensionDefault(self.settingsIdentifier, dict())
         self.instanceFolderName = extensionSettings.get('instanceFolderName', "instances")
@@ -1551,10 +1585,10 @@ class DesignSpaceEditor(BaseWindowController):
         self.updateFromSettings()
         self.updatePaths()
         self.validate()
-
+        
     def toolbarSettings(self, sender):
         designSpaceEditorSettings.Settings(self.w, self.applySettingsCallback)
-
+            
     def openSelectedItem(self, sender):
         selection = sender.getSelection()
         if selection:
@@ -1581,8 +1615,8 @@ class DesignSpaceEditor(BaseWindowController):
                     print("Bad UFO:", path)
                     pass
                 progress.update()
-            progress.close()
-
+            progress.close()            
+    
     def callbackGenerate(self, sender):
         #from mutatorMath.ufo import build
         if self.designSpacePath is None:
@@ -1593,8 +1627,9 @@ class DesignSpaceEditor(BaseWindowController):
             return
         self.doc.problems = []
         progress = ProgressWindow("Generating instance UFO’s…", 10, parentWindow=self.w)
+        print("generating with useVarlib?", self.doc.useVarlib)
         try:
-            messages = self.doc.generateUFO()
+            messages = self.doc.generateUFO(bend=True)
         except ufoProcessor.UFOProcessorError:
             error_type, error_instance, traceback = sys.exc_info()
             self.doc.problems.append(str(error_instance.msg))
@@ -1604,15 +1639,16 @@ class DesignSpaceEditor(BaseWindowController):
         finally:
             progress.close()
         if self.doc.problems:
-            self.reportGroup.text.set("\n".join([str(s) for s in self.doc.problems]))
-
+            errors = "\n".join([str(s) for s in self.doc.problems])
+            print('Report\n', errors)
+            
     def callbackBecameMain(self, sender):
         self.validate()
-
+                    
     def setInstanceFolderName(self, value):
         self.instanceFolderName = value
         self.validate()
-
+    
     def updateAxisOrders(self):
         # we need to make an effort to make the axis order available to all the descriptors
         names = []
@@ -1623,7 +1659,7 @@ class DesignSpaceEditor(BaseWindowController):
         for descriptor in self.doc.sources:
             descriptor.setAxisOrder(names)
         return names
-
+        
     def updateAxesColumns(self):
         # present the axis names above all the columns.
         names = []
@@ -1658,7 +1694,7 @@ class DesignSpaceEditor(BaseWindowController):
                 newTitle = ""
             column.setTitle_(newTitle)
         self.instancesItem.getNSTableView().reloadData()
-
+        
     def fillInterfaceWithDocumentData(self):
         for item in self.doc.axes:
             item.controller = weakref.ref(self)
@@ -1697,10 +1733,10 @@ class DesignSpaceEditor(BaseWindowController):
             paths.sort()
             return paths[0]
         return None
-
+            
     def save(self, sender=None):
         if len(self.doc.axes) == 0:
-            #@@
+            #@@ 
             message(messageText="No axes defined!", informativeText="The designspace needs at least one axis before saving.")
             return
         if self.designSpacePath is None:
@@ -1716,7 +1752,7 @@ class DesignSpaceEditor(BaseWindowController):
                 resultCallback=self.finalizeSave)
         else:
             self.finalizeSave(self.designSpacePath)
-
+    
     def updatePaths(self):
         # a fresh attempt at updating all the paths in the sources and instances
         # the item.filename is leading
@@ -1760,6 +1796,7 @@ class DesignSpaceEditor(BaseWindowController):
                 instanceDescriptor.filename = os.path.relpath(instanceDescriptor.filename, os.path.dirname(self.designSpacePath))
                 instanceDescriptor.makePath()
         self.updatePaths()
+        self.doc.lib[self.mathModelPrefKey] = self.mathModelPref
         self.doc.write(self.designSpacePath)
         self.w.getNSWindow().setRepresentedURL_(AppKit.NSURL.fileURLWithPath_(self.designSpacePath))
         self.w.setTitle(os.path.basename(self.designSpacePath))
@@ -1767,7 +1804,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.validate()
         self.setDocumentNeedSave(False)
         print('saved at', self.designSpacePath)
-
+    
     def updateLocations(self):
         # update all the displayed locations, we might have more or fewer axes
         defaults = {}
@@ -1783,8 +1820,8 @@ class DesignSpaceEditor(BaseWindowController):
             self._updateLocation(sourceDescriptor, defaults)
         for ruleDescriptor in self.doc.rules:
             self._updateConditions(ruleDescriptor, defaults)
-        self.updateRules()
-
+        self.updateRules()                
+            
     def _updateLocation(self, descriptor, defaults):
         remove = []
         for axisName in descriptor.location.keys():
@@ -1795,7 +1832,7 @@ class DesignSpaceEditor(BaseWindowController):
         for axisName, defaultValue in defaults.items():
             if axisName not in descriptor.location:
                 descriptor.location[axisName] = defaultValue
-
+    
     def callbackEditRuleGlyphs(self, sender = None):
         if not self._selectedRule:
             return
@@ -1807,20 +1844,22 @@ class DesignSpaceEditor(BaseWindowController):
             newGlyphs.append((item['name'],item['with']))
         self._selectedRule.subs = newGlyphs
         self._checkRuleGlyphListHasEditableEmpty()
-
+    
     def callbackEditRuleCondition(self, sender=None):
         # vanilla callback for selected a specific axis in the condition list
+        #@@
         if not self._selectedRule: return
         if self._selectedConditionSetIndex is None:
             return
         edited = []
+        print('callbackEditRuleCondition')
         for item in sender.get():
             d = {'minimum':None, 'maximum':None}
             if item.get("minimum") is None:
                 d['minimum'] = None
             else:
                 try:
-                    v = int(item['minimum'])
+                    v = float(item['minimum'])
                 except ValueError:
                     v = None
                 d['minimum'] = v
@@ -1828,7 +1867,7 @@ class DesignSpaceEditor(BaseWindowController):
                 d['maximum'] = None
             else:
                 try:
-                    v = int(item['maximum'])
+                    v = float(item['maximum'])
                 except ValueError:
                     v = None
                 d['maximum'] = v
@@ -1853,7 +1892,7 @@ class DesignSpaceEditor(BaseWindowController):
         sel = sel[0]
         self._selectedConditionSetIndex = sel
         self._setConditionsFromSelectedConditionSet()
-
+    
     def _setConditionsFromSelectedConditionSet(self):
         # set the conditions from the selected condition set
         if self._selectedConditionSetIndex is None:
@@ -1875,9 +1914,9 @@ class DesignSpaceEditor(BaseWindowController):
         selection = sender.getSelection()
         if not selection:
             self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(False, 1)
-        else:
+        else:            
             self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(True, 1)
-
+        
     def callbackRuleNameSelection(self, sender):
         selection = sender.getSelection()
         self._selectedRule = None
@@ -1913,19 +1952,19 @@ class DesignSpaceEditor(BaseWindowController):
             self.rulesGroup.glyphTools.enable(True)
             self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(False, 1)
             self.rulesGroup.tools._nsObject.setEnabled_forSegment_(True, 1)
-
+            
     def _updateConditionSetsList(self):
         conditionSetsForThisRule = []
         for i, conditionSet in enumerate(self._selectedRule.conditionSets):
             conditionSetsForThisRule.append("set %d" % (i+1))
         self.rulesGroup.conditionSets.set(conditionSetsForThisRule)
-
+    
     def _setGlyphNamesToList(self):
         names = []
         for a, b in self._selectedRule.subs:
             names.append({'name':a, 'with':b})
         self.rulesGroup.glyphs.set(names)
-
+    
     def callbackConditionSetTools(self, sender):
         # vanilla callback for the +- button above the conditionsets
         if sender.get() == 0:
@@ -1953,7 +1992,7 @@ class DesignSpaceEditor(BaseWindowController):
             self._updateConditionSetsList()
             self.setDocumentNeedSave(True)
         # things
-
+                
     def callbackRuleGlyphTools(self, sender):
         if sender.get() == 0:
             # + button
@@ -1975,7 +2014,7 @@ class DesignSpaceEditor(BaseWindowController):
         self._checkRuleGlyphListHasEditableEmpty()
         self._setGlyphNamesToList()
         self.setDocumentNeedSave(True)
-
+    
     def _appendGlyphNameToRuleGlyphList(self, names):
         # and make sure the last one remains empty and editable
         if self._selectedRule is None:
@@ -1983,7 +2022,7 @@ class DesignSpaceEditor(BaseWindowController):
         if not names in self._selectedRule.subs:
             self._selectedRule.subs.append(names)
             self.rulesGroup.rulesNameList.set(self.doc.rules)
-
+            
     def _checkRuleGlyphListHasEditableEmpty(self):
         if self._selectedRule is None:
             return
@@ -1996,11 +2035,11 @@ class DesignSpaceEditor(BaseWindowController):
             newRuleDescriptor = KeyedRuleDescriptor()
             newRuleDescriptor.name = "Unnamed Rule %d"%self._newRuleCounter
             newRuleDescriptor.conditionSets = []
-
-            oneNewConditionSet = []
+            
+            oneNewConditionSet = []            
             for axis in self.doc.axes:
                 oneNewConditionSet.append(dict(name=axis.name, minimum=axis.minimum, maximum=axis.maximum))
-            newRuleDescriptor.conditionSets.append(oneNewConditionSet)
+            newRuleDescriptor.conditionSets.append(oneNewConditionSet)                    
             self._newRuleCounter += 1
             self.doc.addRule(newRuleDescriptor)
             self.rulesGroup.rulesNameList.set(self.doc.rules)
@@ -2014,7 +2053,7 @@ class DesignSpaceEditor(BaseWindowController):
             else:
                 text = "Do you want to delete %d rules?"%len(selection)
             result = askYesNo(messageText=text, informativeText="There is no undo.", parentWindow=self.w, resultCallback=self.finallyDeleteRule)
-
+    
     def finallyDeleteRule(self, result):
         if result != 1:
             return
@@ -2029,7 +2068,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.updateRules()
         #self.rulesGroup.rulesNameList.set(self.doc.rules)
         #self.rulesGroup.rulesNameList.setSelection([])
-
+    
     def _updateConditions(self, ruleDescriptor, defaults):
         # this is called when the axes have changed. More, fewer
         # so check the conditions and update them
@@ -2045,12 +2084,12 @@ class DesignSpaceEditor(BaseWindowController):
             if not axisName in keepThese:
                 print('new axis for condition', axisName, default)
         ruleDescriptor.conditions = keepThese
-
+        
     def updateRules(self):
         # update the presentation of the rules
         self.rulesGroup.rulesNameList.set(self.doc.rules)
         self.rulesGroup.rulesNameList.setSelection([])
-
+        
     def callbackAxesListEdit(self, sender):
         if self._updatingTheAxesNames == False:
             if sender.getSelection():
@@ -2112,7 +2151,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.findDefault()
         self.validate()
         self.setDocumentNeedSave(True)
-
+    
     def callbackInstanceTools(self, sender):
         if sender.get() == 0:
             # add instance button
@@ -2168,10 +2207,10 @@ class DesignSpaceEditor(BaseWindowController):
         self.instancesItem.set(self.doc.instances)
         self.validate()
         self.setDocumentNeedSave(True)
-
+            
     def callbackOpenInstance(self, sender):
         self.openSelectedItem(self.instancesItem)
-
+        
     def callbackMasterTools(self, sender):
         if sender.get() == 0:
             # add a master
@@ -2193,7 +2232,7 @@ class DesignSpaceEditor(BaseWindowController):
                 informativeText="There is no undo.",
                 parentWindow=self.w,
                 resultCallback=self.finalizeDeleteMaster)
-
+    
     def callbackAxesFromSources(self, sender):
         # if we have no axes:
         # get the axes from the masters
@@ -2216,13 +2255,13 @@ class DesignSpaceEditor(BaseWindowController):
         self.validate()
         for item in self.doc.axes:
             item.controller = weakref.ref(self)
-
+        
     def callbackOpenMaster(self, sender):
         self.openSelectedItem(self.mastersItem)
         self.updateAxesColumns()
         self.enableInstanceList()
         self.validate()
-
+    
     def callbackMakeDefaultMaster(self, sender):
         selectedMaster = self.mastersItem[self.mastersItem.getSelection()[0]]
         for master in self.mastersItem:
@@ -2232,7 +2271,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.doc.findDefault()
         self.axesItem.set(self.doc.axes)
         self.validate()
-
+        
     def callbackGetNamesFromSources(self, sender):
         # open the source fonts and load the family and stylenames
         for i in self.mastersItem.getSelection():
@@ -2244,7 +2283,7 @@ class DesignSpaceEditor(BaseWindowController):
                 #f.close()
         self.mastersItem.set(self.doc.sources)
         self.validate()
-
+        
     def callbackAddOpenFonts(self, sender):
         # add the open fonts
         weHave = [s.path for s in self.doc.sources]
@@ -2257,13 +2296,14 @@ class DesignSpaceEditor(BaseWindowController):
 
     def enableInstanceList(self):
         # we have open masters:
+        print("self.mastersItem", self.mastersItem, len(self.mastersItem))
         if len(self.mastersItem)>1:
             self.instancesItem.enable(True)
             self.instancesGroup.tools.enable(True)
         else:
             self.instancesItem.enable(False)
             self.instancesGroup.tools.enable(False)
-
+            
     def finalizeDeleteMaster(self, result):
         if result != 1:
             return
@@ -2281,11 +2321,11 @@ class DesignSpaceEditor(BaseWindowController):
         self.enableInstanceList()
         self.validate()
         self.setDocumentNeedSave(True)
-
+    
     def sourceDescriptorWasEditedCallback(self, sd):
         # callback to be given to keyedSourceDescriptor when values are edited.
         self.findDefault()
-
+        
     def addSourceFromFont(self, font):
         defaults = {}
         for axisDescriptor in self.doc.axes:
@@ -2335,7 +2375,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.mastersGroup.openButton.enable(False)
         self.mastersGroup.loadNamesFromSourceButton.enable(False)
         self.setDocumentNeedSave(True)
-
+                
     def callbackDuplicateInstance(self, sender):
         # duplicate the selected instance
         copies = []
@@ -2345,7 +2385,7 @@ class DesignSpaceEditor(BaseWindowController):
             self.doc.instances.append(item)
         self.instancesItem.set(self.doc.instances)
         self.setDocumentNeedSave(True)
-
+        
     def callbackInstanceSelection(self, sender):
         if len(sender.getSelection())>0:
             self.instancesGroup.duplicateButton.enable(True)
@@ -2357,12 +2397,12 @@ class DesignSpaceEditor(BaseWindowController):
                 self.instancesGroup.openButton.enable(True)
                 return
         self.instancesGroup.openButton.enable(False)
-
+                
 if __name__ == "__main__":
     # tests
     assert renameAxis("aaa", "bbb", dict(aaa=1)) == dict(bbb=1)
     assert renameAxis("ccc", "bbb", dict(aaa=1)) == dict(aaa=1)
-
+    
     testWithFile = True    # set to False to test without getfile dialog
 
     if not testWithFile:
@@ -2385,8 +2425,9 @@ if __name__ == "__main__":
         aD.name = "aaa"
         aD.renameAxis("aaa", "bbb")
         assert aD.name == "bbb"
-
+    
         results = getFile(messageText="Select a DesignSpace file:", allowsMultipleSelection=True, fileTypes=["designspace"])
         if results is not None:
            for path in results:
                DesignSpaceEditor(path)
+ 
