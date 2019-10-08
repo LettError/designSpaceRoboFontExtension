@@ -101,6 +101,13 @@ class KeyedGlyphDescriptor(AppKit.NSObject,
 
 class LiveDesignSpaceProcessor(ufoProcessor.DesignSpaceProcessor):
 
+    def robofontHasFont(self, path):
+        # return a font object if we just happen to have it open
+        for font in AllFonts():
+            if font.path == path:
+                return font
+        return None
+
     def loadFonts(self, reload=False):
         # Load the fonts and find the default candidate based on the info flag
         if self._fontsLoaded and not reload:
@@ -109,17 +116,21 @@ class LiveDesignSpaceProcessor(ufoProcessor.DesignSpaceProcessor):
         for sourceDescriptor in self.sources:
             if not sourceDescriptor.name in self.fonts:
                 if os.path.exists(sourceDescriptor.path):
-                    self.fonts[sourceDescriptor.name] = self._instantiateFont(sourceDescriptor.path)
+                    fontObj = self.robofontHasFont(sourceDescriptor.path)
+                    if fontObj is None:
+                        self.fonts[sourceDescriptor.name] = self._instantiateFont(sourceDescriptor.path)
+                        print("Loaded master from %s, format %d"%(sourceDescriptor.path, ufoProcessor.getUFOVersion(sourceDescriptor.path)))
+                    else:
+                        fontObj.save()
+                        self.fonts[sourceDescriptor.name] = fontObj
+                        print("Loaded master from open font %s" %fontObj.path)
                     # this is not a problem, why report it as one?
-                    self.problems.append("loaded master from %s, format %d"%(sourceDescriptor.path, ufoProcessor.getUFOVersion(sourceDescriptor.path)))
                     names = names | set(self.fonts[sourceDescriptor.name].keys())
                 else:
                     self.fonts[sourceDescriptor.name] = None
-                    self.problems.append("can't load master from %s"%(sourceDescriptor.path))
+                    self.problems.append("Can't load master from %s"%(sourceDescriptor.path))
         self.glyphNames = list(names)
         self._fontsLoaded = True
-
-
 
 def renameAxis(oldName, newName, location):
     # rename the axis name in a location
@@ -1196,6 +1207,7 @@ class DesignSpaceEditor(BaseWindowController):
         secondButtonSize = (titleOffset+130,buttonMargin+1,100,buttonHeight)
         first_and_secondButtonSize = (titleOffset+78,buttonMargin+1,150,buttonHeight)
         thirdButtonSize = (titleOffset+232,buttonMargin+1,100,buttonHeight)
+        fourthButtonSize = (titleOffset+444,buttonMargin+1,100,buttonHeight)
         mathPickerButtonSize = (titleOffset+232,buttonMargin+1,200,buttonHeight)
         statusTextSize = (titleOffset+165, buttonMargin+4,-10,buttonHeight)
         addButtonSize = (titleOffset+102,buttonMargin+1,50,buttonHeight)
@@ -1231,7 +1243,7 @@ class DesignSpaceEditor(BaseWindowController):
             sizeStyle="small")
         self.mastersGroup.openButton.enable(False)
         self.mastersGroup.addOpenFontsButton = vanilla.Button(
-            first_and_secondButtonSize, "Add Open UFOs",
+            secondButtonSize, "Add Open UFOs",
             callback=self.callbackAddOpenFonts,
             sizeStyle="small")
         self.mastersGroup.loadNamesFromSourceButton = vanilla.Button(
@@ -1625,11 +1637,15 @@ class DesignSpaceEditor(BaseWindowController):
             AppKit.NSBeep()
             message("This document had structural problems and can not generate UFOs.")
             return
+        self.doc.loadFonts(reload=True)
         self.doc.problems = []
         progress = ProgressWindow("Generating instance UFO’s…", 10, parentWindow=self.w)
-        print("generating with useVarlib?", self.doc.useVarlib)
+        if self.doc.useVarlib:
+            print("generating with varLib")
+        else:
+            print("generating with mutatorMath")
         try:
-            messages = self.doc.generateUFO(bend=True)
+            ufoProcessor.build(self.doc.path, useVarlib=self.doc.useVarlib)
         except ufoProcessor.UFOProcessorError:
             error_type, error_instance, traceback = sys.exc_info()
             self.doc.problems.append(str(error_instance.msg))
@@ -2364,6 +2380,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.enableInstanceList()
         self.updatePaths()
         self.validate()
+
 
     def callbackMasterSelection(self, sender):
         for i in sender.getSelection():
