@@ -21,7 +21,7 @@ class DesignSpaceProblem(object):
     _structural = [
         (0,0),
         (1,0),(1,1),(1,2),(1,3),(1,4),(1,5),
-        (1,9),(1,10),(1,11), (1,12),
+        (1,9),(1,10),
         (2,0),(2,4),(2,7), (2,8),(2,9),(2,10),
         ]
 
@@ -30,44 +30,47 @@ class DesignSpaceProblem(object):
         (0,0): "file corrupt",
 
         # 1 designspace geometry
-        (1,0): "no axes defined",
-        (1,1): "axis missing",
-        (1,2): "axis maximum missing",
-        (1,3): "axis minimum missing",
-        (1,4): "axis default missing",
-        (1,5): "axis name missing",
-        (1,6): "axis tag missing",
-        (1,7): "axis tag mismatch",
+        (1,0):  "no axes defined",
+        (1,1):  "axis missing",
+        (1,2):  "axis maximum missing",
+        (1,3):  "axis minimum missing",
+        (1,4):  "axis default missing",
+        (1,5):  "axis name missing",
+        (1,6):  "axis tag missing",
+        (1,7):  "axis tag mismatch",
 
-        (1,9): "minimum and maximum value are the same",
+        (1,9):  "minimum and maximum value are the same",
         (1,10): "default not between minimum and maximum",
-        (1,11): "mapping table has overlapping input values",
-        (1,12): "mapping table has overlapping output values",
+        (1,11): "mapped axis has overlapping input values (userspace)",
+        (1,12): "mapped axis has overlapping output values (designspace)",
+        (1,13): "mapped minimum > mapped maximum",
+        (1,14): "axis minimum > axis maximum",
 
         # 2 sources
-        (2,0): "no sources defined",
-        (2,1): "source UFO missing",
-        (2,2): "source UFO format too old, recommend update.",
-        (2,3): "source layer missing",
-        (2,4): "source location missing",
-        (2,5): "source location has value for undefined axis",
-        (2,6): "source location has out of bounds value",
-        (2,7): "no source on default location",
-        (2,8): "multiple sources on default location",
-        (2,9): "multiple sources on location",
+        (2,0):  "no sources defined",
+        (2,1):  "source UFO missing",
+        (2,2):  "source UFO format too old, recommend update.",
+        (2,3):  "source layer missing",
+        (2,4):  "source location missing",
+        (2,5):  "source location has value for undefined axis",
+        (2,6):  "source location has out of bounds value",
+        (2,7):  "no source on unmapped default location",
+        (2,12): "no source on mapped default location",
+        (2,8):  "multiple sources on default location",
+        (2,9):  "multiple sources on location",
         (2,10): "source location is anisotropic",
         (2,11): "axis without on-axis sources",
 
         # 3 instances
-        (3,1): 'instance location missing',
-        (3,2): "instance location has value for undefined axis",
-        (3,3): "instance location has out of bounds value",
-        (3,4): "multiple instances on location",
-        (3,5): "instance location requires extrapolation",
-        (3,9): "instance location is anisotropic",
-        (3,6): "missing family name",
-        (3,7): "missing style name",
-        (3,8): "missing output path",
+        (3,1):  'instance location missing',
+        (3,2):  "instance location has value for undefined axis",
+        (3,3):  "instance location has out of bounds value",
+        (3,4):  "multiple instances on location",
+        (3,5):  "instance location requires extrapolation",
+        (3,9):  "instance location is anisotropic",
+        (3,6):  "missing family name",
+        (3,7):  "missing style name",
+        (3,8):  "missing output path",
         (3,10): "no instances defined",
         
         # 4 glyphs
@@ -81,6 +84,7 @@ class DesignSpaceProblem(object):
         (4,7): 'default glyph is empty',
         (4,8): 'contour has wrong direction',
         (4,9): 'incompatible constructions for glyph',
+        (4,10): 'different unicodes in glyph',
 
         # 5 kerning
         (5,0): 'no kerning in source',
@@ -196,6 +200,10 @@ def makeFunctions(whiteSpace=None):
         new = new.replace('-', '')
         new = new.replace(',', '')
         new = new.replace('.', '')
+        new = new.replace('(', '_')
+        new = new.replace(')', '_')
+        new = new.replace('>', '_')
+        new = new.replace('<', '_')
         func = "def %s(**kwargs):\n%s# %s, %s\n%sreturn DesignSpaceProblem(%d,%d,data=kwargs)\n" % (''.join(new), whiteSpace, desc, key, whiteSpace, key[0], key[1])
         modl.append(func)
     path = "./problemFunctions.py"
@@ -231,7 +239,7 @@ def showStructuralProblems():
         print("\t%s:\t%s" %(k, v))
 
 if __name__ == "__main__":
-    makeFunctions()
+    #makeFunctions()
     makeErrorDocumentationTable()
     showStructuralProblems()
     #testCompare()

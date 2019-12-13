@@ -747,7 +747,7 @@ class KeyedAxisDescriptor(AppKit.NSObject,
     def labelNameKey(self):
         if self.registeredTagKey():
             return "-"
-        return self.labelNames.get("en", "New Axis Label Name")
+        return self.labelNames.get("en", "")
         
     def axisNameKey(self):
         return self.name
@@ -1415,17 +1415,17 @@ class DesignSpaceEditor(BaseWindowController):
                     'width':2*fileIconWidth,
                     'editable':False,
                 },
-                {   'title': 'Data',
+                {   'title': 'Where',
                     'key':'problemClass',
                     'width':160,
                     'editable':False,
                 },
-                {   'title': 'Description',
+                {   'title': 'What',
                     'key':'problemDescription',
                     'width':400,
                     'editable':False,
                 },
-                {   'title': 'Data',
+                {   'title': 'Specifically',
                     'key':'problemData',
                     'width':500,
                     'editable':False,

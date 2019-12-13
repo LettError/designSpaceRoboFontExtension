@@ -28,6 +28,37 @@ def getUFOLayers(ufoPath):
         return [a for a, b in p]
     return []
 
+class UnicodeCollector(object):
+    def __init__(self):
+        # do some admin on the unicodes of master glyphs
+        # aeach glyph can have multiple unicodes
+        # so rake in all unicodes of all masters
+        self.unicodes = {}
+        self.masterCount = 0
+
+    def add(self, glyph):
+        # assume these are mathglyphs
+        self.masterCount +=1
+        if not glyph.unicodes:
+            if not None in self.unicodes:
+                self.unicodes[None] = 0
+            self.unicodes[None]+=1
+            return
+        for u in glyph.unicodes:
+            if not u in self.unicodes:
+                self.unicodes[u] = 0
+            self.unicodes[u]+=1
+
+    def evaluate(self):
+        # so what do we think of what we've seen
+        incomplete = []
+        for u, count in self.unicodes.items():
+            if count != self.masterCount:
+                incomplete.append(u)
+        return incomplete
+
+
+
 class DesignSpaceChecker(object):
     _registeredTags = dict(wght = 'weight', wdth = 'width', slnt = 'slant', opsz = 'optical', ital = 'italic')
     _structuralProblems = [
@@ -147,15 +178,24 @@ class DesignSpaceChecker(object):
             # we need to get the mapped values for minimum, default and maximum. 
             # but any problems in the axis map can only be determined if we
             # are sure the axis is valid.
-            mappedMin, mappedDef, mappedMax = self.data_getAxisValues(axisName, mapped=True)
+            axisMin, axisDef, axisMax = self.data_getAxisValues(axisName, mapped=False)
+            mappedAxisMin, mappedAxisDef, mappedAxisMax = self.data_getAxisValues(axisName, mapped=True)
+            # 1,13 mapped minimum > mapped maximum
+            if mappedAxisMin > mappedAxisMax:
+                self.problems.append(DesignSpaceProblem(1,13, dict(axisName=axisName, maximum=mappedAxisMax, minimum=mappedAxisMin)))
+                axisOK = False
+            # 1,14 mapped minimum > mapped maximum
+            if axisMin > axisMax:
+                self.problems.append(DesignSpaceProblem(1,14, dict(axisName=axisName, maximum=mappedAxisMax, minimum=mappedAxisMin)))
+                axisOK = False
 
             # 1,9 minimum and maximum value are the same and not None
-            if (mappedMin == mappedMax) and mappedMin != None:
+            if (mappedAxisMin == mappedAxisMax) and mappedAxisMin != None:
                 self.problems.append(DesignSpaceProblem(1,9, dict(axisName=axisName)))
                 axisOK = False
             # 1,10 default not between minimum and maximum
-            if mappedMin is not None and mappedMax is not None and mappedDef is not None:
-                if not ((mappedMin < mappedDef <= mappedMax) or (mappedMin <= mappedDef < mappedMax)):
+            if mappedAxisMin is not None and mappedAxisMax is not None and mappedAxisDef is not None:
+                if not ((mappedAxisMin < mappedAxisDef <= mappedAxisMax) or (mappedAxisMin <= mappedAxisDef < mappedAxisMax)):
                     self.problems.append(DesignSpaceProblem(1,10, dict(axisName=axisName)))
                     axisOK = False
             # 1.6	axis tag missing
@@ -177,7 +217,7 @@ class DesignSpaceChecker(object):
                 # 1.8	mapping table has overlaps
                 inputs = []
                 outputs = []
-                if ad.map:
+                if len(ad.map)>0:
                     last = None
                     for a, b in ad.map:
                         if last is None:
@@ -188,14 +228,16 @@ class DesignSpaceChecker(object):
                         inputs.append(da)
                         outputs.append(db)
                         last = a,b
-                if inputs:
+                if len(outputs)>0:
+                    if min(outputs)<=0 and max(outputs)>=0:
+                        p = DesignSpaceProblem(1,12, dict(axisName=axisName, axisMap=ad.map))
+                        self.problems.append(p)
+                if len(inputs)>0:
                     # the graph can only be positive or negative
                     # it can't be both, so that's what we test for
-                    if min(inputs)<0 and max(inputs)>0:
-                        self.problems.append(DesignSpaceProblem(1,11, dict(axisName=axisName, axisMap=ad.map)))
-                if outputs:
-                    if min(outputs)<0 and max(outputs)>0:
-                        self.problems.append(DesignSpaceProblem(1,12, dict(axisName=axisName, axisMap=ad.map)))
+                    if min(inputs)<=0 and max(inputs)>=0:
+                        p = DesignSpaceProblem(1,11, dict(axisName=axisName, axisMap=ad.map))
+                        self.problems.append(p)
 
         # XX
         if not False in allAxes:
@@ -242,15 +284,17 @@ class DesignSpaceChecker(object):
                             else:
                                 # 2,5 source location has value for undefined axis
                                 self.problems.append(DesignSpaceProblem(2,5, dict(axisName=axisName)))
-        defaultLocation = self.ds.newDefaultLocation(bend=True)
-        defaultCandidates = []
+        mappedDefaultLocation = self.ds.newDefaultLocation(bend=True)
+        mappedDefaultCandidates = []
+        #unmappedDefaultLocation = self.ds.newDefaultLocation(bend=False)
+        #unmappedDefaultCandidates = []
         for i, sd in enumerate(self.ds.sources):
-            if sd.location == defaultLocation:
-                defaultCandidates.append(sd)
-        if len(defaultCandidates) == 0:
-            # 2,7 no source on default location
+            if sd.location == mappedDefaultLocation:
+                mappedDefaultCandidates.append(sd)
+        if len(mappedDefaultCandidates) == 0:
+            # 2,7 no source on mapped default location
             self.problems.append(DesignSpaceProblem(2,7))
-        elif len(defaultCandidates) > 1:
+        elif len(mappedDefaultCandidates) > 1:
             # 2,8 multiple sources on default location
             self.problems.append(DesignSpaceProblem(2,8))
         allLocations = {}
@@ -266,7 +310,7 @@ class DesignSpaceChecker(object):
             #     # 2,10 source location is anisotropic
             #     self.problems.append(DesignSpaceProblem(2,10))
         for key, items in allLocations.items():
-            if len(items) > 1 and items[0].location != defaultLocation:
+            if len(items) > 1 and items[0].location != mappedDefaultLocation:
                 # 2,9 multiple sources on location
                 self.problems.append(DesignSpaceProblem(2,9))
         onAxis = set()
@@ -389,14 +433,17 @@ class DesignSpaceChecker(object):
         # For this test all glyphs will be loaded.
         # 4.6 non-default glyph is empty
         # 4.8 contour has wrong direction
+        # 4.10 different unicodes in glyph
         items = self.ds.collectMastersForGlyph(glyphName)
         patterns = {}
         contours = {}
         components = {}
+        unicodes = UnicodeCollector()
         anchors = {}
         for loc, mg, masters in items:
             pp = DigestPointStructurePen()
             # get the structure of the glyph, count a couple of things
+            unicodes.add(mg)
             mg.drawPoints(pp)
             pat = pp.getDigest()
             for cm in mg.components:
@@ -421,6 +468,9 @@ class DesignSpaceChecker(object):
             if not contourCount in contours:
                 contours[contourCount] = 0
             contours[contourCount] += 1
+        unicodeResults = unicodes.evaluate()
+        if unicodeResults:
+            self.problems.append(DesignSpaceProblem(4,10, dict(glyphName=glyphName, unicodes=unicodeResults)))
         if len(components) != 0:
             for baseGlyphName, refCount in components.items():
                 if refCount % len(items) != 0:
