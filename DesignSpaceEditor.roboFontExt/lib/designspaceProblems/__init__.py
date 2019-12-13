@@ -392,21 +392,21 @@ class DesignSpaceChecker(object):
                     allLocations[key] = []
                 allLocations[key].append((i,jd))
         for key, items in allLocations.items():
-            # 3,4   multiple sources on location
+            # 3,4   multiple instances on location
             if len(items) > 1:
-                self.problems.append(DesignSpaceProblem(3,4, dict(location=items[0][1].location, instances=[a for a,b in items])))
+                self.problems.append(DesignSpaceProblem(3,4, dict(location=items[0][1].location, instances=[b for a,b in items])))
         
         # 3,5   instance location is anisotropic
         for i, jd in enumerate(self.ds.instances):
             # 3,6   missing family name
             if jd.familyName is None:
-                self.problems.append(DesignSpaceProblem(3,6, dict(instance=i)))
+                self.problems.append(DesignSpaceProblem(3,6, dict(instance=jd)))
             # 3,7   missing style name
             if jd.styleName is None:
-                self.problems.append(DesignSpaceProblem(3,7, dict(instance=i)))
+                self.problems.append(DesignSpaceProblem(3,7, dict(instance=jd)))
             # 3,8   missing output path
             if jd.filename is None:
-                self.problems.append(DesignSpaceProblem(3,8, dict(instance=i)))
+                self.problems.append(DesignSpaceProblem(3,8, dict(instance=jd)))
         # 3,9   duplicate instances
     
     def checkGlyphs(self):
@@ -612,11 +612,12 @@ class DesignSpaceChecker(object):
                         else:
                             if cd['minimum'] < min(axisValues[cd['name']]) or cd['maximum'] > max(axisValues[cd['name']]):
                                 # 7.6 condition values out of axis bounds
-                                self.problems.append(DesignSpaceProblem(7,6, data=dict(rule=name, axisValues=axisValues[cd['name']])))
+                                self.problems.append(DesignSpaceProblem(7,6, data=dict(rule=name, axisValues=axisValues[cd['name']], 
+                                    conditionMinimum=cd.get('minimum'), conditionDefault=cd.get('default'), conditionMaximum=cd.get('maximum'))))
                     else:
-                        if cd['minimum'] == None:
+                        if cd.get('minimum') == None:
                             self.problems.append(DesignSpaceProblem(7,10, data=dict(rule=name, axisValues=axisValues[cd['name']])))
-                        if cd['maximum'] == None:
+                        if cd.get('maximum') == None:
                             self.problems.append(DesignSpaceProblem(7,11, data=dict(rule=name, axisValues=axisValues[cd['name']])))
 
 

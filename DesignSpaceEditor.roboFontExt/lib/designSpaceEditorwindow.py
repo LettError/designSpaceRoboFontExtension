@@ -119,11 +119,11 @@ class LiveDesignSpaceProcessor(ufoProcessor.DesignSpaceProcessor):
                     fontObj = self.robofontHasFont(sourceDescriptor.path)
                     if fontObj is None:
                         self.fonts[sourceDescriptor.name] = self._instantiateFont(sourceDescriptor.path)
-                        print("Loaded master from %s, format %d"%(sourceDescriptor.path, ufoProcessor.getUFOVersion(sourceDescriptor.path)))
+                        #print("Loaded master from %s, format %d"%(sourceDescriptor.path, ufoProcessor.getUFOVersion(sourceDescriptor.path)))
                     else:
                         fontObj.save()
                         self.fonts[sourceDescriptor.name] = fontObj
-                        print("Loaded master from open font %s" %fontObj.path)
+                        #print("Loaded master from open font %s" %fontObj.path)
                     # this is not a problem, why report it as one?
                     names = names | set(self.fonts[sourceDescriptor.name].keys())
                 else:
@@ -162,7 +162,7 @@ class KeyedRuleDescriptor(AppKit.NSObject,
     def updateAxes(self, axes):
         #@@ this needs to update the axes references in the conditionsets
         # new axis, deleted axis
-        print("updateAxes {} conditionsets{}".format(id(self), self.conditionSets))
+        #print("updateAxes {} conditionsets{}".format(id(self), self.conditionSets))
         pass
         
     @python_method
@@ -1519,7 +1519,7 @@ class DesignSpaceEditor(BaseWindowController):
         # vanilla callback for segmented button switching the math model
         #@@
         wouldLikeToUseVarLib = sender.get() == 1
-        print('switchMathModelCallback', wouldLikeToUseVarLib)
+        #print('switchMathModelCallback', wouldLikeToUseVarLib)
         self.doc.useVarlib = wouldLikeToUseVarLib
         if wouldLikeToUseVarLib:
             self.mathModelPref = 'previewVarLib'
@@ -1819,7 +1819,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.instancesItem.set(self.doc.instances)
         self.validate()
         self.setDocumentNeedSave(False)
-        print('saved at', self.designSpacePath)
+        #print('saved at', self.designSpacePath)
     
     def updateLocations(self):
         # update all the displayed locations, we might have more or fewer axes
@@ -1827,7 +1827,7 @@ class DesignSpaceEditor(BaseWindowController):
         values = {}
         # find the defined names
         for axisDescriptor in self.doc.axes:
-            print("updateLocations axisDescriptor", axisDescriptor.name)
+            #print("updateLocations axisDescriptor", axisDescriptor.name)
             defaults[axisDescriptor.name] = axisDescriptor.default
             values[axisDescriptor.name] = axisDescriptor.minimum, axisDescriptor.default, axisDescriptor.maximum
         for instanceDescriptor in self.doc.instances:
@@ -1868,7 +1868,7 @@ class DesignSpaceEditor(BaseWindowController):
         if self._selectedConditionSetIndex is None:
             return
         edited = []
-        print('callbackEditRuleCondition')
+        #print('callbackEditRuleCondition')
         for item in sender.get():
             d = {'minimum':None, 'maximum':None}
             if item.get("minimum") is None:
@@ -2089,16 +2089,16 @@ class DesignSpaceEditor(BaseWindowController):
         # this is called when the axes have changed. More, fewer
         # so check the conditions and update them
         keepThese = []
-        print("_updateConditions {}\n{}".format(id(self), ruleDescriptor.conditionSets))
+        #print("_updateConditions {}\n{}".format(id(self), ruleDescriptor.conditionSets))
         for cd in ruleDescriptor.conditions:
             if cd.get('name') in defaults:
                 # we're good
                 keepThese.append(cd)
         # but what about the new axes
-        print('keepThese', keepThese)
-        for axisName, default in defaults.items():
-            if not axisName in keepThese:
-                print('new axis for condition', axisName, default)
+        #print('keepThese', keepThese)
+        #for axisName, default in defaults.items():
+        #    if not axisName in keepThese:
+        #        print('new axis for condition', axisName, default)
         ruleDescriptor.conditions = keepThese
         
     def updateRules(self):
@@ -2312,7 +2312,7 @@ class DesignSpaceEditor(BaseWindowController):
 
     def enableInstanceList(self):
         # we have open masters:
-        print("self.mastersItem", self.mastersItem, len(self.mastersItem))
+        #print("self.mastersItem", self.mastersItem, len(self.mastersItem))
         if len(self.mastersItem)>1:
             self.instancesItem.enable(True)
             self.instancesGroup.tools.enable(True)
