@@ -453,6 +453,8 @@ class DesignSpaceChecker(object):
                 components[cm['baseGlyph']] += 1
             for ad in mg.anchors:
                 # collect anchor counts
+                if not 'name' in ad:
+                    continue
                 if ad['name'] not in anchors:
                     anchors[ad['name']] = 0
                 anchors[ad['name']] += 1                

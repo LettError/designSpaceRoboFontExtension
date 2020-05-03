@@ -2417,31 +2417,31 @@ class DesignSpaceEditor(BaseWindowController):
                 
 if __name__ == "__main__":
     # tests
-    assert renameAxis("aaa", "bbb", dict(aaa=1)) == dict(bbb=1)
-    assert renameAxis("ccc", "bbb", dict(aaa=1)) == dict(aaa=1)
+    # assert renameAxis("aaa", "bbb", dict(aaa=1)) == dict(bbb=1)
+    # assert renameAxis("ccc", "bbb", dict(aaa=1)) == dict(aaa=1)
+    # sD = KeyedSourceDescriptor()
+    # sD.location = dict(aaa=1, bbb=2)
+    # sD.renameAxis("aaa", "ddd")
+    # assert sD.location == dict(ddd=1, bbb=2)
+
+    # kI = KeyedInstanceDescriptor()
+    # kI.location = dict(aaa=1, bbb=2)
+    # kI.renameAxis("aaa", "ddd")
+    # assert kI.location == dict(ddd=1, bbb=2)
+    # kI.renameAxis("ddd", "bbb")
+    # assert kI.location == dict(ddd=1, bbb=2)
+
+    # aD = KeyedAxisDescriptor()
+    # aD.name = "aaa"
+    # aD.renameAxis("aaa", "bbb")
+    # assert aD.name == "bbb"
     
-    testWithFile = True    # set to False to test without getfile dialog
+    testWithFile = True   # set to False to test without getfile dialog
 
     if not testWithFile:
         # test
         DesignSpaceEditor()
     else:
-        sD = KeyedSourceDescriptor()
-        sD.location = dict(aaa=1, bbb=2)
-        sD.renameAxis("aaa", "ddd")
-        assert sD.location == dict(ddd=1, bbb=2)
-
-        kI = KeyedInstanceDescriptor()
-        kI.location = dict(aaa=1, bbb=2)
-        kI.renameAxis("aaa", "ddd")
-        assert kI.location == dict(ddd=1, bbb=2)
-        kI.renameAxis("ddd", "bbb")
-        assert kI.location == dict(ddd=1, bbb=2)
-
-        aD = KeyedAxisDescriptor()
-        aD.name = "aaa"
-        aD.renameAxis("aaa", "bbb")
-        assert aD.name == "bbb"
     
         results = getFile(messageText="Select a DesignSpace file:", allowsMultipleSelection=True, fileTypes=["designspace"])
         if results is not None:
