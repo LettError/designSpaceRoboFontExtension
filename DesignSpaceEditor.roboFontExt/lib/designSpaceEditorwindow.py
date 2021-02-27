@@ -1592,7 +1592,9 @@ class DesignSpaceEditor(BaseWindowController):
             else:
                 icon="❕"
             data = ""
-            if problem.data:
+            if problem.details:
+                data = problem.details
+            elif problem.data:
                 t = []
                 for k, v in problem.data.items():
                     t.append("%s: %s" % (k, str(v)))

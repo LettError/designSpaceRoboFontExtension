@@ -9,6 +9,15 @@ from ufoProcessor.varModels import AxisMapper
 from fontParts.fontshell import RFont
 from fontPens.digestPointPen import DigestPointStructurePen
 
+def prettyLocation(loc):
+    if loc is None:
+        return "[no location]"
+    t = []
+    names = list(loc.keys())
+    names.sort()
+    for n in names:
+        t.append(f'{n}:{loc[n]:9.3f}')
+    return '['+' '.join(t)+']'
 
 def getUFOLayers(ufoPath):
     # Peek into a ufo to read its layers.
@@ -384,7 +393,8 @@ class DesignSpaceChecker(object):
         allLocations = {}
         for i, jd in enumerate(self.ds.instances):
             if jd.location is None:
-                self.problems.append(DesignSpaceProblem(3,1, dict(instance=i)))
+                deets = f'No location for {jd.familyName} {jd.styleName}'
+                self.problems.append(DesignSpaceProblem(3,1, dict(instance=i), details=deets))
             else:
                 key = list(jd.location.items())
                 key.sort()
@@ -395,20 +405,23 @@ class DesignSpaceChecker(object):
         for key, items in allLocations.items():
             # 3,4   multiple instances on location
             if len(items) > 1:
-                deets = f"multiple instances on {items[0][1].location}"
+                deets = f"multiple instances at {prettyLocation(items[0][1].location)}"
                 self.problems.append(DesignSpaceProblem(3,4, dict(location=items[0][1].location, instances=[b for a,b in items]), details=deets))
         
         # 3,5   instance location is anisotropic
         for i, jd in enumerate(self.ds.instances):
             # 3,6   missing family name
             if jd.familyName is None:
-                self.problems.append(DesignSpaceProblem(3,6, dict(instance=jd)))
+                deets = f"instance at {prettyLocation(jd.location)}"
+                self.problems.append(DesignSpaceProblem(3,6, dict(instance=jd), details=deets))
             # 3,7   missing style name
             if jd.styleName is None:
-                self.problems.append(DesignSpaceProblem(3,7, dict(instance=jd)))
+                deets = f"instance at {prettyLocation(jd.location)}"
+                self.problems.append(DesignSpaceProblem(3,7, dict(instance=jd), details=deets))
             # 3,8   missing output path
             if jd.filename is None:
-                self.problems.append(DesignSpaceProblem(3,8, dict(instance=jd)))
+                deets = f"no location for {jd.familyName} {jd.styleName}"
+                self.problems.append(DesignSpaceProblem(3,8, dict(instance=jd), details=deets))
         # 3,9   duplicate instances
     
     def checkGlyphs(self):
@@ -428,7 +441,8 @@ class DesignSpaceChecker(object):
         for name in glyphs.keys():
             if self.nf is not None:
                 if name not in self.nf:
-                    self.problems.append(DesignSpaceProblem(4,7, dict(glyphName=name)))
+                    deets = f'empty glyph at default: {name}'
+                    self.problems.append(DesignSpaceProblem(4,7, dict(glyphName=name), details=deets))
                 self.checkGlyph(name)
 
     def checkGlyph(self, glyphName):

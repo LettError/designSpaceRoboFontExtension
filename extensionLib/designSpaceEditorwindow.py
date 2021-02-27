@@ -1435,12 +1435,12 @@ class DesignSpaceEditor(BaseWindowController):
                 },
                 {   'title': 'What',
                     'key':'problemDescription',
-                    'width':400,
+                    'width':300,
                     'editable':False,
                 },
                 {   'title': 'Specifically',
                     'key':'problemData',
-                    'width':500,
+                    'width':650,
                     'editable':False,
                 },
             ]
@@ -1592,7 +1592,9 @@ class DesignSpaceEditor(BaseWindowController):
             else:
                 icon="❕"
             data = ""
-            if problem.data:
+            if problem.details:
+                data = problem.details
+            elif problem.data:
                 t = []
                 for k, v in problem.data.items():
                     t.append("%s: %s" % (k, str(v)))
@@ -1825,9 +1827,11 @@ class DesignSpaceEditor(BaseWindowController):
             if instanceDescriptor.filename == instanceDescriptor.path:
                 # - new unsaved document
                 # - instance added, we have no relative path
-                instanceDescriptor.setDocumentFolder(self.designSpacePath)
-                instanceDescriptor.filename = os.path.relpath(instanceDescriptor.filename, os.path.dirname(self.designSpacePath))
-                instanceDescriptor.makePath()
+                if instanceDescriptor.filename is not None:
+                    # filename can be None if the instance is not intended to output to UFO
+                    instanceDescriptor.setDocumentFolder(self.designSpacePath)
+                    instanceDescriptor.filename = os.path.relpath(instanceDescriptor.filename, os.path.dirname(self.designSpacePath))
+                    instanceDescriptor.makePath()
         self.updatePaths()
         self.doc.lib[self.mathModelPrefKey] = self.mathModelPref
         self.doc.write(self.designSpacePath)

@@ -155,7 +155,7 @@ class DesignSpaceProblem(object):
             t.append(self._problems.get(key))
         dt = ""
         if self.details is not None:
-            dt += self.details
+            dt += " / " + self.details
         if self.data is not None:
             dt += ", "+ ' '.join("%s: %s" % (a, b) for a, b in self.data.items())
         return '[' + ": ".join(t) + dt + ' %s' % str(key) + ']'
