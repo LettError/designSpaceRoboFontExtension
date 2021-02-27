@@ -1623,19 +1623,23 @@ class DesignSpaceEditor(BaseWindowController):
                 if key.path is None:
                     continue
                 path = key.path
+                print('a openSelectedItem opening', path)
                 try:
-                    alreadyOpen = False
-                    for f in AllFonts():
-                        if f.path == path:
-                            thisWindow = f.document().getMainWindow()
-                            thisWindow.show()
-                            alreadyOpen = True
-                            break
-                    if not alreadyOpen:
-                        if version[0] == '2':
-                            font = OpenFont(path, showInterface=True)
-                        else:
-                            font = OpenFont(path, showUI=True)
+                    #alreadyOpen = False
+                    #for f in AllFonts():
+                    #    if f.path == path:
+                    #        thisWindow = f.document().getMainWindow()
+                    #        thisWindow.show()
+                    #        alreadyOpen = True
+                    #        break
+                    #if not alreadyOpen:
+                    print('b openSelectedItem opening', path)
+                    if version[0] == '2':
+                        font = OpenFont(path, showInterface=True)
+                        print('c 1')
+                    else:
+                        font = OpenFont(path, showUI=True)
+                        print('c 2')
                 except:
                     print("Bad UFO:", path)
                     pass
@@ -2332,6 +2336,8 @@ class DesignSpaceEditor(BaseWindowController):
             item.controller = weakref.ref(self)
         
     def callbackOpenMaster(self, sender):
+        print('callbackOpenMaster')
+        print('self.mastersItem', self.mastersItem)
         self.openSelectedItem(self.mastersItem)
         self.updateAxesColumns()
         self.enableInstanceList()

@@ -94,6 +94,7 @@ class DesignSpaceProblem(object):
         (5,4): 'kerning pair missing',
         (5,5): 'no kerning groups in default',
         (5,6): 'no kerning groups in source',
+        (5,7): 'kerning group members sorted differently',
 
         # 6 font info
         (6,0): 'default font info missing value for units per em',
@@ -117,10 +118,11 @@ class DesignSpaceProblem(object):
         (7,11): 'condition with missing maximum',
         }
         
-    def __init__(self, category=None, error=None, data=None):
+    def __init__(self, category=None, error=None, data=None, details=None):
         self.category = category
         self.problem = error
         self.data = data
+        self.details = details
     
     def __eq__(self, otherProblem):
         # this way we can test membership in a list
@@ -140,6 +142,8 @@ class DesignSpaceProblem(object):
             t.append(self._categories.get(self.category))
         if key in self._problems:
             t.append(self._problems.get(key))
+        #if self.details is not None:
+        #    t.append(self.details)
         return t
 
     def __repr__(self):
@@ -149,10 +153,11 @@ class DesignSpaceProblem(object):
             t.append(self._categories.get(self.category))
         if key in self._problems:
             t.append(self._problems.get(key))
+        dt = ""
+        if self.details is not None:
+            dt += self.details
         if self.data is not None:
-            dt = ", "+ ' '.join("%s: %s" % (a, b) for a, b in self.data.items())
-        else:
-            dt = ''
+            dt += ", "+ ' '.join("%s: %s" % (a, b) for a, b in self.data.items())
         return '[' + ": ".join(t) + dt + ' %s' % str(key) + ']'
             
 def allProblems():

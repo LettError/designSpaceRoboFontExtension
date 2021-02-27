@@ -157,7 +157,15 @@ class KeyedRuleDescriptor(AppKit.NSObject,
         self.conditions = []
         self.subs = []
         return self
-
+    
+    def copy(self):
+        new = KeyedRuleDescriptor()
+        new.name = self.name + "_copy"
+        new.conditionSets = self.conditionSets[:]
+        new.conditions = self.conditions[:]
+        new.subs = self.subs[:]
+        return new
+        
     @python_method
     def updateAxes(self, axes):
         #@@ this needs to update the axes references in the conditionsets
@@ -1349,7 +1357,7 @@ class DesignSpaceEditor(BaseWindowController):
         
         listMargin = 5
         self.rulesGroup = self.w.ruleGroup = vanilla.Group((0,groupStart,0, -30))
-        self.rulesGroup.title = vanilla.TextBox((50, 3, 150, 20), "Rules")
+        self.rulesGroup.title = vanilla.TextBox((120, 3, 150, 20), "Rules")
         ruleToolbarHeight = 25
         self.rulesNames = vanilla.List((0,ruleToolbarHeight, 200,-0), [],
             columnDescriptions=ruleNameColDescriptions,
@@ -1359,7 +1367,7 @@ class DesignSpaceEditor(BaseWindowController):
         )
 
         ruleGlyphListLeftMargin = 200+listMargin
-        self.rulesGroup.title3 = vanilla.TextBox((ruleGlyphListLeftMargin + 50, 3, 150, 20), "Subs")
+        self.rulesGroup.title3 = vanilla.TextBox((ruleGlyphListLeftMargin + 50+70, 3, 150, 20), "Subs")
         self.rulesGlyphs = vanilla.List((ruleGlyphListLeftMargin,ruleToolbarHeight, 200,-0), [],
             columnDescriptions=ruleGlyphsColDescriptions,
             editCallback = self.callbackEditRuleGlyphs,
@@ -1369,7 +1377,7 @@ class DesignSpaceEditor(BaseWindowController):
         )
 
         ruleConditionSetListLeftMargin = 400+3*listMargin
-        self.rulesGroup.title2 = vanilla.TextBox((ruleConditionSetListLeftMargin + 50, 3, 250, 20), "Conditionsets")
+        self.rulesGroup.title2 = vanilla.TextBox((ruleConditionSetListLeftMargin + 50+70, 3, 250, 20), "Conditionsets")
         self.rulesConditionSets = vanilla.List((ruleConditionSetListLeftMargin,ruleToolbarHeight, 100-listMargin,-0), [],
             #columnDescriptions=ruleConditionSetColDescriptions,
             selectionCallback = self.callbackSelectedConditionSet,
@@ -1391,19 +1399,24 @@ class DesignSpaceEditor(BaseWindowController):
         self.rulesGroup.conditions = self.rulesConditions
         self.rulesGroup.glyphs = self.rulesGlyphs
         # segmented button for + - rules
+        rulesToolDescriptions = [
+            {'title': "+", 'width': 20,},
+            {'title': "-", 'width': 20},
+            {'title': "Duplicate", 'width': 70},
+            ]
         self.rulesGroup.tools = vanilla.SegmentedButton(
-            (buttonMargin, buttonMargin,100,buttonHeight),
-            segmentDescriptions=instancesToolDescriptions,
+            (buttonMargin, buttonMargin,150,buttonHeight),
+            segmentDescriptions=rulesToolDescriptions,
             selectionStyle="momentary",
             callback=self.callbackRulesTools)
         self.rulesGroup.conditionSetTools = vanilla.SegmentedButton(
-            (ruleConditionSetListLeftMargin, buttonMargin,100,buttonHeight),
-            segmentDescriptions=instancesToolDescriptions,
+            (ruleConditionSetListLeftMargin, buttonMargin,150,buttonHeight),
+            segmentDescriptions=rulesToolDescriptions,
             selectionStyle="momentary",
             callback=self.callbackConditionSetTools)
         self.rulesGroup.glyphTools = vanilla.SegmentedButton(
-            (ruleGlyphListLeftMargin, buttonMargin,100,buttonHeight),
-            segmentDescriptions=instancesToolDescriptions,
+            (ruleGlyphListLeftMargin, buttonMargin,150,buttonHeight),
+            segmentDescriptions=rulesToolDescriptions,
             selectionStyle="momentary",
             callback=self.callbackRuleGlyphTools)
         
@@ -1610,19 +1623,23 @@ class DesignSpaceEditor(BaseWindowController):
                 if key.path is None:
                     continue
                 path = key.path
+                print('a openSelectedItem opening', path)
                 try:
-                    alreadyOpen = False
-                    for f in AllFonts():
-                        if f.path == path:
-                            thisWindow = f.document().getMainWindow()
-                            thisWindow.show()
-                            alreadyOpen = True
-                            break
-                    if not alreadyOpen:
-                        if version[0] == '2':
-                            font = OpenFont(path, showInterface=True)
-                        else:
-                            font = OpenFont(path, showUI=True)
+                    #alreadyOpen = False
+                    #for f in AllFonts():
+                    #    if f.path == path:
+                    #        thisWindow = f.document().getMainWindow()
+                    #        thisWindow.show()
+                    #        alreadyOpen = True
+                    #        break
+                    #if not alreadyOpen:
+                    print('b openSelectedItem opening', path)
+                    if version[0] == '2':
+                        font = OpenFont(path, showInterface=True)
+                        print('c 1')
+                    else:
+                        font = OpenFont(path, showUI=True)
+                        print('c 2')
                 except:
                     print("Bad UFO:", path)
                     pass
@@ -1860,6 +1877,7 @@ class DesignSpaceEditor(BaseWindowController):
             newGlyphs.append((item['name'],item['with']))
         self._selectedRule.subs = newGlyphs
         self._checkRuleGlyphListHasEditableEmpty()
+        self.setDocumentNeedSave(True)
     
     def callbackEditRuleCondition(self, sender=None):
         # vanilla callback for selected a specific axis in the condition list
@@ -1890,6 +1908,7 @@ class DesignSpaceEditor(BaseWindowController):
             d['name'] = item['name']
             edited.append(d)
         self._selectedRule.conditionSets[self._selectedConditionSetIndex] = edited
+        self.setDocumentNeedSave(True)
 
     def callbackSelectedConditionSet(self, sender=None):
         sel = sender.getSelection()
@@ -1901,10 +1920,12 @@ class DesignSpaceEditor(BaseWindowController):
             self.rulesGroup.conditions.setSelection([])
             # disable the "-" segment
             self.rulesGroup.conditionSetTools._nsObject.setEnabled_forSegment_(False, 1)
+            self.rulesGroup.conditionSetTools._nsObject.setEnabled_forSegment_(False, 2)
             return
         # selected items
         # enable the "-" item
         self.rulesGroup.conditionSetTools._nsObject.setEnabled_forSegment_(True, 1)
+        self.rulesGroup.conditionSetTools._nsObject.setEnabled_forSegment_(True, 2)
         sel = sel[0]
         self._selectedConditionSetIndex = sel
         self._setConditionsFromSelectedConditionSet()
@@ -1930,8 +1951,10 @@ class DesignSpaceEditor(BaseWindowController):
         selection = sender.getSelection()
         if not selection:
             self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(False, 1)
+            self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(False, 2)
         else:            
             self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(True, 1)
+            self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(True, 2)
         
     def callbackRuleNameSelection(self, sender):
         selection = sender.getSelection()
@@ -1952,8 +1975,10 @@ class DesignSpaceEditor(BaseWindowController):
             self.rulesGroup.glyphs.enable(False)
             self.rulesGroup.glyphTools.enable(False)
             # ZZZ
-            self.rulesGroup.tools._nsObject.setEnabled_forSegment_(False, 1)
-            self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(False, 1)
+            self.rulesGroup.tools._nsObject.setEnabled_forSegment_(False, 1)    # - button
+            self.rulesGroup.tools._nsObject.setEnabled_forSegment_(False, 2)    # duplicate button
+            self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(False, 1)    # - button
+            self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(False, 2)    # duplicate button
         else:
             self._selectedRule = self.rulesGroup.rulesNameList[selection[0]]
             self._selectedConditionSetIndex = 0
@@ -1967,7 +1992,9 @@ class DesignSpaceEditor(BaseWindowController):
             self._settingGlyphsFlag = False
             self.rulesGroup.glyphTools.enable(True)
             self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(False, 1)
+            self.rulesGroup.glyphTools._nsObject.setEnabled_forSegment_(False, 2)
             self.rulesGroup.tools._nsObject.setEnabled_forSegment_(True, 1)
+            self.rulesGroup.tools._nsObject.setEnabled_forSegment_(True, 2)
             
     def _updateConditionSetsList(self):
         conditionSetsForThisRule = []
@@ -1999,7 +2026,7 @@ class DesignSpaceEditor(BaseWindowController):
             self._updateConditionSetsList()
             self.setDocumentNeedSave(True)
         elif sender.get() == 1:
-            # + button
+            # - button
             if not self._selectedRule:
                 return
             selectedConditionSet = self.rulesConditionSets.getSelection()
@@ -2007,6 +2034,20 @@ class DesignSpaceEditor(BaseWindowController):
                 del self._selectedRule.conditionSets[index]
             self._updateConditionSetsList()
             self.setDocumentNeedSave(True)
+        else:
+            # duplicate button
+            print("duplicate conditionset")
+            if not self._selectedRule:
+                return
+            selectedConditionSet = self.rulesConditionSets.getSelection()
+            new = []
+            for index in selectedConditionSet:
+                new.append(self._selectedRule.conditionSets[index].copy())
+            for n in new:
+                self._selectedRule.conditionSets.append(n)
+            self._updateConditionSetsList()
+            self.setDocumentNeedSave(True)
+                
         # things
                 
     def callbackRuleGlyphTools(self, sender):
@@ -2018,16 +2059,30 @@ class DesignSpaceEditor(BaseWindowController):
             #self._selectedRule.subs.append(("<glyph>", "<glyph>"))
             self._setGlyphNamesToList()
             self.setDocumentNeedSave(True)
-        else:
+        elif sender.get() == 1:
             if not self._selectedRule:
                 return
-        selected = self.rulesGlyphs.getSelection()
-        keepThese = []
-        for i, pair in enumerate(self._selectedRule.subs):
-            if i not in selected:
-                keepThese.append(pair)
-        self._selectedRule.subs = keepThese
-        self._checkRuleGlyphListHasEditableEmpty()
+            selected = self.rulesGlyphs.getSelection()
+            keepThese = []
+            for i, pair in enumerate(self._selectedRule.subs):
+                if i not in selected:
+                    keepThese.append(pair)
+            self._selectedRule.subs = keepThese
+            self._checkRuleGlyphListHasEditableEmpty()
+        elif sender.get() == 2:
+            print("XX duplicate glyphs")
+            if not self._selectedRule:
+                return
+            new = []
+            selected = self.rulesGlyphs.getSelection()
+            for i, pair in enumerate(self._selectedRule.subs):
+                #newGlyphs.append((item['name'],item['with']))
+                if i in selected:
+                    new.append({'name':pair[0], 'with':pair[1]})
+            for n in new:
+                self.rulesGlyphs.append(n)
+            self.rulesGlyphs.setSelection([])
+                
         self._setGlyphNamesToList()
         self.setDocumentNeedSave(True)
     
@@ -2059,7 +2114,8 @@ class DesignSpaceEditor(BaseWindowController):
             self._newRuleCounter += 1
             self.doc.addRule(newRuleDescriptor)
             self.rulesGroup.rulesNameList.set(self.doc.rules)
-        else:
+        elif sender.get() == 1:
+            # - button
             selection = self.rulesGroup.rulesNameList.getSelection()
             if not selection:
                 # no selected rules, nothing to delete
@@ -2069,7 +2125,16 @@ class DesignSpaceEditor(BaseWindowController):
             else:
                 text = "Do you want to delete %d rules?"%len(selection)
             result = askYesNo(messageText=text, informativeText="There is no undo.", parentWindow=self.w, resultCallback=self.finallyDeleteRule)
-    
+        elif sender.get() == 2:
+            # duplicate button for rules
+            selection = self.rulesGroup.rulesNameList.getSelection()
+            print("duplicate button in rule names", selection)
+            for s in selection:
+                newRuleDescriptor = self.doc.rules[s].copy()
+                print("\tselected rule", type(newRuleDescriptor))
+                self.doc.addRule(newRuleDescriptor)
+        self.rulesGroup.rulesNameList.set(self.doc.rules)
+
     def finallyDeleteRule(self, result):
         if result != 1:
             return
@@ -2082,8 +2147,6 @@ class DesignSpaceEditor(BaseWindowController):
                 keepThese.append(item)
         self.doc.rules = keepThese
         self.updateRules()
-        #self.rulesGroup.rulesNameList.set(self.doc.rules)
-        #self.rulesGroup.rulesNameList.setSelection([])
     
     def _updateConditions(self, ruleDescriptor, defaults):
         # this is called when the axes have changed. More, fewer
@@ -2273,6 +2336,8 @@ class DesignSpaceEditor(BaseWindowController):
             item.controller = weakref.ref(self)
         
     def callbackOpenMaster(self, sender):
+        print('callbackOpenMaster')
+        print('self.mastersItem', self.mastersItem)
         self.openSelectedItem(self.mastersItem)
         self.updateAxesColumns()
         self.enableInstanceList()
@@ -2417,31 +2482,31 @@ class DesignSpaceEditor(BaseWindowController):
                 
 if __name__ == "__main__":
     # tests
-    assert renameAxis("aaa", "bbb", dict(aaa=1)) == dict(bbb=1)
-    assert renameAxis("ccc", "bbb", dict(aaa=1)) == dict(aaa=1)
+    # assert renameAxis("aaa", "bbb", dict(aaa=1)) == dict(bbb=1)
+    # assert renameAxis("ccc", "bbb", dict(aaa=1)) == dict(aaa=1)
+    # sD = KeyedSourceDescriptor()
+    # sD.location = dict(aaa=1, bbb=2)
+    # sD.renameAxis("aaa", "ddd")
+    # assert sD.location == dict(ddd=1, bbb=2)
+
+    # kI = KeyedInstanceDescriptor()
+    # kI.location = dict(aaa=1, bbb=2)
+    # kI.renameAxis("aaa", "ddd")
+    # assert kI.location == dict(ddd=1, bbb=2)
+    # kI.renameAxis("ddd", "bbb")
+    # assert kI.location == dict(ddd=1, bbb=2)
+
+    # aD = KeyedAxisDescriptor()
+    # aD.name = "aaa"
+    # aD.renameAxis("aaa", "bbb")
+    # assert aD.name == "bbb"
     
-    testWithFile = True    # set to False to test without getfile dialog
+    testWithFile = True   # set to False to test without getfile dialog
 
     if not testWithFile:
         # test
         DesignSpaceEditor()
     else:
-        sD = KeyedSourceDescriptor()
-        sD.location = dict(aaa=1, bbb=2)
-        sD.renameAxis("aaa", "ddd")
-        assert sD.location == dict(ddd=1, bbb=2)
-
-        kI = KeyedInstanceDescriptor()
-        kI.location = dict(aaa=1, bbb=2)
-        kI.renameAxis("aaa", "ddd")
-        assert kI.location == dict(ddd=1, bbb=2)
-        kI.renameAxis("ddd", "bbb")
-        assert kI.location == dict(ddd=1, bbb=2)
-
-        aD = KeyedAxisDescriptor()
-        aD.name = "aaa"
-        aD.renameAxis("aaa", "bbb")
-        assert aD.name == "bbb"
     
         results = getFile(messageText="Select a DesignSpace file:", allowsMultipleSelection=True, fileTypes=["designspace"])
         if results is not None:
