@@ -84,7 +84,7 @@ def ClassNameIncrementer(clsName, bases, dct):
    return type(clsName, bases, dct)
 
 class KeyedGlyphDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -148,7 +148,7 @@ def renameAxis(oldName, newName, location):
     return newLocation
 
 class KeyedRuleDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -200,7 +200,7 @@ class KeyedRuleDescriptor(AppKit.NSObject,
 
 
 class KeyedSourceDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -435,7 +435,7 @@ class KeyedSourceDescriptor(AppKit.NSObject,
     #    xx
     
 class KeyedInstanceDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -646,7 +646,7 @@ def intOrFloat(num):
 
 
 class KeyedAxisDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
@@ -1435,12 +1435,12 @@ class DesignSpaceEditor(BaseWindowController):
                 },
                 {   'title': 'What',
                     'key':'problemDescription',
-                    'width':400,
+                    'width':300,
                     'editable':False,
                 },
                 {   'title': 'Specifically',
                     'key':'problemData',
-                    'width':500,
+                    'width':650,
                     'editable':False,
                 },
             ]
@@ -1453,6 +1453,7 @@ class DesignSpaceEditor(BaseWindowController):
            dict(label="Rules", view=self.rulesGroup, size=135, collapsed=False, canResize=True),
            dict(label="Report", view=self.reportGroup, size=170, collapsed=True, canResize=True),
         ]
+        #self.reportGroup.scanButton = vanilla.Button((), "")
         
         for sourceDescriptor in self.doc.sources:
             sourceDescriptor.wasEditedCallback = self.sourceDescriptorWasEditedCallback
@@ -1827,9 +1828,11 @@ class DesignSpaceEditor(BaseWindowController):
             if instanceDescriptor.filename == instanceDescriptor.path:
                 # - new unsaved document
                 # - instance added, we have no relative path
-                instanceDescriptor.setDocumentFolder(self.designSpacePath)
-                instanceDescriptor.filename = os.path.relpath(instanceDescriptor.filename, os.path.dirname(self.designSpacePath))
-                instanceDescriptor.makePath()
+                if instanceDescriptor.filename is not None:
+                    # filename can be None if the instance is not intended to output to UFO
+                    instanceDescriptor.setDocumentFolder(self.designSpacePath)
+                    instanceDescriptor.filename = os.path.relpath(instanceDescriptor.filename, os.path.dirname(self.designSpacePath))
+                    instanceDescriptor.makePath()
         self.updatePaths()
         self.doc.lib[self.mathModelPrefKey] = self.mathModelPref
         self.doc.write(self.designSpacePath)

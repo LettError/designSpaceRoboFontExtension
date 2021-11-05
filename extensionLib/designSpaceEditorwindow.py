@@ -84,7 +84,7 @@ def ClassNameIncrementer(clsName, bases, dct):
    return type(clsName, bases, dct)
 
 class KeyedGlyphDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -148,7 +148,7 @@ def renameAxis(oldName, newName, location):
     return newLocation
 
 class KeyedRuleDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -200,7 +200,7 @@ class KeyedRuleDescriptor(AppKit.NSObject,
 
 
 class KeyedSourceDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -435,7 +435,7 @@ class KeyedSourceDescriptor(AppKit.NSObject,
     #    xx
     
 class KeyedInstanceDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -646,7 +646,7 @@ def intOrFloat(num):
 
 
 class KeyedAxisDescriptor(AppKit.NSObject,
-        metaclass=ClassNameIncrementer
+        #metaclass=ClassNameIncrementer
         ):
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
@@ -1453,6 +1453,7 @@ class DesignSpaceEditor(BaseWindowController):
            dict(label="Rules", view=self.rulesGroup, size=135, collapsed=False, canResize=True),
            dict(label="Report", view=self.reportGroup, size=170, collapsed=True, canResize=True),
         ]
+        #self.reportGroup.scanButton = vanilla.Button((), "")
         
         for sourceDescriptor in self.doc.sources:
             sourceDescriptor.wasEditedCallback = self.sourceDescriptorWasEditedCallback
