@@ -951,9 +951,9 @@ class DesignSpaceEditor(BaseWindowController):
         ]
         self.w.addToolbar("DesignSpaceToolbar", toolbarItems)
         
-        fileIconWidth = 30
+        fileIconWidth = 50
         ufoNameWidth = 250
-        axisValueWidth = 70
+        axisValueWidth = 100
         familyNameWidth = 130
         masterColDescriptions = [
                 {   'title': '',
@@ -1200,6 +1200,29 @@ class DesignSpaceEditor(BaseWindowController):
                     'editable':False,
                 },
         ]
+
+        # delete the width cue from these dictionaries so vanilla doesn't hard-code the width. save them for later.
+        masterColWidths = []
+        for dictionary in masterColDescriptions:
+            masterColWidths.append(dictionary['width'])
+            dictionary.pop('width', None)
+
+        instanceColWidths = []
+        for dictionary in instanceColDescriptions:
+            instanceColWidths.append(dictionary['width'])
+            dictionary.pop('width', None)
+
+        axisColWidths = []
+        for dictionary in axisColDescriptions:
+            axisColWidths.append(dictionary['width'])
+            dictionary.pop('width', None)
+
+        glyphsColWidths = []
+        for dictionary in glyphsColDescriptions:
+            glyphsColWidths.append(dictionary['width'])
+            dictionary.pop('width', None)
+
+
         toolbarHeight = 24
         groupStart = 30
         buttonMargin = 2
@@ -1207,7 +1230,14 @@ class DesignSpaceEditor(BaseWindowController):
         titleOffset = 100
         sectionTitleSize = (65, 3, 100, 20)
         self.axesGroup = self.w.axesGroup = vanilla.Group((0, groupStart,0, -30))
+        
         self.axesItem = vanilla.List((0, toolbarHeight, -0, -0), [], columnDescriptions=axisColDescriptions, editCallback=self.callbackAxesListEdit)
+        
+        # set the column widths we had before. but since we're doing it after the fact, we're maintaining the initial ability to resize
+        cols = self.axesItem.getNSTableView().tableColumns()
+        for i in range(len(cols)):
+            cols[i].setWidth_(axisColWidths[i])
+
         self.axesGroup.title = vanilla.TextBox(sectionTitleSize, "Axes")
         self.axesGroup.l = self.axesItem
         linkButtonSize = (titleOffset+48, buttonMargin+1, 30, buttonHeight)
@@ -1234,11 +1264,17 @@ class DesignSpaceEditor(BaseWindowController):
             {'title': "+", 'width': 20,},
             {'title': "-", 'width': 20},
             ]
+        
         self.mastersItem = vanilla.List((0, toolbarHeight, -0, -0), [],
             columnDescriptions=masterColDescriptions,
             #doubleClickCallback=self.callbackMastersDblClick
             selectionCallback=self.callbackMasterSelection
             )
+
+        cols = self.mastersItem.getNSTableView().tableColumns()
+        for i in range(len(cols)):
+            cols[i].setWidth_(masterColWidths[i])
+
         self.mastersGroup.l = self.mastersItem
         self.mastersGroup.tools = vanilla.SegmentedButton(
             (buttonMargin, buttonMargin,100,buttonHeight),
@@ -1266,6 +1302,11 @@ class DesignSpaceEditor(BaseWindowController):
             columnDescriptions=instanceColDescriptions,
             selectionCallback=self.callbackInstanceSelection,
         )
+
+        cols = self.instancesItem.getNSTableView().tableColumns()
+        for i in range(len(cols)):
+            cols[i].setWidth_(instanceColWidths[i])
+
         self.instancesGroup.duplicateButton = vanilla.Button(
             secondButtonSize, "Duplicate",
             callback=self.callbackDuplicateInstance,
@@ -1306,6 +1347,11 @@ class DesignSpaceEditor(BaseWindowController):
             columnDescriptions=glyphsColDescriptions,
             #selectionCallback=self.callbackInstanceSelection,
         )
+
+        cols = self.glyphsItem.getNSTableView().tableColumns()
+        for i in range(len(cols)):
+            cols[i].setWidth_(glyphsColWidths[i])
+
         self.glyphsGroup.l = self.glyphsItem
         
         ruleNameColDescriptions = [
@@ -1445,7 +1491,18 @@ class DesignSpaceEditor(BaseWindowController):
                 },
             ]
 
+        reportWidths = []
+        for dictionary in reportColumns:
+            reportWidths.append(dictionary['width'])
+            dictionary.pop('width', None)
+
         self.reportGroup.text = vanilla.List((0,toolbarHeight,-0,0), columnDescriptions=reportColumns, items=[])
+
+        cols = self.reportGroup.text.getNSTableView().tableColumns()
+        for i in range(len(cols)):
+            cols[i].setWidth_(reportWidths[i])
+
+
         descriptions = [
            dict(label="Axes", view=self.axesGroup, size=138, collapsed=False, canResize=False),
            dict(label="Masters", view=self.mastersGroup, size=135, collapsed=False, canResize=True),
