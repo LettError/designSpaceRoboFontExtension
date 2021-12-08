@@ -168,7 +168,7 @@ class KeyedRuleDescriptor(AppKit.NSObject,
         
     @python_method
     def updateAxes(self, axes):
-        #@@ this needs to update the axes references in the conditionsets
+        # this needs to update the axes references in the conditionsets
         # new axis, deleted axis
         #print("updateAxes {} conditionsets{}".format(id(self), self.conditionSets))
         pass
@@ -1264,6 +1264,7 @@ class DesignSpaceEditor(BaseWindowController):
         firstButtonSize = (titleOffset+78,buttonMargin+1,50,buttonHeight)
         secondButtonSize = (titleOffset+130,buttonMargin+1,100,buttonHeight)
         first_and_secondButtonSize = (titleOffset+78,buttonMargin+1,150,buttonHeight)
+        quickAxesWideSize = (titleOffset+78,buttonMargin+1,400,buttonHeight)
         thirdButtonSize = (titleOffset+232,buttonMargin+1,100,buttonHeight)
         fourthButtonSize = (titleOffset+444,buttonMargin+1,100,buttonHeight)
         mathPickerButtonSize = (titleOffset+232,buttonMargin+1,200,buttonHeight)
@@ -1279,6 +1280,14 @@ class DesignSpaceEditor(BaseWindowController):
             segmentDescriptions=axisToolDescriptions,
             selectionStyle="momentary",
             callback=self.callbackAxisTools)
+
+        quickAxesDescriptions = [dict(title=f'Add {n[0]} axis',width=100) for n in self.preferredAxes]
+        self.axesGroup.quickAxes = vanilla.SegmentedButton(
+            quickAxesWideSize,
+            segmentDescriptions=quickAxesDescriptions,
+            selectionStyle="momentary",
+            callback=self.callbackQuickAxes)
+            
         self.mastersGroup = self.w.mastersGroup = vanilla.Group((0,groupStart,0, -30))
         self.mastersGroup.title = vanilla.TextBox(sectionTitleSize, "Sources: UFOs and Layers")
         masterToolDescriptions = [
@@ -1316,6 +1325,11 @@ class DesignSpaceEditor(BaseWindowController):
             callback=self.callbackGetNamesFromSources,
             sizeStyle="small")
         self.mastersGroup.loadNamesFromSourceButton.enable(False)
+        self.mastersGroup.replaceSourceButton = vanilla.Button(
+            fourthButtonSize, "Replace UFO",
+            callback=self.callbackReplaceSource,
+            sizeStyle="small")
+        self.mastersGroup.replaceSourceButton.enable(False)
         
         self.instancesGroup = self.w.instancesGroup = vanilla.Group((0,groupStart,0, -30))
         self.instancesGroup.title = vanilla.TextBox(sectionTitleSize, "Instances")
@@ -1545,7 +1559,6 @@ class DesignSpaceEditor(BaseWindowController):
             sourceDescriptor.wasEditedCallback = self.sourceDescriptorWasEditedCallback
         self.w.open()
         
-        #@@
         self.fillInterfaceWithDocumentData()
         
         if self.designSpacePath is not None:
@@ -1622,7 +1635,6 @@ class DesignSpaceEditor(BaseWindowController):
         
     def switchMathModelCallback(self, sender):
         # vanilla callback for segmented button switching the math model
-        #@@
         wouldLikeToUseVarLib = sender.get() == 1
         self.doc.useVarlib = wouldLikeToUseVarLib
         if wouldLikeToUseVarLib:
@@ -1867,7 +1879,6 @@ class DesignSpaceEditor(BaseWindowController):
             
     def save(self, sender=None):
         if len(self.doc.axes) == 0:
-            #@@ 
             message(messageText="No axes defined!", informativeText="The designspace needs at least one axis before saving.")
             return
         if self.designSpacePath is None:
@@ -1979,7 +1990,6 @@ class DesignSpaceEditor(BaseWindowController):
     
     def callbackEditRuleCondition(self, sender=None):
         # vanilla callback for selected a specific axis in the condition list
-        #@@
         if not self._selectedRule: return
         if self._selectedConditionSetIndex is None:
             return
@@ -2273,6 +2283,31 @@ class DesignSpaceEditor(BaseWindowController):
                 self.findDefault()
                 self.validate()
 
+    def callbackQuickAxes(self, sender):
+        newAxis = self.preferredAxes[sender.get()]
+        for axisDescriptor in self.doc.axes:
+            if axisDescriptor.name == newAxis[0]:
+                # we already have one
+                print(f"Duplicate axis {newAxis}")
+                return
+        axisDescriptor = KeyedAxisDescriptor()
+        axisDescriptor.controller = weakref.ref(self)
+        axisDescriptor.name = newAxis[0]
+        axisDescriptor.tag = newAxis[1]
+        axisDescriptor.minimum = newAxis[2]
+        axisDescriptor.maximum = newAxis[3]
+        axisDescriptor.default = newAxis[4]
+        self.doc.axes.append(axisDescriptor)
+        #if self.doc.defaultLoc is None:
+        #    self.doc.defaultLoc = {}
+        #self.doc.defaultLoc[axisDescriptor.name] = axisDescriptor.default
+        self.updateAxesColumns()
+        self.updateLocations()
+        self.axesItem.set(self.doc.axes)
+        self.setDocumentNeedSave(True)
+        
+        
+        
     def callbackAxisTools(self, sender):
         if sender.get() == 0:
             # add axis button
@@ -2445,6 +2480,39 @@ class DesignSpaceEditor(BaseWindowController):
         self.doc.findDefault()
         self.axesItem.set(self.doc.axes)
         self.validate()
+    
+    def callbackReplaceSource(self, sender):
+        item = self.mastersItem[self.mastersItem.getSelection()[0]]
+        # open file dialog here
+        getFile(messageText=f"New UFO for {os.path.basename(item.path)}",
+            allowsMultipleSelection=True,
+            fileTypes=["ufo"],
+            parentWindow=self.w,
+            resultCallback=self.finalizeReplaceMaster)
+    
+    def finalizeReplaceMaster(self, paths):
+        defaults = {}
+        for axisDescriptor in self.doc.axes:
+            defaults[axisDescriptor.name] = axisDescriptor.default
+        #print('finalizeReplaceMaster', paths)
+        font = OpenFont(paths[0])
+        sourceDescriptor = self.mastersItem[self.mastersItem.getSelection()[0]]
+        sourceDescriptor.path = font.path
+        sourceDescriptor.familyName = font.info.familyName
+        sourceDescriptor.styleName = font.info.styleName
+
+        if self.designSpacePath is not None:
+            sourceDescriptor.setDocumentFolder(self.designSpacePath)
+            sourceDescriptor.filename = os.path.relpath(font.path, os.path.dirname(self.designSpacePath))
+            #sourceDescriptor.makePath()
+        else:
+            # we're adding sources to an unsaved document
+            # that means we can't make a relative path
+            # what to do? absolute path to the source?
+            sourceDescriptor.filename = font.path
+        sourceDescriptor.makePath()
+        self.setDocumentNeedSave(True)
+        self.validate()
         
     def callbackGetNamesFromSources(self, sender):
         # open the source fonts and load the family and stylenames
@@ -2541,6 +2609,11 @@ class DesignSpaceEditor(BaseWindowController):
 
 
     def callbackMasterSelection(self, sender):
+        if len(sender.getSelection())==1:
+            # we selected 1 source, let's enable the replace UFO button
+            self.mastersGroup.replaceSourceButton.enable(True)
+        else:
+            self.mastersGroup.replaceSourceButton.enable(False)
         for i in sender.getSelection():
             selectedItem = self.doc.sources[i]
             if selectedItem.sourceHasFileKey():
