@@ -446,6 +446,7 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
         self.location = None
         self.familyName = None
         self.styleName = None
+        self.automaticUFOName = True
         self.postScriptFontName = None
         self.styleMapFamilyName = None
         self.styleMapStyleName = None
@@ -479,6 +480,7 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
         copy.styleName = self.styleName
         copy.postScriptFontName = self.postScriptFontName
         copy.styleMapFamilyName = self.styleMapFamilyName
+        copy.automaticUFOName = self.self.automaticUFOName
         copy.glyphs.update(self.glyphs)
         copy.axisOrder = self.axisOrder
         copy.info = self.info
@@ -495,6 +497,10 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
         for k, v in self.location.items():
             name.append("%s_%3.3f"%(k, v))
         self.name = "_".join(name)
+    
+    @python_method
+    def setAutomaticUFONname(self, state=True):
+        self.automaticUFOName = state
         
     @python_method
     def setAxisOrder(self, names):
@@ -562,16 +568,29 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
     def setPathRelativeTo(self, docFolder, instancesFolderName):
         self.dir = os.path.join(docFolder, instancesFolderName)
         self.path = os.path.join(self.dir, fileName)
+    
+    @python_method
+    def makeUFOPathFromFontNames(self):
+        #print('makeUFOPathFromFontNames')
+        if self.familyName is not None and self.styleName is not None:
+            instancesDirName = os.path.dirname(self.filename)
+            self.filename = os.path.join(instancesDirName, f"{self.familyName}-{self.styleName}.ufo")
+            self.makePath()
+            #print(f'makeUFOPathFromFontNames self.filename {self.filename} {self.path}')
 
     def setValue_forUndefinedKey_(self, value=None, key=None):
         if key == "instanceFamilyNameKey":
             self.familyName = value
+            if self.automaticUFOName:
+                self.makeUFOPathFromFontNames()
         elif key == "instanceUFONameKey":
             # manual text edit to the path
             self.filename = value
             self.makePath()
         elif key == "instanceStyleNameKey":
             self.styleName = value
+            if self.automaticUFOName:
+                self.makeUFOPathFromFontNames()
         elif key == "instanceAxis_1":
             axisName = self.axisOrder[0]
             try:
@@ -852,6 +871,7 @@ class DesignSpaceEditor(BaseWindowController):
         self._newInstanceCounter = 1
         self._newRuleCounter = 1
         self._selectedRule = None
+        self.automaticUFOName = True
         self._selectedConditionSetIndex = None
         self._settingConditionsFlag = False
         self._settingGlyphsFlag = False
@@ -1247,6 +1267,7 @@ class DesignSpaceEditor(BaseWindowController):
         thirdButtonSize = (titleOffset+232,buttonMargin+1,100,buttonHeight)
         fourthButtonSize = (titleOffset+444,buttonMargin+1,100,buttonHeight)
         mathPickerButtonSize = (titleOffset+232,buttonMargin+1,200,buttonHeight)
+        automaticUFONameize = (titleOffset+432,buttonMargin+1,200,buttonHeight)
         statusTextSize = (titleOffset+165, buttonMargin+4,-10,buttonHeight)
         addButtonSize = (titleOffset+102,buttonMargin+1,50,buttonHeight)
         axisToolDescriptions = [
@@ -1312,7 +1333,15 @@ class DesignSpaceEditor(BaseWindowController):
             callback=self.callbackDuplicateInstance,
             sizeStyle="small")
         self.instancesGroup.duplicateButton.enable(False)
-
+        
+        self.instancesGroup.automaticUFONameCheck = vanilla.CheckBox(
+            automaticUFONameize,
+            callback = self.setAutomaticUFONameCallback,
+            title="Automatic UFO names",
+            sizeStyle="small"
+            )
+        self.instancesGroup.automaticUFONameCheck.set(1)
+        
         mathModelDescriptions = [
             dict(title="MutatorMath"),
             dict(title="VarLib"),
@@ -1586,11 +1615,15 @@ class DesignSpaceEditor(BaseWindowController):
         for source in self.doc.sources:
             source.callbackCleanup()
     
+    def setAutomaticUFONameCallback(self, sender):
+        #print("setAutomaticUFONameCallback", sender.get())
+        self.automaticUFOName = sender.get()==1
+        self.updateUFOnamesFromFontNames()
+        
     def switchMathModelCallback(self, sender):
         # vanilla callback for segmented button switching the math model
         #@@
         wouldLikeToUseVarLib = sender.get() == 1
-        #print('switchMathModelCallback', wouldLikeToUseVarLib)
         self.doc.useVarlib = wouldLikeToUseVarLib
         if wouldLikeToUseVarLib:
             self.mathModelPref = 'previewVarLib'
@@ -1683,7 +1716,6 @@ class DesignSpaceEditor(BaseWindowController):
                 if key.path is None:
                     continue
                 path = key.path
-                print('a openSelectedItem opening', path)
                 try:
                     #alreadyOpen = False
                     #for f in AllFonts():
@@ -1693,13 +1725,10 @@ class DesignSpaceEditor(BaseWindowController):
                     #        alreadyOpen = True
                     #        break
                     #if not alreadyOpen:
-                    print('b openSelectedItem opening', path)
                     if version[0] == '2':
                         font = OpenFont(path, showInterface=True)
-                        print('c 1')
                     else:
                         font = OpenFont(path, showUI=True)
-                        print('c 2')
                 except:
                     print("Bad UFO:", path)
                     pass
@@ -1787,6 +1816,15 @@ class DesignSpaceEditor(BaseWindowController):
                 newTitle = ""
             column.setTitle_(newTitle)
         self.instancesItem.getNSTableView().reloadData()
+    
+    def updateUFOnamesFromFontNames(self):
+        # XX
+        # update the instance UFO names from the instance names
+        #print("updateUFOnamesFromFontNames")
+        for item in self.doc.instances:
+            item.automaticUFOName = self.automaticUFOName
+            if self.automaticUFOName:
+                item.makeUFOPathFromFontNames()
         
     def fillInterfaceWithDocumentData(self):
         for item in self.doc.axes:
@@ -1898,7 +1936,6 @@ class DesignSpaceEditor(BaseWindowController):
         self.instancesItem.set(self.doc.instances)
         self.validate()
         self.setDocumentNeedSave(False)
-        #print('saved at', self.designSpacePath)
     
     def updateLocations(self):
         # update all the displayed locations, we might have more or fewer axes
@@ -1906,7 +1943,6 @@ class DesignSpaceEditor(BaseWindowController):
         values = {}
         # find the defined names
         for axisDescriptor in self.doc.axes:
-            #print("updateLocations axisDescriptor", axisDescriptor.name)
             defaults[axisDescriptor.name] = axisDescriptor.default
             values[axisDescriptor.name] = axisDescriptor.minimum, axisDescriptor.default, axisDescriptor.maximum
         for instanceDescriptor in self.doc.instances:
@@ -1948,7 +1984,6 @@ class DesignSpaceEditor(BaseWindowController):
         if self._selectedConditionSetIndex is None:
             return
         edited = []
-        #print('callbackEditRuleCondition')
         for item in sender.get():
             d = {'minimum':None, 'maximum':None}
             if item.get("minimum") is None:
@@ -2098,7 +2133,6 @@ class DesignSpaceEditor(BaseWindowController):
             self.setDocumentNeedSave(True)
         else:
             # duplicate button
-            print("duplicate conditionset")
             if not self._selectedRule:
                 return
             selectedConditionSet = self.rulesConditionSets.getSelection()
@@ -2132,7 +2166,6 @@ class DesignSpaceEditor(BaseWindowController):
             self._selectedRule.subs = keepThese
             self._checkRuleGlyphListHasEditableEmpty()
         elif sender.get() == 2:
-            print("XX duplicate glyphs")
             if not self._selectedRule:
                 return
             new = []
@@ -2190,10 +2223,8 @@ class DesignSpaceEditor(BaseWindowController):
         elif sender.get() == 2:
             # duplicate button for rules
             selection = self.rulesGroup.rulesNameList.getSelection()
-            print("duplicate button in rule names", selection)
             for s in selection:
                 newRuleDescriptor = self.doc.rules[s].copy()
-                print("\tselected rule", type(newRuleDescriptor))
                 self.doc.addRule(newRuleDescriptor)
         self.rulesGroup.rulesNameList.set(self.doc.rules)
 
@@ -2214,7 +2245,6 @@ class DesignSpaceEditor(BaseWindowController):
         # this is called when the axes have changed. More, fewer
         # so check the conditions and update them
         keepThese = []
-        #print("_updateConditions {}\n{}".format(id(self), ruleDescriptor.conditionSets))
         for cd in ruleDescriptor.conditions:
             if cd.get('name') in defaults:
                 # we're good
@@ -2232,6 +2262,7 @@ class DesignSpaceEditor(BaseWindowController):
         self.rulesGroup.rulesNameList.setSelection([])
         
     def callbackAxesListEdit(self, sender):
+        #print("callbackAxesListEdit", sender)
         if self._updatingTheAxesNames == False:
             if sender.getSelection():
                 self._updatingTheAxesNames = True        # preventing recursion? XXX
@@ -2398,8 +2429,8 @@ class DesignSpaceEditor(BaseWindowController):
             item.controller = weakref.ref(self)
         
     def callbackOpenMaster(self, sender):
-        print('callbackOpenMaster')
-        print('self.mastersItem', self.mastersItem)
+        #print('callbackOpenMaster')
+        #print('self.mastersItem', self.mastersItem)
         self.openSelectedItem(self.mastersItem)
         self.updateAxesColumns()
         self.enableInstanceList()
@@ -2563,7 +2594,7 @@ if __name__ == "__main__":
     # aD.renameAxis("aaa", "bbb")
     # assert aD.name == "bbb"
     
-    testWithFile = True   # set to False to test without getfile dialog
+    testWithFile = False   # set to False to test without getfile dialog
 
     if not testWithFile:
         # test
