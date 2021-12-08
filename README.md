@@ -22,14 +22,12 @@ but ¯\\\_(ツ)__/¯.
 
 ![Screenshot](screen.png)
 
-## Notes
-* This extension uses the [DesignSpaceDocument](https://github.com/LettError/designSpaceDocument) reader and writer.
-* The editor does not support **anisotropic** designspace locations (variable fonts don't either). If you open a file with an anisotropic coordinate (for instance exported from Superpolator) only the horizontal value will be used.
+This editor does not support **anisotropic** designspace locations (variable fonts don't either). If you open a file with an anisotropic coordinate (for instance exported from Superpolator) only the horizontal value will be used.
 
 ## Toolbar
 * `Save` saves the file.
 * `Add Open Fonts` adds all open UFOs to th Masters list.
-* `Generate` feeds this designspace to the **MutatorMath** embedded in RoboFont and it will attempt to generate the instances as well as it can.
+* `Generate` feeds this designspace to the **MutatorMath** embedded in RoboFont and it will attempt to generate the instances as well as it can with [UFOProcessor](https://github.com/LettError/ufoProcessor).
 * `Settings` provides a sheet with some preferences. At the moment: just the name of the folder for the instances.
 
 ## Axes
@@ -74,7 +72,7 @@ but ¯\\\_(ツ)__/¯.
 It is possible to define and edit rules and conditions that can convert to `rvrn` features if compiled.
 
 ## Problems
-* This panel shows a very basic validation report of what needs to be done and where the UFOs are, etc. This uses the (DesignspaceProblems)[https://github.com/LettError/DesignspaceProblems] package.
+* This panel shows a very basic validation report of what needs to be done and where the UFOs are, etc. This uses the [DesignspaceProblems](https://github.com/LettError/DesignspaceProblems) package.
 
 
 ## History
@@ -87,7 +85,7 @@ It is possible to define and edit rules and conditions that can convert to `rvrn
 * 1.3.6 Updated designSpaceDocument. ShowSparksTool made independent.
 * 1.9.6
 	* Update of this readme
-	* Resizable columns (thanks Ryam Bugden)[https://github.com/ryanbugden]
+	* Resizable columns thanks [@ryanbugden](https://github.com/ryanbugden)!
 	* Quick defaults for axes
 	* Replace UFO button
 	* Automatic update of UFO name based on `familyName-styleName.ufo`
