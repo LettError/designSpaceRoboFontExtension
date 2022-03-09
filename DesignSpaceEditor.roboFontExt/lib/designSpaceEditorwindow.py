@@ -574,7 +574,8 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
         #print('makeUFOPathFromFontNames')
         if self.familyName is not None and self.styleName is not None:
             instancesDirName = os.path.dirname(self.filename)
-            self.filename = os.path.join(instancesDirName, f"{self.familyName}-{self.styleName}.ufo")
+            fam_name, sty_name = self.familyName.replace(" ", "_"), self.styleName.replace(" ", "_")
+            self.filename = os.path.join(instancesDirName, f"{fam_name}-{sty_name}.ufo")
             self.makePath()
             #print(f'makeUFOPathFromFontNames self.filename {self.filename} {self.path}')
 
