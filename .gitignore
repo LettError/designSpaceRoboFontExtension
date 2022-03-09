@@ -1,11 +1,7 @@
 test.designspace
 build.py
-buildExtension.py
-screen.psd
 __pycache__
-automatic_testfonts
 *.pyc
 DesignSpaceEditor.roboFontExt/lib/.pytest_cache
-drawbot
 issues
 .DS_Store
