@@ -574,7 +574,8 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
         #print('makeUFOPathFromFontNames')
         if self.familyName is not None and self.styleName is not None:
             instancesDirName = os.path.dirname(self.filename)
-            self.filename = os.path.join(instancesDirName, f"{self.familyName}-{self.styleName}.ufo")
+            fam_name, sty_name = self.familyName.replace(" ", "_"), self.styleName.replace(" ", "_")
+            self.filename = os.path.join(instancesDirName, f"{fam_name}-{sty_name}.ufo")
             self.makePath()
             #print(f'makeUFOPathFromFontNames self.filename {self.filename} {self.path}')
 
@@ -1298,7 +1299,10 @@ class DesignSpaceEditor(BaseWindowController):
         self.mastersItem = vanilla.List((0, toolbarHeight, -0, -0), [],
             columnDescriptions=masterColDescriptions,
             #doubleClickCallback=self.callbackMastersDblClick
-            selectionCallback=self.callbackMasterSelection
+            selectionCallback=self.callbackMasterSelection,
+            otherApplicationDropSettings=dict(
+                type=AppKit.NSFilenamesPboardType,
+                callback=self.callbackSourceDrop)
             )
 
         cols = self.mastersItem.getNSTableView().tableColumns()
@@ -1578,6 +1582,25 @@ class DesignSpaceEditor(BaseWindowController):
         self.updateLocations()
         self.enableInstanceList()
     
+    def callbackSourceDrop(self, sender, dropInfo):
+        supportedFontFileFormats = ["ufo"]
+        isProposal = dropInfo["isProposal"]
+        existingPaths = [item.path for item in sender.get()]
+        paths = dropInfo["data"]
+        paths = [path for path in paths if path not in existingPaths]
+        paths = [path for path in paths if path.split(".")[-1].lower() in supportedFontFileFormats]
+
+        if not paths:
+            return False
+
+        if not isProposal:
+            items = sender.get() + paths
+            sender.set(items)
+            self.finalizeAddMaster(paths)
+            
+        return True
+        
+
     def showTab(self, sender):
         wantTab = sender.label()
         if wantTab == "Axes":
@@ -1737,10 +1760,7 @@ class DesignSpaceEditor(BaseWindowController):
                     #        alreadyOpen = True
                     #        break
                     #if not alreadyOpen:
-                    if version[0] == '2':
-                        font = OpenFont(path, showInterface=True)
-                    else:
-                        font = OpenFont(path, showUI=True)
+                    font = OpenFont(path, showInterface=True)
                 except:
                     print("Bad UFO:", path)
                     pass
@@ -2519,7 +2539,7 @@ class DesignSpaceEditor(BaseWindowController):
         for i in self.mastersItem.getSelection():
             selectedItem = self.doc.sources[i]
             if selectedItem.sourceHasFileKey():
-                f = OpenFont(selectedItem.path, showUI=True)
+                f = OpenFont(selectedItem.path, showInterface=True)
                 selectedItem.familyName = f.info.familyName
                 selectedItem.styleName = f.info.styleName
                 #f.close()
@@ -2600,7 +2620,7 @@ class DesignSpaceEditor(BaseWindowController):
 
     def finalizeAddMaster(self, paths):
         for path in paths:
-            font = OpenFont(path, showUI=True)
+            font = OpenFont(path, showInterface=True)
             self.addSourceFromFont(font)
         self.updateAxesColumns()
         self.enableInstanceList()
