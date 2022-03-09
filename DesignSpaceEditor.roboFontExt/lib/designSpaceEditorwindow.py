@@ -1583,26 +1583,21 @@ class DesignSpaceEditor(BaseWindowController):
         self.enableInstanceList()
     
     def callbackSourceDrop(self, sender, dropInfo):
+        supportedFontFileFormats = ["ufo"]
+        isProposal = dropInfo["isProposal"]
+        existingPaths = [item.path for item in sender.get()]
+        paths = dropInfo["data"]
+        paths = [path for path in paths if path not in existingPaths]
+        paths = [path for path in paths if path.split(".")[-1].lower() in supportedFontFileFormats]
 
-        existing_paths = [item.path for item in sender.get()]
-
-        paths = []
-        paths.extend(list(dropInfo["data"]))
-
-        # print("existing_paths", existing_paths)
-        # print("paths", paths)
-
-        for path in paths:
-            if path.split(".")[-1] != "ufo":
-                print("Sources must be UFOs. Try dropping again.")
-                return False
-            if path in existing_paths:
-                paths.remove(path)
-        
         if not paths:
             return False
 
-        self.finalizeAddMaster(paths)
+        if not isProposal:
+            items = sender.get() + paths
+            sender.set(items)
+            self.finalizeAddMaster(paths)
+            
         return True
         
 
