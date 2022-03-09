@@ -1298,7 +1298,10 @@ class DesignSpaceEditor(BaseWindowController):
         self.mastersItem = vanilla.List((0, toolbarHeight, -0, -0), [],
             columnDescriptions=masterColDescriptions,
             #doubleClickCallback=self.callbackMastersDblClick
-            selectionCallback=self.callbackMasterSelection
+            selectionCallback=self.callbackMasterSelection,
+            otherApplicationDropSettings=dict(
+                type=AppKit.NSFilenamesPboardType,
+                callback=self.callbackSourceDrop)
             )
 
         cols = self.mastersItem.getNSTableView().tableColumns()
@@ -1578,6 +1581,30 @@ class DesignSpaceEditor(BaseWindowController):
         self.updateLocations()
         self.enableInstanceList()
     
+    def callbackSourceDrop(self, sender, dropInfo):
+
+        existing_paths = [item.path for item in sender.get()]
+
+        paths = []
+        paths.extend(list(dropInfo["data"]))
+
+        # print("existing_paths", existing_paths)
+        # print("paths", paths)
+
+        for path in paths:
+            if path.split(".")[-1] != "ufo":
+                print("Sources must be UFOs. Try dropping again.")
+                return False
+            if path in existing_paths:
+                paths.remove(path)
+        
+        if not paths:
+            return False
+
+        self.finalizeAddMaster(paths)
+        return True
+        
+
     def showTab(self, sender):
         wantTab = sender.label()
         if wantTab == "Axes":
@@ -1737,10 +1764,7 @@ class DesignSpaceEditor(BaseWindowController):
                     #        alreadyOpen = True
                     #        break
                     #if not alreadyOpen:
-                    if version[0] == '2':
-                        font = OpenFont(path, showInterface=True)
-                    else:
-                        font = OpenFont(path, showUI=True)
+                    font = OpenFont(path, showInterface=True)
                 except:
                     print("Bad UFO:", path)
                     pass
@@ -2519,7 +2543,7 @@ class DesignSpaceEditor(BaseWindowController):
         for i in self.mastersItem.getSelection():
             selectedItem = self.doc.sources[i]
             if selectedItem.sourceHasFileKey():
-                f = OpenFont(selectedItem.path, showUI=True)
+                f = OpenFont(selectedItem.path, showInterface=True)
                 selectedItem.familyName = f.info.familyName
                 selectedItem.styleName = f.info.styleName
                 #f.close()
@@ -2600,7 +2624,7 @@ class DesignSpaceEditor(BaseWindowController):
 
     def finalizeAddMaster(self, paths):
         for path in paths:
-            font = OpenFont(path, showUI=True)
+            font = OpenFont(path, showInterface=True)
             self.addSourceFromFont(font)
         self.updateAxesColumns()
         self.enableInstanceList()
