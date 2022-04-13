@@ -481,7 +481,8 @@ class DesignSpaceChecker(object):
             #print('checkGlyph mg.anchors', mg.anchors, type(mg.anchors))
             for ad in mg.anchors:
                 # collect anchor counts
-                if not 'name' in ad:
+                if not hasattr(ad, 'name'):
+                    # what kind of object do we have here?
                     continue
                 if ad.name not in anchors:
                     anchors[ad.name] = 0
