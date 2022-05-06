@@ -478,7 +478,7 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
         copy.styleName = self.styleName
         copy.postScriptFontName = self.postScriptFontName
         copy.styleMapFamilyName = self.styleMapFamilyName
-        copy.automaticUFOName = self.self.automaticUFOName
+        copy.automaticUFOName = self.automaticUFOName
         copy.glyphs.update(self.glyphs)
         copy.axisOrder = self.axisOrder
         copy.info = self.info
