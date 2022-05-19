@@ -578,7 +578,7 @@ class KeyedInstanceDescriptor(AppKit.NSObject, metaclass=ClassNameIncrementer):
         #print('makeUFOPathFromFontNames')
         if self.familyName is not None and self.styleName is not None:
             instancesDirName = os.path.dirname(self.filename)
-            
+
             fam_name, sty_name = self.familyName.replace(" ", "_"), self.styleName.replace(" ", "_")
             fam_name, sty_name = fam_name.replace("_-_", "-"), sty_name.replace("_-_", "-") # take care of spaces around hyphens (make it look nice in the file name)
 
@@ -1251,12 +1251,13 @@ class DesignSpaceEditor(BaseWindowController):
 
 
         toolbarHeight = 24
-        groupStart = 30
+        groupStart = 0
+        bottom = 0
         buttonMargin = 2
         buttonHeight = 20
         titleOffset = 100
         sectionTitleSize = (65, 3, 100, 20)
-        self.axesGroup = self.w.axesGroup = vanilla.Group((0, groupStart,0, -30))
+        self.axesGroup = self.w.axesGroup = vanilla.Group((0, groupStart, 0, bottom))
 
         self.axesItem = vanilla.List((0, toolbarHeight, -0, -0), [], columnDescriptions=axisColDescriptions, editCallback=self.callbackAxesListEdit)
 
@@ -1295,7 +1296,7 @@ class DesignSpaceEditor(BaseWindowController):
             selectionStyle="momentary",
             callback=self.callbackQuickAxes)
 
-        self.mastersGroup = self.w.mastersGroup = vanilla.Group((0,groupStart,0, -30))
+        self.mastersGroup = self.w.mastersGroup = vanilla.Group((0, groupStart, 0, bottom))
         self.mastersGroup.title = vanilla.TextBox(sectionTitleSize, "Sources: UFOs and Layers")
         masterToolDescriptions = [
             {'title': "+", 'width': 20,},
@@ -1455,7 +1456,7 @@ class DesignSpaceEditor(BaseWindowController):
             ]
 
         listMargin = 5
-        self.rulesGroup = self.w.ruleGroup = vanilla.Group((0,groupStart,0, -30))
+        self.rulesGroup = self.w.ruleGroup = vanilla.Group((0,groupStart,0, bottom))
         self.rulesGroup.title = vanilla.TextBox((120, 3, 150, 20), "Rules")
         ruleToolbarHeight = 25
         self.rulesNames = vanilla.List((0,ruleToolbarHeight, 200,-0), [],
@@ -1519,7 +1520,7 @@ class DesignSpaceEditor(BaseWindowController):
             selectionStyle="momentary",
             callback=self.callbackRuleGlyphTools)
 
-        self.reportGroup = self.w.reportGroup = vanilla.Group((0,groupStart,0,-30))
+        self.reportGroup = self.w.reportGroup = vanilla.Group((0, groupStart, 0, bottom))
 
         reportColumns = [
                 {   'title': '',
