@@ -20,7 +20,7 @@ from designspaceProblems import DesignSpaceChecker
 import logging
 
 import ufoProcessor
-import fontTools.designspaceLib as dsd
+import fontTools.designspaceLib as designspaceLib
 
 import designSpaceEditorSettings
 
@@ -56,32 +56,20 @@ except ImportError:
     # axes toevoegen moet updaten bij rules
 
 """
-DEVELOP = False
+DEVELOP = True
 
 if DEVELOP:
+    from lib.tools.debugTools import ClassNameIncrementer
     pathForBundle = os.path.dirname(__file__)
     resourcePathForBundle = os.path.join(os.path.dirname(pathForBundle), "resources")
     designspaceBundle = mojo.extensions.ExtensionBundle(path=pathForBundle, resourcesName=resourcePathForBundle)
 else:
+    ClassNameIncrementer = type
     designspaceBundle = mojo.extensions.ExtensionBundle("DesignspaceEditor")
 
 
-#NSOBject Hack, please remove before release.
-def ClassNameIncrementer(clsName, bases, dct):
-   import objc
-   orgName = clsName
-   counter = 0
-   while 1:
-       try:
-           objc.lookUpClass(clsName)
-       except objc.nosuchclass_error:
-           break
-       counter += 1
-       clsName = orgName + str(counter)
-   return type(clsName, bases, dct)
-
 class KeyedGlyphDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+       metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -145,7 +133,7 @@ def renameAxis(oldName, newName, location):
     return newLocation
 
 class KeyedRuleDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -197,7 +185,7 @@ class KeyedRuleDescriptor(AppKit.NSObject,
 
 
 class KeyedSourceDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     def __new__(cls):
         self = cls.alloc().init()
@@ -216,6 +204,7 @@ class KeyedSourceDescriptor(AppKit.NSObject,
         self.mutedGlyphNames = []
         self.familyName = None
         self.styleName = None
+        self.localisedFamilyName = None
         self.axisOrder = []
         self.lib = {}
         self.isDefault = False
@@ -431,9 +420,8 @@ class KeyedSourceDescriptor(AppKit.NSObject,
     #def setDocumentNeedSave(self, something=None):
     #    xx
 
-class KeyedInstanceDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
-        ):
+class KeyedInstanceDescriptor(AppKit.NSObject, metaclass=ClassNameIncrementer):
+
     def __new__(cls):
         self = cls.alloc().init()
         self.dir = None
@@ -458,6 +446,22 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
         self.info = True
         self.lib = {}
         return self
+
+    @python_method
+    def _get_location(self):
+        """
+        Deprecated, but aliasing designLocation
+        """
+        return self.designLocation
+
+    @python_method
+    def _set_location(self, value):
+        """
+        Deprecated, but aliasing designLocation
+        """
+        self.designLocation = value
+
+    location = property(_get_location, _set_location)
 
     @python_method
     def renameAxis(self, oldName, newName):
@@ -658,6 +662,7 @@ class KeyedInstanceDescriptor(AppKit.NSObject,
 
     def instanceFamilyNameKey(self):
         return self.familyName
+
     def instanceStyleNameKey(self):
         return self.styleName
 
@@ -669,7 +674,7 @@ def intOrFloat(num):
 
 
 class KeyedAxisDescriptor(AppKit.NSObject,
-        #metaclass=ClassNameIncrementer
+        metaclass=ClassNameIncrementer
         ):
     # https://www.microsoft.com/typography/otspec/fvar.htm
     registeredTags = [
@@ -692,6 +697,8 @@ class KeyedAxisDescriptor(AppKit.NSObject,
         self.default = None
         self.hidden = False
         self.map = []
+        self.axisOrdering = None
+        self.axisLabels = []
         self.controller = None    # weakref to controller
         return self
 
@@ -830,13 +837,13 @@ class ConditionDict(object):
 #a = ConditionDict()
 #a['a'] = 10
 
-class KeyedDocReader(dsd.BaseDocReader):
+class KeyedDocReader(designspaceLib.BaseDocReader):
     ruleDescriptorClass = KeyedRuleDescriptor
     axisDescriptorClass = KeyedAxisDescriptor
     sourceDescriptorClass = KeyedSourceDescriptor
     instanceDescriptorClass = KeyedInstanceDescriptor
 
-class KeyedDocWriter(dsd.BaseDocWriter):
+class KeyedDocWriter(designspaceLib.BaseDocWriter):
     ruleDescriptorClass = KeyedRuleDescriptor
     axisDescriptorClass = KeyedAxisDescriptor
     sourceDescriptorClass = KeyedSourceDescriptor
@@ -2625,7 +2632,6 @@ class DesignSpaceEditor(BaseWindowController):
         self.enableInstanceList()
         self.updatePaths()
         self.validate()
-
 
     def callbackMasterSelection(self, sender):
         if len(sender.getSelection())==1:
