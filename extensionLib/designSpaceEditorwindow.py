@@ -1908,7 +1908,7 @@ class DesignSpaceEditor(BaseWindowController):
         if len(self.doc.axes) == 0:
             message(messageText="No axes defined!", informativeText="The designspace needs at least one axis before saving.")
             return
-        if self.designSpacePath is None:
+        if self.designSpacePath is None or AppKit.NSEvent.modifierFlags() & AppKit.NSAlternateKeyMask:
             # check if w have defined any axes
             # can't save without axes
             # get a filepath first
