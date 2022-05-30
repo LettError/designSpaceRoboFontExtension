@@ -13,6 +13,8 @@ from mojo.UI import AccordionView
 from mojo.roboFont import *
 import mojo.extensions
 import fontTools.ufoLib
+from fontTools.misc.textTools import tostr
+
 
 import designspaceProblems
 from designspaceProblems import DesignSpaceChecker
@@ -462,7 +464,39 @@ class KeyedInstanceDescriptor(AppKit.NSObject, metaclass=ClassNameIncrementer):
         self.designLocation = value
 
     location = property(_get_location, _set_location)
+    
+    @python_method
+    def setStyleName(self, styleName, languageCode="en"):
+        self.localisedStyleName[languageCode] = tostr(styleName)
+    
+    @python_method
+    def getStyleName(self, languageCode="en"):
+        return self.localisedStyleName.get(languageCode)
+    
+    @python_method
+    def setFamilyName(self, familyName, languageCode="en"):
+        self.localisedFamilyName[languageCode] = tostr(familyName)
 
+    @python_method    
+    def getFamilyName(self, languageCode="en"):
+        return self.localisedFamilyName.get(languageCode)
+
+    @python_method
+    def setStyleMapStyleName(self, styleMapStyleName, languageCode="en"):
+        self.localisedStyleMapStyleName[languageCode] = tostr(styleMapStyleName)
+
+    @python_method
+    def getStyleMapStyleName(self, languageCode="en"):
+        return self.localisedStyleMapStyleName.get(languageCode)
+
+    @python_method
+    def setStyleMapFamilyName(self, styleMapFamilyName, languageCode="en"):
+        self.localisedStyleMapFamilyName[languageCode] = tostr(styleMapFamilyName)
+
+    @python_method
+    def getStyleMapFamilyName(self, languageCode="en"):
+        return self.localisedStyleMapFamilyName.get(languageCode)
+        
     @python_method
     def renameAxis(self, oldName, newName):
         self.designLocation = renameAxis(oldName, newName, self.designLocation)
@@ -492,6 +526,14 @@ class KeyedInstanceDescriptor(AppKit.NSObject, metaclass=ClassNameIncrementer):
         copy.userLocation = {}
         copy.userLocation.update(self.userLocation)
         copy.name = self.name
+        copy.localisedStyleName = dict()
+        copy.localisedStyleName.update(self.localisedStyleName)
+        copy.localisedFamilyName = dict()
+        copy.localisedFamilyName.update(self.localisedFamilyName)
+        copy.localisedStyleMapStyleName = dict()
+        copy.localisedStyleMapStyleName.update(self.localisedStyleMapStyleName)
+        copy.localisedStyleMapFamilyName = dict()
+        copy.localisedStyleMapFamilyName.update(self.localisedStyleMapFamilyName)
         #copy.setName()
         return copy
 
@@ -501,7 +543,7 @@ class KeyedInstanceDescriptor(AppKit.NSObject, metaclass=ClassNameIncrementer):
         for k, v in self.designLocation.items():
             name.append("%s_%3.3f"%(k, v))
         self.name = "_".join(name)
-
+    
     @python_method
     def setAutomaticUFONname(self, state=True):
         self.automaticUFOName = state
@@ -901,9 +943,8 @@ class DesignSpaceEditor(BaseWindowController):
         if self.designSpacePath is not None:
             try:
                 self.doc.read(self.designSpacePath)
-            except:
-                error_type, error_instance, traceback = sys.exc_info()
-                message("DesignSpaceEdit can't open this file", informativeText="Error reading {}.\n{}.".format(os.path.basename(self.designSpacePath), error_instance.msg))
+            except Exception as e:
+                message("DesignSpaceEdit can't open this file", informativeText="Error reading {}.\n{}.".format(os.path.basename(self.designSpacePath), e))
                 return
 
         # so we have a document, now build a window
@@ -1791,10 +1832,9 @@ class DesignSpaceEditor(BaseWindowController):
             print("generating with mutatorMath")
         try:
             ufoProcessor.build(self.doc.path, useVarlib=self.doc.useVarlib)
-        except ufoProcessor.UFOProcessorError:
-            error_type, error_instance, traceback = sys.exc_info()
-            self.doc.problems.append(str(error_instance.msg))
-        except:
+        except ufoProcessor.UFOProcessorError as e:
+            self.doc.problems.append(str(e))
+        except Exception:
             import traceback
             traceback.print_exc()
         finally:
@@ -2694,10 +2734,11 @@ if __name__ == "__main__":
     # assert aD.name == "bbb"
 
     testWithFile = False   # set to False to test without getfile dialog
-
+    path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v4_original.designspace'
+    # path = None
     if not testWithFile:
         # test
-        DesignSpaceEditor()
+        DesignSpaceEditor(path)
     else:
 
         results = getFile(messageText="Select a DesignSpace file:", allowsMultipleSelection=True, fileTypes=["designspace"])
