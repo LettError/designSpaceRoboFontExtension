@@ -206,7 +206,7 @@ class KeyedSourceDescriptor(AppKit.NSObject,
         self.mutedGlyphNames = []
         self.familyName = None
         self.styleName = None
-        self.localisedFamilyName = None
+        self.localisedFamilyName = {}
         self.axisOrder = []
         self.lib = {}
         self.isDefault = False
@@ -419,6 +419,24 @@ class KeyedSourceDescriptor(AppKit.NSObject,
         if self.wasEditedCallback is not None:
             self.wasEditedCallback(self)
 
+    @python_method
+    def setFamilyName(self, familyName, languageCode="en"):
+        self.localisedFamilyName[languageCode] = tostr(familyName)
+
+    @python_method
+    def getFamilyName(self, languageCode="en"):
+        return self.localisedFamilyName.get(languageCode)
+
+    @python_method
+    def getFullDesignLocation(self, doc):
+        result = {}
+        for axis in doc.axes:
+            if axis.name in self.designLocation:
+                result[axis.name] = self.designLocation[axis.name]
+            else:
+                result[axis.name] = axis.map_forward(axis.default)
+        return result
+
     #def setDocumentNeedSave(self, something=None):
     #    xx
 
@@ -464,20 +482,20 @@ class KeyedInstanceDescriptor(AppKit.NSObject, metaclass=ClassNameIncrementer):
         self.designLocation = value
 
     location = property(_get_location, _set_location)
-    
+
     @python_method
     def setStyleName(self, styleName, languageCode="en"):
         self.localisedStyleName[languageCode] = tostr(styleName)
-    
+
     @python_method
     def getStyleName(self, languageCode="en"):
         return self.localisedStyleName.get(languageCode)
-    
+
     @python_method
     def setFamilyName(self, familyName, languageCode="en"):
         self.localisedFamilyName[languageCode] = tostr(familyName)
 
-    @python_method    
+    @python_method
     def getFamilyName(self, languageCode="en"):
         return self.localisedFamilyName.get(languageCode)
 
@@ -496,7 +514,7 @@ class KeyedInstanceDescriptor(AppKit.NSObject, metaclass=ClassNameIncrementer):
     @python_method
     def getStyleMapFamilyName(self, languageCode="en"):
         return self.localisedStyleMapFamilyName.get(languageCode)
-        
+
     @python_method
     def renameAxis(self, oldName, newName):
         self.designLocation = renameAxis(oldName, newName, self.designLocation)
@@ -543,7 +561,7 @@ class KeyedInstanceDescriptor(AppKit.NSObject, metaclass=ClassNameIncrementer):
         for k, v in self.designLocation.items():
             name.append("%s_%3.3f"%(k, v))
         self.name = "_".join(name)
-    
+
     @python_method
     def setAutomaticUFONname(self, state=True):
         self.automaticUFOName = state
