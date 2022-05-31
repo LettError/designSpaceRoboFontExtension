@@ -1,5 +1,6 @@
 import os
 import AppKit
+
 import vanilla
 
 from fontTools import designspaceLib
@@ -19,9 +20,7 @@ from designspaceProblems import DesignSpaceChecker
 from dse.designspaceLexer import DesignspaceLexer, TextLexer
 from dse.parsers import mapParser, rulesParser, labelsParser, glyphNameParser
 from dse.parsers.parserTools import numberToSTring
-
-# import importlib
-# importlib.reload(mapParser)
+from dse.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept
 
 
 designspaceBundle = ExtensionBundle("DesignspaceEditor2")
@@ -54,23 +53,6 @@ try:
 except Exception:
     # older systems
     infoImage = AppKit.NSImage.imageNamed_(AppKit.NSImageNameInfo)
-
-
-def holdRecursionDecorator(func):
-    func._hold = False
-    def wrapper(*args, **kwargs):
-        if func._hold:
-            return
-        func._hold = True
-        func(*args, **kwargs)
-        func._hold = False
-    return wrapper
-
-
-def addToolTipForColumn(listObject, columnIdentifier, tooltip):
-    nsTableView = listObject.getNSTableView()
-    column = nsTableView.tableColumnWithIdentifier_(columnIdentifier)
-    column.setHeaderToolTip_(tooltip)
 
 
 class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
@@ -776,16 +758,23 @@ class DesignspaceEditorController(WindowController):
                         styleName=sourceDescriptor.styleName,
                         designLocation=sourceDescriptor.location,
                         filename=os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{sourceDescriptor.familyName}-{sourceDescriptor.styleName}.ufo")
-
                     )
                     self.instances.list.append(self.wrapInstanceDescriptor(newInstanceDescriptor))
 
-        elif value == 1:
-            # Generate with MutatorMath
-            pass
-        elif value == 1:
-            # Generate with VarLib
-            pass
+        elif value in (2, 3):
+            # Generate with MutatorMath or VarLib
+            self.document.useVarlib = value == 3
+            self.document.roundGeometry = True
+            self.document.loadFonts()
+            self.document.findDefault()
+            for index in self.instances.list.getSelection():
+                item = self.instances.list[index]
+                instanceDescriptor = item["object"]
+                with TryExcept(self, "Generate Intance"):
+                    font = self.document.makeInstance(instanceDescriptor)
+                    if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
+                        os.makedirs(os.path.dirname(instanceDescriptor.path))
+                    font.save(path=instanceDescriptor.path)
 
     # rules
 
