@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>addToMenu</key>
+	<array>
+		<dict>
+			<key>nestInSubmenus</key>
+			<true/>
+			<key>path</key>
+			<string>newDesignspaceEditor.py</string>
+			<key>preferredName</key>
+			<string>New Designspace</string>
+			<key>shortKey</key>
+			<string></string>
+		</dict>
+		<dict>
+			<key>nestInSubmenus</key>
+			<true/>
+			<key>path</key>
+			<string>openDesignspaceEditor.py</string>
+			<key>preferredName</key>
+			<string>Open Designspace</string>
+			<key>shortKey</key>
+			<string></string>
+		</dict>
+	</array>
+	<key>developer</key>
+	<string>letterror</string>
+	<key>developerURL</key>
+	<string>www.letterror.com</string>
+	<key>html</key>
+	<false/>
+	<key>launchAtStartUp</key>
+	<integer>1</integer>
+	<key>mainScript</key>
+	<string>main.py</string>
+	<key>name</key>
+	<string>Designspace Editor 2</string>
+	<key>requiresVersionMajor</key>
+	<string>3</string>
+	<key>requiresVersionMinor</key>
+	<string>0</string>
+	<key>timeStamp</key>
+	<real>1653936779.9141068</real>
+	<key>version</key>
+	<string>1.0</string>
+</dict>
+</plist>
