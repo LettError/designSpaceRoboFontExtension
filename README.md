@@ -2,13 +2,14 @@
 
 ![Icon](assets/designSpaceFileIcon.png)
 
-A RoboFont extension to create and edit designspace version 5 files. For a specification of the **designspace** format go [to the designspace specification at the FontTools repository](https://fonttools.readthedocs.io/en/latest/designspaceLib/readme.html).
+A RoboFont extension to create and edit designspace version 5.0 files. For a specification of the **designspace** format go [to the designspace specification at the FontTools repository](https://fonttools.readthedocs.io/en/latest/designspaceLib/readme.html).
 
 * Open, edit and save existing designspace files.
 * Start new designspace files.
 * Open source UFOs
 
 ## Usage
+
 1. Open an existing designspace file or start a new one.
 1. Define some axes. Give them useful names.
 1. Then load some source UFOs.
@@ -22,10 +23,95 @@ but ¯\\\_(ツ)__/¯.
 
 ## Toolbar
 
+## Axes
+
+Map syntax:
+
+```
+# input value > output value
+50 > 10
+100 > 20
+125 > 66
+150 > 990
+```
+
+Labels syntax:
+
+```
+# if it start with ? it will be a localised axis name
+# starts with a ? <language tag> <localised string>
+? fr 'Chasse'
+
+# <label name> <value>
+'Condensed' 50
+
+# optionally add (elidable) or (olderSibling)
+'Normal' 100 (elidable) (olderSibling)
+
+# set a range for a label name
+# <label name> <min value> <default value> <max value>
+'Extra Wide' 150 150 300
+
+# set a range for a label name
+'Extra Light' 200 200 250
+# add localisations for this 'Extra Light' label
+? de 'Extraleicht'
+? fr 'Extra léger'
+```
 
 ## Sources
 
+Localised Family Name syntax:
+
+```
+# starts with a ? <language tag> <localised string>
+? fr 'Montserrat'
+? ja 'モンセラート'
+```
+
+Muted Glyph syntax:
+
+```
+# a space separated list of glyph names
+a b c d
+```
+
 ## Rules
+
+Rules syntax:
+
+```
+# a comment
+# name of the rule
+switching a's
+	# a list of source glyph > substituted glyph	a > a.alt
+	agrave > agrave.alt
+	
+	# conditions
+	# <axis name> startRange-endRange
+	# a condition set with two conditions
+	weight 800-1000 width 200-1000
+	optical 500-1000	
+```
+
+## Labels
+
+Location Labels syntax:
+
+```
+# styleName
+Some Style
+	# optionally localisation
+	# starts with a ? <language tag> <localised string>
+	?  fr  "Un Style"
+	# optionally translation
+	?  fr  "Un Style"
+	# location name if the axis and value
+	weight 300
+	width 40
+	Italic 1
+	boldness 30
+```
 
 ## Problems
 

@@ -36,7 +36,7 @@ def TryExcept(controller, action):
         yield
     except Exception as e:
         controller.showMessage(
-            f"{action} faild",
+            f"{action} failed",
             informativeText=str(e)
         )
     finally:

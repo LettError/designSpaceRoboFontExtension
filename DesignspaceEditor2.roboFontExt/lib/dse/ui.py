@@ -403,6 +403,7 @@ class DesignspaceEditorController(WindowController):
             [],
             columnDescriptions=sourcesColumnDescriptions,
             editCallback=self.sourcesListEditCallback,
+            menuCallback=self.listMenuCallack,
             otherApplicationDropSettings=dict(type=AppKit.NSFilenamesPboardType, operation=AppKit.NSDragOperationCopy, callback=self.sourcesListDropCallback),
         )
         addToolTipForColumn(self.sources.list, "genericInfoButton", "Double click to pop over an axis map and label editor")
@@ -451,6 +452,7 @@ class DesignspaceEditorController(WindowController):
             (0, 30, 0, 0),
             [],
             columnDescriptions=instancesColumnDescriptions,
+            menuCallback=self.listMenuCallack,
         )
 
         # RULES
@@ -771,7 +773,8 @@ class DesignspaceEditorController(WindowController):
             for index in self.instances.list.getSelection():
                 item = self.instances.list[index]
                 instanceDescriptor = item["object"]
-                with TryExcept(self, "Generate Intance"):
+                with TryExcept(self, "Generate Instance"):
+                    print(instanceDescriptor.path)
                     font = self.document.makeInstance(instanceDescriptor)
                     if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
                         os.makedirs(os.path.dirname(instanceDescriptor.path))
@@ -822,6 +825,53 @@ class DesignspaceEditorController(WindowController):
         self.problems.list.set(report)
 
     # tools
+
+    def listMenuCallack(self, sender):
+        tableView = sender.getNSTableView()
+        point = AppKit.NSEvent.mouseLocation()
+        point = tableView.window().convertPointFromScreen_(point)
+        point = tableView.convertPoint_fromView_(point, None)
+        columnIndex = tableView.columnAtPoint_(point)
+        rowIndex = tableView.rowAtPoint_(point)
+
+        column = tableView.tableColumns()[columnIndex]
+        columnIdentifier = column.identifier()
+        axisName = column.title()
+        item = sender[rowIndex]
+
+        def menuCallback(sender):
+            item[columnIdentifier] = float(sender.title())
+
+        def sliderCallback(sender):
+            item[columnIdentifier] = sender.get()
+
+        menu = []
+        for axisDescriptor in self.document.axes:
+            if axisDescriptor.name == axisName:
+                if hasattr(axisDescriptor, "values"):
+                    menu.extend([dict(title=numberToSTring(value), callback=menuCallback) for value in axisDescriptor.values])
+                else:
+                    menu.append(dict(title=numberToSTring(axisDescriptor.minimum), callback=menuCallback))
+                    if axisDescriptor.minimum != axisDescriptor.default and axisDescriptor.maximum != axisDescriptor.default:
+                        menu.append(dict(title=numberToSTring(axisDescriptor.default), callback=menuCallback))
+                    menu.append(dict(title=numberToSTring(axisDescriptor.maximum), callback=menuCallback))
+                    menu.append("----")
+
+                    self._menuGroup = vanilla.Group((0, 0, 150, 30))
+                    self._menuGroup.slider = vanilla.Slider(
+                        (10, 0, 130, 22),
+                        minValue=axisDescriptor.minimum,
+                        maxValue=axisDescriptor.maximum,
+                        value=axisDescriptor.default,
+                        callback=sliderCallback,
+                        sizeStyle="mini"
+                    )
+                    self._menuGroup.getNSView().setFrame_(((0, 0), (150, 30)))
+                    menuItem = AppKit.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("sourceSlider", None, "")
+                    menuItem.setView_(self._menuGroup.getNSView())
+                    menu.append(menuItem)
+
+        return menu
 
     def convertAxisTo(self, axisDescriptor, destinationClass, **kwargs):
         index = self.document.axes.index(axisDescriptor)
@@ -974,9 +1024,7 @@ class DesignspaceEditorController(WindowController):
                 if instanceDescriptor.filename == instanceDescriptor.path:
                     # - new unsaved document
                     # - instance added, we have no relative path
-                    if instanceDescriptor.filename is not None:
-                        # filename can be None if the instance is not intended to output to UFO
-                        instanceDescriptor.filename = os.path.relpath(instanceDescriptor.filename, os.path.dirname(path))
+                    instanceDescriptor.filename = os.path.relpath(instanceDescriptor.filename, os.path.dirname(path))
 
             # TODO self.document.lib[self.mathModelPrefKey] = self.mathModelPref
             self.document.write(path)
