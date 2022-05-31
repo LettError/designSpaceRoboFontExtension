@@ -47,6 +47,7 @@ numberFormatter.setAllowsFloats_(True)
 
 checkSymbol = "✓"
 defaultSymbol = "🔹"
+dotSymbol = "⚬"
 
 try:
     infoImage = AppKit.NSImage.imageWithSystemSymbolName_accessibilityDescription_("info.circle.fill", None)
@@ -151,12 +152,12 @@ class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
 
     def axisHasMap(self):
         if self.axisDescriptor.map:
-            return "•"
+            return dotSymbol
         return ""
 
     def axisHasLabels(self):
         if self.axisDescriptor.labelNames or self.axisDescriptor.axisLabels:
-            return "•"
+            return dotSymbol
         return ""
 
     def genericInfoButton(self):
@@ -641,8 +642,8 @@ class DesignspaceEditorController(WindowController):
             sourceFamilyName=sourceDescriptor.familyName or "",
             sourceStyleName=sourceDescriptor.styleName or "",
             sourceLayerName=sourceDescriptor.layerName if sourceDescriptor.layerName else "",
-            sourceHasLocalisedFamilyNames="•" if sourceDescriptor.localisedFamilyName else "",
-            sourceHasMutedGlyphs="•" if sourceDescriptor.mutedGlyphNames else "",
+            sourceHasLocalisedFamilyNames=dotSymbol if sourceDescriptor.localisedFamilyName else "",
+            sourceHasMutedGlyphs=dotSymbol if sourceDescriptor.mutedGlyphNames else "",
             object=sourceDescriptor
         )
         for axis, value in sourceDescriptor.location.items():
