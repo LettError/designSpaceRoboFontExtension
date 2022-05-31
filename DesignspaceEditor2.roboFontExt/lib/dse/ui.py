@@ -278,15 +278,6 @@ class SourceAttributesPopover(BaseAttributePopover):
         self.sourceDescriptor.mutedGlyphNames = glyphNameParser.parseGlyphNames(self.sourceMutedGlyphNames.editor.get())
 
 
-# class InstanceAttributesPopover(BaseAttributePopover):
-
-#     def build(self, item):
-#         pass
-
-#     def close(self):
-#         pass
-
-
 class DesignspaceEditorController(WindowController):
 
     def __init__(self, path=None):
@@ -449,6 +440,19 @@ class DesignspaceEditorController(WindowController):
             segmentDescriptions=instancesToolsSsegmentDescriptions
         )
 
+        instancesEditorToolsSsegmentDescriptions = [
+            dict(title="Duplicate"),
+            dict(title="Add Sources as Instances"),
+            dict(title="Generate with MutatorMath"),
+            dict(title="Generate with VarLib")
+        ]
+        self.instances.editorTools = vanilla.SegmentedButton(
+            (72, 5, 570, 22),
+            selectionStyle="momentary",
+            callback=self.instancesEditorToolsCallback,
+            segmentDescriptions=instancesEditorToolsSsegmentDescriptions
+        )
+
         # instancesDoubleClickCell = RFDoubleClickCell.alloc().init()
         # instancesDoubleClickCell.setDoubleClickCallback_(self.instancesListDoubleClickCallback)
         # instancesDoubleClickCell.setImage_(infoImage)
@@ -514,7 +518,7 @@ class DesignspaceEditorController(WindowController):
             self.setWindowTitleFromPath(path)
             self.updateColumnHeadersFromAxes()
 
-    # axes
+    # AXES
 
     def axisToolsCallback(self, sender):
         value = sender.get()
@@ -554,7 +558,7 @@ class DesignspaceEditorController(WindowController):
     def axisListDoubleClickCallback(self, sender):
         self.axisPopover = AxisAttributesPopover(self.axes.list)
 
-    # sources
+    # SOURCES
 
     def sourcesToolsCallback(self, sender):
 
@@ -700,23 +704,25 @@ class DesignspaceEditorController(WindowController):
             sourceDescriptor = self.unwrapSourceDescriptor(item)
             item.update(self.wrapSourceDescriptor(sourceDescriptor))
 
-    # instances
+    # INSTANCES
 
     def instancesToolsCallback(self, sender):
         value = sender.get()
         if value == 0:
             # add
-            instanceDescriptor = self.document.writerClass.instanceDescriptorClass()
             if self.document.instances:
-                instanceDescriptor.familyName = self.document.instances[0].familyName
+                familyName = self.document.instances[0].familyName
             elif self.document.sources:
-                instanceDescriptor.familyName = self.document.sources[0].familyName
+                familyName = self.document.sources[0].familyName
             else:
-                instanceDescriptor.familyName = "NewFamily"
-            instanceDescriptor.designLocation = self.document.newDefaultLocation()
-            instanceDescriptor.styleName = f"Style_{len(self.document.instances)}"
-            instanceDescriptor.fileName = os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}.ufo")
-            self.document.instances.append(instanceDescriptor)
+                familyName = "NewFamily"
+            styleName = f"Style_{len(self.document.instances)}"
+            instanceDescriptor = self.document.addInstanceDescriptor(
+                familyName=familyName,
+                designLocation=self.document.newDefaultLocation(),
+                styleName=styleName,
+                filename=os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{familyName}-{styleName}.ufo")
+            )
             self.instances.list.append(self.wrapInstanceDescriptor(instanceDescriptor))
         elif value == 1:
             # remove
@@ -750,6 +756,36 @@ class DesignspaceEditorController(WindowController):
 
     def instancesListDoubleClickCallback(self, sender):
         pass
+
+    def instancesEditorToolsCallback(self, sender):
+        value = sender.get()
+        if value == 0:
+            # duplicate
+            for index in self.instances.list.getSelection():
+                item = self.instances.list[index]
+                instanceDescriptor = item["object"]
+                newInstanceDescriptor = self.document.addInstanceDescriptor(**instanceDescriptor.asdict())
+                self.instances.list.append(self.wrapInstanceDescriptor(newInstanceDescriptor))
+        elif value == 1:
+            # Add Sources as Instances
+            existingLocations = [instanceDescriptor.designLocation for instanceDescriptor in self.document.instances]
+            for sourceDescriptor in self.document.sources:
+                if sourceDescriptor.location not in existingLocations:
+                    newInstanceDescriptor = self.document.addInstanceDescriptor(
+                        familyName=sourceDescriptor.familyName,
+                        styleName=sourceDescriptor.styleName,
+                        designLocation=sourceDescriptor.location,
+                        filename=os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{sourceDescriptor.familyName}-{sourceDescriptor.styleName}.ufo")
+
+                    )
+                    self.instances.list.append(self.wrapInstanceDescriptor(newInstanceDescriptor))
+
+        elif value == 1:
+            # Generate with MutatorMath
+            pass
+        elif value == 1:
+            # Generate with VarLib
+            pass
 
     # rules
 
