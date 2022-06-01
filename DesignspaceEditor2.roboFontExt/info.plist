@@ -38,9 +38,9 @@
 	<key>name</key>
 	<string>Designspace Editor 2</string>
 	<key>requiresVersionMajor</key>
-	<string>3</string>
+	<string>4</string>
 	<key>requiresVersionMinor</key>
-	<string>0</string>
+	<string>3</string>
 	<key>timeStamp</key>
 	<real>1653936779.9141068</real>
 	<key>version</key>
