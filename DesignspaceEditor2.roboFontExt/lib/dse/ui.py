@@ -770,11 +770,14 @@ class DesignspaceEditorController(WindowController):
             self.document.roundGeometry = True
             self.document.loadFonts()
             self.document.findDefault()
-            for index in self.instances.list.getSelection():
-                item = self.instances.list[index]
+            selection = self.instances.list.getSelection()
+            if selection:
+                items = [self.instances.list[index] for index in selection]
+            else:
+                items = self.instances.list
+            for item in items:
                 instanceDescriptor = item["object"]
                 with TryExcept(self, "Generate Instance"):
-                    print(instanceDescriptor.path)
                     font = self.document.makeInstance(instanceDescriptor)
                     if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
                         os.makedirs(os.path.dirname(instanceDescriptor.path))
