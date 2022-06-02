@@ -41,6 +41,8 @@ preferredAxes = [
     ("weight", "wght", 0, 1000, 0),
     ("width", "wdth", 0, 1000, 0),
     ("optical", "opsz", 3, 1000, 16),
+    # ("italic", "ital", 0, 0, 1),  # must be a discrete axis
+    # ("slant", "slnt", -90, 0, 90),
 ]
 
 numberFormatter = AppKit.NSNumberFormatter.alloc().init()
@@ -887,7 +889,7 @@ class DesignspaceEditorController(WindowController):
                         (10, 0, 130, 22),
                         minValue=axisDescriptor.minimum,
                         maxValue=axisDescriptor.maximum,
-                        value=axisDescriptor.default,
+                        value=item[columnIdentifier],
                         callback=sliderCallback,
                         sizeStyle="mini"
                     )
