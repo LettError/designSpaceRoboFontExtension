@@ -1,5 +1,5 @@
 from mojo.events import addObserver
-from dse.ui import DesignspaceEditorController
+from designspaceEditor.ui import DesignspaceEditorController
 
 import os
 

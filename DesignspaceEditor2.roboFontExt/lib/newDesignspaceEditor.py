@@ -1,3 +1,3 @@
-from dse.ui import DesignspaceEditorController
+from designspaceEditor.ui import DesignspaceEditorController
 
 DesignspaceEditorController()

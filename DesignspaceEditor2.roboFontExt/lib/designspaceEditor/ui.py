@@ -1,4 +1,5 @@
 import os
+import weakref
 import AppKit
 
 import vanilla
@@ -7,6 +8,7 @@ from fontTools import designspaceLib
 import ufoProcessor
 
 from mojo.UI import CodeEditor
+from mojo.events import postEvent
 from mojo.subscriber import WindowController
 from mojo.extensions import getExtensionDefault, ExtensionBundle
 from mojo.roboFont import AllFonts, OpenFont
@@ -17,10 +19,10 @@ from lib.cells.doubleClickCell import RFDoubleClickCell
 
 from designspaceProblems import DesignSpaceChecker
 
-from dse.designspaceLexer import DesignspaceLexer, TextLexer
-from dse.parsers import mapParser, rulesParser, labelsParser, glyphNameParser
-from dse.parsers.parserTools import numberToSTring
-from dse.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept
+from designspaceEditor.designspaceLexer import DesignspaceLexer, TextLexer
+from designspaceEditor.parsers import mapParser, rulesParser, labelsParser, glyphNameParser
+from designspaceEditor.parsers.parserTools import numberToSTring
+from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges
 
 
 designspaceBundle = ExtensionBundle("DesignspaceEditor2")
@@ -180,7 +182,11 @@ class BaseAttributePopover:
     def popoverWillCloseCallback(self, sender):
         self.close()
         if self.closeCallback is not None:
-            self.closeCallback()
+            if isinstance(self.closeCallback, (list, tuple)):
+                for callback in self.closeCallback:
+                    callback()
+            else:
+                self.closeCallback()
 
     def build(self, item):
         pass
@@ -264,13 +270,17 @@ class SourceAttributesPopover(BaseAttributePopover):
 class DesignspaceEditorController(WindowController):
 
     def __init__(self, path=None):
-        super().__init__()
-        self.load(path)
+        self.holdChanges = HoldChanges()
+        with self.holdChanges:
+            super().__init__()
+            self.load(path)
 
     def build(self):
         self.document = ufoProcessor.DesignSpaceProcessor()
 
         self.w = vanilla.Window((850, 500), "Designspace Editor", minSize=(720, 400))
+        self.w.vanillaWrapper = weakref.ref(self)
+        self.w.bind("should close", self.windowShouldClose)
 
         self.tabItems = ["Axes", "Sources", "Instances", "Rules", "Labels", "Problems"]
         self.w.tabs = vanilla.Tabs((0, 0, 0, 0), self.tabItems, showTabs=False)
@@ -348,6 +358,7 @@ class DesignspaceEditorController(WindowController):
         self.axes.list = vanilla.List(
             (0, 30, 0, 0),
             [],
+            editCallback=self.axesListEditCallback,
             columnDescriptions=axesColumnDescriptions,
             dragSettings=dict(type="sourcesListDragAndDropType", callback=self.dragCallback),
             selfDropSettings=dict(type="sourcesListDragAndDropType", operation=AppKit.NSDragOperationMove, callback=self.dropCallback),
@@ -451,6 +462,7 @@ class DesignspaceEditorController(WindowController):
         self.instances.list = vanilla.List(
             (0, 30, 0, 0),
             [],
+            editCallback=self.instancesListEditCallback,
             columnDescriptions=instancesColumnDescriptions,
             menuCallback=self.listMenuCallack,
         )
@@ -481,7 +493,9 @@ class DesignspaceEditorController(WindowController):
         self.w.getNSWindow().toolbar().setSelectedItemIdentifier_("axes")
 
     def started(self):
+        postEvent("designspaceEditorWillOpenDesignspace", designspace=self.document)
         self.w.open()
+        postEvent("designspaceEditorDidOpenDesignspace", designspace=self.document)
 
     def load(self, path):
         if path is not None:
@@ -541,7 +555,10 @@ class DesignspaceEditorController(WindowController):
         # TODO self.updateLocations()
 
     def axisListDoubleClickCallback(self, sender):
-        self.axisPopover = AxisAttributesPopover(self.axes.list)
+        self.axisPopover = AxisAttributesPopover(self.axes.list, closeCallback=self.setDocumentNeedSave)
+
+    def axesListEditCallback(self, sender):
+        self.setDocumentNeedSave(True)
 
     # SOURCES
 
@@ -662,10 +679,11 @@ class DesignspaceEditorController(WindowController):
         return sourceDescriptor
 
     def sourcesListDoubleClickCallback(self, sender):
-        self.sourcePopover = SourceAttributesPopover(self.sources.list, closeCallback=self.updateSources)
+        self.sourcePopover = SourceAttributesPopover(self.sources.list, closeCallback=[self.updateSources, self.setDocumentNeedSave])
 
     def sourcesListEditCallback(self, sender):
         self.updateSources()
+        self.setDocumentNeedSave(True)
 
     def sourcesListDropCallback(self, sender, dropInfo):
         isProposal = dropInfo["isProposal"]
@@ -685,9 +703,10 @@ class DesignspaceEditorController(WindowController):
 
     @holdRecursionDecorator
     def updateSources(self):
-        for item in self.sources.list:
-            sourceDescriptor = self.unwrapSourceDescriptor(item)
-            item.update(self.wrapSourceDescriptor(sourceDescriptor))
+        with self.holdChanges:
+            for item in self.sources.list:
+                sourceDescriptor = self.unwrapSourceDescriptor(item)
+                item.update(self.wrapSourceDescriptor(sourceDescriptor))
 
     # INSTANCES
 
@@ -782,6 +801,9 @@ class DesignspaceEditorController(WindowController):
                     if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
                         os.makedirs(os.path.dirname(instanceDescriptor.path))
                     font.save(path=instanceDescriptor.path)
+
+    def instancesListEditCallback(self, sender):
+        self.setDocumentNeedSave(True)
 
     # rules
 
@@ -916,15 +938,39 @@ class DesignspaceEditorController(WindowController):
                 if path is None:
                     continue
                 try:
-                    font = OpenFont(path, showInterface=True)
+                    OpenFont(path, showInterface=True)
                 except Exception as e:
                     print(f"Bad UFO: {path}, {e}")
                     pass
                 progress.update()
             progress.close()
 
-    def setDocumentNeedSave(self, state):
+    def windowShouldClose(self, window):
+        def callback(result):
+            if result == 0:
+                # save
+                self.toolbarSave(None)
+            elif result == 1:
+                # dont save
+                self.setDocumentNeedSave(False)
+                self.w.close()
+            elif result == 2:
+                # cancel
+                pass
+        if self.w.getNSWindow().isDocumentEdited():
+            self.showAsk(
+                messageText="Do you want to save the changes made to the document?",
+                informativeText="Your changes will be lost if youd don't save them.",
+                buttonTitles=[("Save...", 0), ("Don't Save", 1), ("Cancel", 2)],
+                callback=callback
+            )
+        return not self.w.getNSWindow().isDocumentEdited()
+
+    def setDocumentNeedSave(self, state=True):
+        if self.holdChanges:
+            return
         if state:
+            postEvent("designspaceEditorDidChange", designspace=self.document)
             self.w.getNSWindow().setDocumentEdited_(True)
         else:
             self.w.getNSWindow().setDocumentEdited_(False)
@@ -1072,5 +1118,5 @@ if __name__ == '__main__':
     path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v4_original.designspace'
     #path = "/Users/frederik/Desktop/designSpaceEditorText/testFiles/Untitled.designspace"
     #path = None
-    path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v5.designspace'
+    #path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v5.designspace'
     DesignspaceEditorController(path)

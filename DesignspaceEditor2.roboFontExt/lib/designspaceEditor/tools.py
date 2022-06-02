@@ -41,3 +41,26 @@ def TryExcept(controller, action):
         )
     finally:
         pass
+
+
+class HoldChanges:
+
+    def __init__(self):
+        self._hold = 0
+
+    def hold(self):
+        self._hold += 1
+
+    def release(self):
+        assert self._hold >= 1, "Hold changes cannot be released, call hold() first."
+        self._hold -= 1
+
+    def __bool__(self):
+        return bool(self._hold)
+
+    def __enter__(self):
+        self.hold()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.release()

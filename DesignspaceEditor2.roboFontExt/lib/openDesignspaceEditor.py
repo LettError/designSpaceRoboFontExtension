@@ -1,5 +1,5 @@
 from mojo.UI import GetFile
-from dse.ui import DesignspaceEditorController
+from designspaceEditor.ui import DesignspaceEditorController
 
 
 paths = GetFile(
