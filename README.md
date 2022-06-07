@@ -2,11 +2,12 @@
 
 ![Icon](assets/designSpaceFileIcon.png)
 
-A RoboFont extension to create and edit designspace version 5.0 files. For a specification of the **designspace** format go [to the designspace specification at the FontTools repository](https://fonttools.readthedocs.io/en/latest/designspaceLib/readme.html).
+A RoboFont extension to create and edit designspace version 5.0 files. For a specification of the **designspace** format go [to the designspace specification at the FontTools repository](https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html).
 
-* Open, edit and save existing designspace files.
-* Start new designspace files.
-* Open source UFOs
+The extension is capable of:
+* Opening, editing and saving existing designspace files.
+* Starting new designspace files.
+* Opening source UFOs
 
 ## Usage
 
@@ -15,15 +16,14 @@ A RoboFont extension to create and edit designspace version 5.0 files. For a spe
 1. Then load some source UFOs.
 1. Then save the document in the same folder as your sources, or one level up. The document will store a relative path to the sources and instances.
 1. Define instances and whatever else you need to do.
-1. Save. 
+1. Save.
 
-Yes, I know you can write the xml by hand, 
-but ¯\\\_(ツ)__/¯.
+Yes, I know you can write the xml by hand, but ¯\\\_(ツ)__/¯.
 
 
 ## Toolbar
 
-## Axes
+### Axes
 
 Map syntax:
 
@@ -59,7 +59,7 @@ Labels syntax:
 ? fr 'Extra léger'
 ```
 
-## Sources
+### Sources
 
 Localised Family Name syntax:
 
@@ -76,7 +76,7 @@ Muted Glyph syntax:
 a b c d
 ```
 
-## Rules
+### Rules
 
 Rules syntax:
 
@@ -94,7 +94,7 @@ switching a's
 	optical 500-1000	
 ```
 
-## Labels
+### Labels
 
 Location Labels syntax:
 
@@ -113,9 +113,9 @@ Some Style
 	boldness 30
 ```
 
-## Problems
+### Problems
 
-## History
+### History
 
 * 1.0 Initial commit
 * 1.1 Fixes a mistake with packaging.
@@ -129,4 +129,4 @@ Some Style
 	* Quick defaults for axes
 	* Replace UFO button
 	* Automatic update of UFO name based on `familyName-styleName.ufo`
-* 2.0 Rewrite with designpspace 5.0 spec
+* 2.0 Rewrite for designspace 5.0 specification
