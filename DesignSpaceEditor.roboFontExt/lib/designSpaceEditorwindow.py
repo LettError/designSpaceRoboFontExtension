@@ -450,6 +450,7 @@ class KeyedInstanceDescriptor(AppKit.NSObject, metaclass=ClassNameIncrementer):
         self.name = None
         self.designLocation = None
         self.userLocation = None
+        self.locationLabel = None
         self.familyName = None
         self.styleName = None
         self.automaticUFOName = True
@@ -2756,7 +2757,7 @@ if __name__ == "__main__":
     # path = None
     if not testWithFile:
         # test
-        DesignSpaceEditor(path)
+        DesignSpaceEditor()
     else:
 
         results = getFile(messageText="Select a DesignSpace file:", allowsMultipleSelection=True, fileTypes=["designspace"])
