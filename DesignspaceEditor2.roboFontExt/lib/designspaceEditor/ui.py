@@ -403,7 +403,7 @@ class DesignspaceEditorController(WindowController):
             dict(title="", key="genericInfoButton", width=20, editable=False, cell=sourcesDoubleClickCell),
             dict(title="💾", key="sourceHasPath", width=20, editable=False),
             dict(title="📍", key="sourceIsDefault", width=20, editable=False),
-            dict(title="UFO", key="sourceUFOFileName", width=200, minWidth=100, maxWidth=250, editable=False),
+            dict(title="UFO", key="sourceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False),
             dict(title="Famiy Name", key="sourceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="Style Name", key="sourceStyleName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="Layer Name", key="sourceLayerName", editable=True, width=130, minWidth=130, maxWidth=250),
@@ -456,7 +456,7 @@ class DesignspaceEditorController(WindowController):
 
         instancesColumnDescriptions = [
             # dict(title="", key="genericInfoButton", width=20, editable=False, cell=instancesDoubleClickCell),
-            dict(title="UFO", key="instanceUFOFileName", width=200, minWidth=100, maxWidth=250, editable=False),
+            dict(title="UFO", key="instanceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False),
             dict(title="Famiy Name", key="instanceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="Style Name", key="instanceStyleName", editable=True, width=130, minWidth=130, maxWidth=250),
         ]
@@ -787,22 +787,25 @@ class DesignspaceEditorController(WindowController):
 
         elif value in (2, 3):
             # Generate with MutatorMath or VarLib
-            self.document.useVarlib = value == 3
-            self.document.roundGeometry = True
-            self.document.loadFonts()
-            self.document.findDefault()
-            selection = self.instances.list.getSelection()
-            if selection:
-                items = [self.instances.list[index] for index in selection]
+            if self.document.path is None:
+                self.showMessage("Save the designspace first.", "Instances are generated in a relative path next to the designspace file.")
             else:
-                items = self.instances.list
-            for item in items:
-                instanceDescriptor = item["object"]
-                with TryExcept(self, "Generate Instance"):
-                    font = self.document.makeInstance(instanceDescriptor)
-                    if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
-                        os.makedirs(os.path.dirname(instanceDescriptor.path))
-                    font.save(path=instanceDescriptor.path)
+                self.document.useVarlib = value == 3
+                self.document.roundGeometry = True
+                self.document.loadFonts()
+                self.document.findDefault()
+                selection = self.instances.list.getSelection()
+                if selection:
+                    items = [self.instances.list[index] for index in selection]
+                else:
+                    items = self.instances.list
+                for item in items:
+                    instanceDescriptor = item["object"]
+                    with TryExcept(self, "Generate Instance"):
+                        font = self.document.makeInstance(instanceDescriptor)
+                        if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
+                            os.makedirs(os.path.dirname(instanceDescriptor.path))
+                        font.save(path=instanceDescriptor.path)
 
     def instancesListEditCallback(self, sender):
         self.setDocumentNeedSave(True)
@@ -1062,20 +1065,13 @@ class DesignspaceEditorController(WindowController):
         def saveDesignspace(path):
             # so we have the path for this document
             # we need to make sure the sources and instances are all in the right place
+            root = os.path.dirname(path)
             for wrappedSourceDescriptor in self.sources.list:
                 sourceDescriptor = self.unwrapSourceDescriptor(wrappedSourceDescriptor)
-                if sourceDescriptor.filename == sourceDescriptor.path:
-                    # - new unsaved document
-                    # - masters added, we have no relative path
-                    # - in this case the .filename and .path are the same
-                    #     so we can check for this and update the .filename
-                    sourceDescriptor.filename = os.path.relpath(sourceDescriptor.path, os.path.dirname(path))
+                sourceDescriptor.filename = os.path.relpath(sourceDescriptor.path, root)
             for wrappedInstanceDescriptor in self.instances.list:
                 instanceDescriptor = self.unwrapInstanceDescriptor(wrappedInstanceDescriptor)
-                if instanceDescriptor.filename == instanceDescriptor.path:
-                    # - new unsaved document
-                    # - instance added, we have no relative path
-                    instanceDescriptor.filename = os.path.relpath(instanceDescriptor.filename, os.path.dirname(path))
+                instanceDescriptor.path = os.path.abspath(os.path.join(root, instanceDescriptor.filename))
 
             # TODO self.document.lib[self.mathModelPrefKey] = self.mathModelPref
             self.document.write(path)
@@ -1119,6 +1115,6 @@ if __name__ == '__main__':
     path = "/Users/frederik/Documents/dev/JustVanRossum/fontgoggles/Tests/data/MutatorSans/MutatorSans.designspace"
     path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v4_original.designspace'
     #path = "/Users/frederik/Desktop/designSpaceEditorText/testFiles/Untitled.designspace"
-    #path = None
+    path = None
     #path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v5.designspace'
     DesignspaceEditorController(path)
