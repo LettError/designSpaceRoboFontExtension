@@ -182,13 +182,21 @@ class BaseAttributePopover:
         self.popover.open(parentView=tableView, preferredEdge='bottom', relativeRect=relativeRect)
 
     def popoverWillCloseCallback(self, sender):
+        if not self.controlEdited:
+            return
         self.close()
+
         if self.closeCallback is not None:
             if isinstance(self.closeCallback, (list, tuple)):
                 for callback in self.closeCallback:
                     callback()
             else:
                 self.closeCallback()
+
+    controlEdited = False
+
+    def controleEditCallback(self, sender=None):
+        self.controlEdited = True
 
     def build(self, item):
         pass
@@ -206,6 +214,7 @@ class AxisAttributesPopover(BaseAttributePopover):
             * labels
         """
         self.axisDescriptor = item.axisDescriptor
+        self.isDiscreteAxis = item.axisIsDescrete()
 
         self.popover.tabs = vanilla.Tabs((0, 15, -0, -0), ["Map", "Labels"])
 
@@ -216,18 +225,26 @@ class AxisAttributesPopover(BaseAttributePopover):
             (10, 10, -10, -10),
             mapParser.dumpMap(self.axisDescriptor.map),
             lexer=DesignspaceLexer(),
-            showLineNumbers=False
+            showLineNumbers=False,
+            callback=self.controleEditCallback
         )
+        if self.isDiscreteAxis:
+            self.axisMap.editor.setPosSize((10, 40, -10, -10))
+            self.axisMap.editor.getNSTextView().setEditable_(False)
+            self.axisMap.info = vanilla.TextBox((10, 10, -10, 22), "A discrete axis with a map does not make sense.")
+            # grayedOut = vanilla.Group((10, 10, -10, -10))
 
         self.axisLabels.editor = CodeEditor(
             (10, 10, -10, -10),
             labelsParser.dumpAxisLabels(self.axisDescriptor.labelNames, self.axisDescriptor.axisLabels),
             lexer=DesignspaceLexer(),
-            showLineNumbers=False
+            showLineNumbers=False,
+            callback=self.controleEditCallback
         )
 
     def close(self):
-        self.axisDescriptor.map = mapParser.parseMap(self.axisMap.editor.get())
+        if not self.isDiscreteAxis:
+            self.axisDescriptor.map = mapParser.parseMap(self.axisMap.editor.get())
 
         labelNames, axisLabels = labelsParser.parseAxisLabels(self.axisLabels.editor.get())
         self.axisDescriptor.labelNames = labelNames
@@ -253,14 +270,16 @@ class SourceAttributesPopover(BaseAttributePopover):
             (10, 10, -10, -10),
             labelsParser.dumpAxisLabels(self.sourceDescriptor.localisedFamilyName, []),
             lexer=DesignspaceLexer(),
-            showLineNumbers=False
+            showLineNumbers=False,
+            callback=self.controleEditCallback
         )
 
         self.sourceMutedGlyphNames.editor = CodeEditor(
             (10, 10, -10, -10),
             glyphNameParser.dumpGlyphNames(self.sourceDescriptor.mutedGlyphNames),
             lexer=TextLexer(),
-            showLineNumbers=False
+            showLineNumbers=False,
+            callback=self.controleEditCallback
         )
 
     def close(self):
@@ -1116,5 +1135,6 @@ if __name__ == '__main__':
     path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v4_original.designspace'
     #path = "/Users/frederik/Desktop/designSpaceEditorText/testFiles/Untitled.designspace"
     path = None
-    #path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v5.designspace'
+    path = '/Users/frederik/Documents/dev/letterror/ufoProcessor/Tests/202206 discrete spaces/test.ds5.designspace'
+    path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v5.designspace'
     DesignspaceEditorController(path)
