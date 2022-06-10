@@ -7,7 +7,7 @@ import vanilla
 from fontTools import designspaceLib
 import ufoProcessor
 
-from mojo.UI import CodeEditor
+from mojo.UI import CodeEditor, SliderEditStepper
 from mojo.events import postEvent
 from mojo.subscriber import WindowController
 from mojo.extensions import getExtensionDefault, ExtensionBundle
@@ -176,7 +176,7 @@ class BaseAttributePopover:
         item = listView[index]
         relativeRect = tableView.rectOfRow_(index)
         self.closeCallback = closeCallback
-        self.popover = self.popover = vanilla.Popover((400, 300))
+        self.popover = vanilla.Popover((400, 300))
         self.build(item)
         self.popover.bind("will close", self.popoverWillCloseCallback)
         self.popover.open(parentView=tableView, preferredEdge='bottom', relativeRect=relativeRect)
@@ -228,11 +228,10 @@ class AxisAttributesPopover(BaseAttributePopover):
             showLineNumbers=False,
             callback=self.controleEditCallback
         )
-        if self.isDiscreteAxis:
-            self.axisMap.editor.setPosSize((10, 40, -10, -10))
-            self.axisMap.editor.getNSTextView().setEditable_(False)
-            self.axisMap.info = vanilla.TextBox((10, 10, -10, 22), "A discrete axis with a map does not make sense.")
-            # grayedOut = vanilla.Group((10, 10, -10, -10))
+        # if self.isDiscreteAxis:
+        #     self.axisMap.editor.setPosSize((10, 40, -10, -10))
+        #     self.axisMap.editor.getNSTextView().setEditable_(False)
+        #     self.axisMap.info = vanilla.TextBox((10, 10, -10, 22), "A discrete axis with a map does not make sense.")
 
         self.axisLabels.editor = CodeEditor(
             (10, 10, -10, -10),
@@ -286,6 +285,90 @@ class SourceAttributesPopover(BaseAttributePopover):
         labels, _ = labelsParser.parseAxisLabels(self.sourceLocalisedFamilyName.editor.get())
         self.sourceDescriptor.localisedFamilyName = labels
         self.sourceDescriptor.mutedGlyphNames = glyphNameParser.parseGlyphNames(self.sourceMutedGlyphNames.editor.get())
+
+
+class BaseButtonPopover:
+
+    def __init__(self, vanillaObject, closeCallback=None, **kwargs):
+        self.closeCallback = closeCallback
+        self.popover = vanilla.Popover((400, 300))
+        self.build(**kwargs)
+        self.popover.bind("will close", self.popoverWillCloseCallback)
+        self.popover.open(parentView=vanillaObject, preferredEdge='bottom')
+
+    def popoverWillCloseCallback(self, sender):
+        self.close()
+
+        if self.closeCallback is not None:
+            if isinstance(self.closeCallback, (list, tuple)):
+                for callback in self.closeCallback:
+                    callback()
+            else:
+                self.closeCallback()
+
+    def build(self, **kwargs):
+        pass
+
+    def close(self):
+        pass
+
+
+class LabelPreviewPopover(BaseButtonPopover):
+
+    def build(self, document):
+        self.document = document
+        y = 10
+        self.popover.languages = vanilla.PopUpButton((10, y, 80, 22), [], self.changed)
+        self.popover.previewText = vanilla.TextBox((100, y, -10, 22))
+
+        y += 40
+        for axis in self.document.axes:
+            setattr(
+                self.popover,
+                f"{axis.name}_name",
+                vanilla.TextBox((10, y, 80, 22), f"{axis.name}:", sizeStyle="small", alignment="right")
+            )
+            if hasattr(axis, "values"):
+                control = vanilla.PopUpButton((100, y, 100, 16),
+                    [str(value) for value in axis.values],
+                    sizeStyle="small",
+                    callback=self.changed
+                )
+            else:
+                control = SliderEditStepper((100, y, -10, 22),
+                    minValue=axis.minimum,
+                    maxValue=axis.maximum,
+                    value=axis.default,
+                    sizeStyle="small",
+                    callback=self.changed
+                )
+            setattr(self.popover, f"{axis.name}_control", control)
+            y += 30
+        self.popover.resize(400, y)
+        self.changed(setLanguages=True)
+
+    def close(self):
+        self.document = None
+
+    def changed(self, sender=None, setLanguages=False):
+        location = dict()
+        for axis in self.document.axes:
+            control = getattr(self.popover, f"{axis.name}_control")
+            if hasattr(axis, "values"):
+                value = axis.values[control.get()]
+            else:
+                value = control.get()
+            location[axis.name] = value
+
+        self.names = designspaceLib.statNames.getStatNames(self.document, location)
+        if setLanguages:
+            languages = list(sorted(set(list(self.names.familyNames.keys()) + list(self.names.styleNames.keys()))))
+            self.popover.languages.setItems(languages)
+            if "en" in languages:
+                self.popover.languages.set(languages.index("en"))
+
+        language = self.popover.languages.getItem()
+        self.popover.previewText.set(f"{self.names.familyNames.get(language, '-')} {self.names.styleNames.get(language, '-')}")
 
 
 class DesignspaceEditorController(WindowController):
@@ -492,7 +575,14 @@ class DesignspaceEditorController(WindowController):
         self.rules.editor = CodeEditor((0, 0, 0, 0), lexer=DesignspaceLexer(), showLineNumbers=False, callback=self.rulesEditorCallback)
 
         # LABELS
-        self.labels.editor = CodeEditor((0, 0, 0, 0), lexer=DesignspaceLexer(), showLineNumbers=False, callback=self.locationLabelsEditorCallback)
+        self.labels.tools = vanilla.SegmentedButton(
+            (-105, 5, -5, 22),
+            selectionStyle="momentary",
+            callback=self.labelsToolsCallback,
+            segmentDescriptions=[dict(title="Preview")]
+        )
+        self.labels.editor = CodeEditor((0, 30, 0, 0), lexer=DesignspaceLexer(), showLineNumbers=False, callback=self.locationLabelsEditorCallback)
+
 
         # PROBLEMS
         self.problems.tools = vanilla.SegmentedButton(
@@ -838,6 +928,9 @@ class DesignspaceEditorController(WindowController):
         self.setDocumentNeedSave(True)
 
     # labels
+
+    def labelsToolsCallback(self, sender):
+        self.labelPreviewPopover = LabelPreviewPopover(sender, document=self.document)
 
     @coalescingDecorator(delay=0.2)
     def locationLabelsEditorCallback(self, sender):
