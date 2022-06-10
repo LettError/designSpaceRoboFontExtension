@@ -95,13 +95,17 @@ class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
             self.axisDescriptor.name = str(value)
             self.controller.updateColumnHeadersFromAxes()
         else:
-            print(f"Duplicate axis: '{value}'")
+            print(f"Duplicate axis name: '{value}'")
 
     def axisTag(self):
         return self.axisDescriptor.tag
 
     def setAxisTag_(self, value):
-        self.axisDescriptor.tag = str(value)
+        # prevent setting tag if the name already exists
+        if self.controller.validateAxisTag(value):
+            self.axisDescriptor.tag = str(value)
+        else:
+            print(f"Duplicate axis tag: '{value}'")
 
     def axisMinimum(self):
         if self.axisIsDescrete():
@@ -652,7 +656,7 @@ class DesignspaceEditorController(WindowController):
             else:
                 name, tag, minimum, maximum, default = preferredAxes[value - 2]
 
-            if self.validateAxisName(name):
+            if self.validateAxisName(name) and self.validateAxisTag(tag):
                 axisDescriptor = self.document.writerClass.axisDescriptorClass()
                 axisDescriptor.name = name
                 axisDescriptor.tag = tag
@@ -663,6 +667,7 @@ class DesignspaceEditorController(WindowController):
                 self.axes.list.append(AxisListItem(axisDescriptor, self))
             else:
                 print(f"Duplicate axis: '{name}'")
+                return
 
         self.setDocumentNeedSave(True)
         self.updateColumnHeadersFromAxes()
@@ -1102,10 +1107,9 @@ class DesignspaceEditorController(WindowController):
     def updateColumnHeadersFromAxes(self):
         for listObject in [self.sources.list, self.instances.list]:
             tableView = listObject.getNSTableView()
-            for column in tableView.tableColumns():
+            for column in list(tableView.tableColumns()):
                 if column.identifier().startswith("axis_"):
                     tableView.removeTableColumn_(column)
-
             for axis in self.document.axes:
                 identifier = f"axis_{axis.name}"
                 column = AppKit.NSTableColumn.alloc().initWithIdentifier_(identifier)
@@ -1131,7 +1135,6 @@ class DesignspaceEditorController(WindowController):
                     if identifier not in item:
                         location = item["object"].location
                         item[identifier] = location.get(axis.name, axis.default)
-
             tableView.sizeToFit()
 
     # drag and drop
@@ -1165,6 +1168,12 @@ class DesignspaceEditorController(WindowController):
                 return False
         return True
 
+    def validateAxisTag(self, tag):
+        for axisDescriptor in self.document.axes:
+            if axisDescriptor.tag == tag:
+                return False
+        return True
+
     # toolbar
 
     def toolbarSelectTab(self, sender):
@@ -1186,6 +1195,8 @@ class DesignspaceEditorController(WindowController):
                 sourceDescriptor.filename = os.path.relpath(sourceDescriptor.path, root)
             for wrappedInstanceDescriptor in self.instances.list:
                 instanceDescriptor = self.unwrapInstanceDescriptor(wrappedInstanceDescriptor)
+                if instanceDescriptor.filename is None:
+                    instanceDescriptor.filename = os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}.ufo")
                 instanceDescriptor.path = os.path.abspath(os.path.join(root, instanceDescriptor.filename))
 
             # TODO self.document.lib[self.mathModelPrefKey] = self.mathModelPref
