@@ -329,13 +329,16 @@ class LabelPreviewPopover(BaseButtonPopover):
                 vanilla.TextBox((10, y, 80, 22), f"{axis.name}:", sizeStyle="small", alignment="right")
             )
             if hasattr(axis, "values"):
-                control = vanilla.PopUpButton((100, y, 100, 16),
+                control = vanilla.PopUpButton(
+                    (100, y, 100, 16),
                     [str(value) for value in axis.values],
                     sizeStyle="small",
                     callback=self.changed
                 )
+                control.set(axis.values.index(axis.default))
             else:
-                control = SliderEditStepper((100, y, -10, 22),
+                control = SliderEditStepper(
+                    (100, y, -10, 22),
                     minValue=axis.minimum,
                     maxValue=axis.maximum,
                     value=axis.default,
