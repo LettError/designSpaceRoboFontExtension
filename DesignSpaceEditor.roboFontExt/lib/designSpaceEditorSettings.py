@@ -19,7 +19,7 @@ class Settings(BaseWindowController):
     identifier = "%s.%s" % (settingsIdentifier, "general")
 
     def __init__(self, parentWindow, callback=None):
-        
+
         self.doneCallback = callback
         data = getExtensionDefault(self.identifier, dict())
         updateWithDefaultValues(data, defaultOptions)
@@ -34,10 +34,10 @@ class Settings(BaseWindowController):
         self.w.instanceFolderNameCaption = TextBox((10, y+3, 180, 20), "Instance folder name", sizeStyle="small")
         # self.w.threaded = CheckBox((10, y, -10, 22), "Threaded", value=data["threaded"])
 
-        y += 30
+        # y += 30
         # self.w.exportInFolders = CheckBox((10, y, -10, 22), "Export in Sub Folders", value=data["exportInFolders"])
 
-        y += 30
+        # y += 30
         # self.w.keepFileNames = CheckBox((10, y, -10, 22), "Keep file names (otherwise use familyName-styleName)", value=data["keepFileNames"])
 
         y += 35
@@ -47,11 +47,7 @@ class Settings(BaseWindowController):
         self.w.closeButton = Button((-190, y, -110, 20), "Cancel", callback=self.closeCallback, sizeStyle="small")
         self.w.closeButton.bind(".", ["command"])
 
-        try:
-            escChar = unichr(27)
-        except:
-            escChar = chr(27)
-        self.w.closeButton.bind(escChar, [])
+        self.w.closeButton.bind(chr(27), [])
         self.w.resetButton = Button((-280, y, -200, 20), "Reset", callback=self.resetCallback, sizeStyle="small")
 
         y += 30

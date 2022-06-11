@@ -66,7 +66,7 @@ B.html = htmlPath is not None
 
 # minimum RoboFont version required for this extension
 # Robofont 4.3 has fontTools with designspace version 5.0
-B.requiresVersionMajor = '4'
+B.requiresVersionMajor = '3'
 B.requiresVersionMinor = '3'
 
 # scripts which should appear in Extensions menu

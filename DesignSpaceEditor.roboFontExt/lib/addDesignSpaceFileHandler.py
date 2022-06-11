@@ -1,4 +1,4 @@
-
+import AppKit
 from mojo.events import addObserver
 from designSpaceEditorwindow import DesignSpaceEditor
 
@@ -7,11 +7,11 @@ import os
 def getDesignSpaceDocuments():
     """ Try to find designspace windows."""
     designSpaces = []
-    windows = [w for w in NSApp().orderedWindows() if w.isVisible()]
+    windows = [w for w in AppKit.NSApp().orderedWindows() if w.isVisible()]
     for window in windows:
         delegate = window.delegate()
         if not hasattr(delegate, "vanillaWrapper"):
-            continue            
+            continue
         vanillaWrapper = delegate.vanillaWrapper()
         if vanillaWrapper.__class__.__name__ == "DesignSpaceEditor":
             designSpaces.append(vanillaWrapper)

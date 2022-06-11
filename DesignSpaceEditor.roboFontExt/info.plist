@@ -34,11 +34,11 @@
 	<key>name</key>
 	<string>DesignSpaceEdit</string>
 	<key>requiresVersionMajor</key>
-	<string>4</string>
+	<string>3</string>
 	<key>requiresVersionMinor</key>
 	<string>3</string>
 	<key>timeStamp</key>
-	<real>1651882306.0566349</real>
+	<real>1654762803.3198762</real>
 	<key>version</key>
 	<string>1.9.8</string>
 </dict>
