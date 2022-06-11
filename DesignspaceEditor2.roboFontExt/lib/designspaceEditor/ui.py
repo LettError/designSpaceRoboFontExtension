@@ -8,7 +8,7 @@ from fontTools import designspaceLib
 import ufoProcessor
 
 from mojo.UI import CodeEditor, SliderEditStepper
-from mojo.events import postEvent
+from mojo.events import postEvent, addObserver, removeObserver
 from mojo.subscriber import WindowController
 from mojo.extensions import getExtensionDefault, ExtensionBundle
 from mojo.roboFont import AllFonts, OpenFont
@@ -174,11 +174,12 @@ class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
 
 class BaseAttributePopover:
 
-    def __init__(self, listView, closeCallback=None):
+    def __init__(self, listView, document, closeCallback=None):
         tableView = listView.getNSTableView()
         index = listView.getSelection()[0]
         item = listView[index]
         relativeRect = tableView.rectOfRow_(index)
+        self.document = document
         self.closeCallback = closeCallback
         self.popover = vanilla.Popover((400, 300))
         self.build(item)
@@ -242,8 +243,12 @@ class AxisAttributesPopover(BaseAttributePopover):
             labelsParser.dumpAxisLabels(self.axisDescriptor.labelNames, self.axisDescriptor.axisLabels),
             lexer=DesignspaceLexer(),
             showLineNumbers=False,
-            callback=self.controleEditCallback
+            callback=self.axisLabelsEditorCallback
         )
+
+    def axisLabelsEditorCallback(self, sender):
+        postEvent("designspaceEditorLabelsDidChange", designspace=self.document)
+        self.controleEditCallback(sender)
 
     def close(self):
         if not self.isDiscreteAxis:
@@ -317,18 +322,35 @@ class BaseButtonPopover:
         pass
 
 
-class LabelPreviewPopover(BaseButtonPopover):
+class LabelsPreview:
 
-    def build(self, document):
+    def __init__(self, document):
+        self.w = vanilla.FloatingWindow((250, 300), "Labels Preview")
         self.document = document
-        y = 10
-        self.popover.languages = vanilla.PopUpButton((10, y, 80, 22), [], self.changed)
-        self.popover.previewText = vanilla.TextBox((100, y, -10, 22))
+        self.w.languages = vanilla.PopUpButton((10, 10, 80, 22), [], self.controlEdited)
+        self.w.previewText = vanilla.TextBox((100, 10, -10, 22))
+        self.build()
+        self.w.bind("close", self.windowCloseCallback)
+        addObserver(self, "designspaceEditorDidChange", "designspaceEditorDidChange")
+        addObserver(self, "designspaceEditorLabelsDidChange", "designspaceEditorLabelsDidChange")
+        self.w.open()
 
-        y += 40
+    def windowCloseCallback(self, sender):
+        removeObserver(self, "designspaceEditorDidChange")
+        removeObserver(self, "designspaceEditorLabelsDidChange")
+        self.document = None
+
+    def build(self):
+        location = dict()
+        if hasattr(self.w, "controls"):
+            location = self.getControlLocation()
+            del self.w.controls
+        self.w.controls = vanilla.Group((0, 40, 0, 0))
+
+        y = 10
         for axis in self.document.axes:
             setattr(
-                self.popover,
+                self.w.controls,
                 f"{axis.name}_name",
                 vanilla.TextBox((10, y, 80, 22), f"{axis.name}:", sizeStyle="small", alignment="right")
             )
@@ -337,45 +359,51 @@ class LabelPreviewPopover(BaseButtonPopover):
                     (100, y, 100, 16),
                     [str(value) for value in axis.values],
                     sizeStyle="small",
-                    callback=self.changed
+                    callback=self.controlEdited
                 )
-                control.set(axis.values.index(axis.default))
+                control.set(location.get(axis.name, axis.values.index(axis.default)))
             else:
                 control = SliderEditStepper(
-                    (100, y, -10, 22),
+                    (100, y, -10, 20),
                     minValue=axis.minimum,
                     maxValue=axis.maximum,
-                    value=axis.default,
+                    value=location.get(axis.name, axis.default),
                     sizeStyle="small",
-                    callback=self.changed
+                    callback=self.controlEdited
                 )
-            setattr(self.popover, f"{axis.name}_control", control)
+            setattr(self.w.controls, f"{axis.name}_control", control)
             y += 30
-        self.popover.resize(400, y)
-        self.changed(setLanguages=True)
+        self.w.resize(400, y + 40)
+        self.controlEdited(setLanguages="en")
 
-    def close(self):
-        self.document = None
-
-    def changed(self, sender=None, setLanguages=False):
+    def getControlLocation(self):
         location = dict()
         for axis in self.document.axes:
-            control = getattr(self.popover, f"{axis.name}_control")
-            if hasattr(axis, "values"):
-                value = axis.values[control.get()]
-            else:
-                value = control.get()
-            location[axis.name] = value
+            if hasattr(self.w.controls, f"{axis.name}_control"):
+                control = getattr(self.w.controls, f"{axis.name}_control")
+                if hasattr(axis, "values"):
+                    value = axis.values[control.get()]
+                else:
+                    value = control.get()
+                location[axis.name] = value
+        return location
 
-        self.names = designspaceLib.statNames.getStatNames(self.document, location)
+    def controlEdited(self, sender=None, setLanguages=None):
+        self.names = designspaceLib.statNames.getStatNames(self.document, self.getControlLocation())
         if setLanguages:
             languages = list(sorted(set(list(self.names.familyNames.keys()) + list(self.names.styleNames.keys()))))
-            self.popover.languages.setItems(languages)
-            if "en" in languages:
-                self.popover.languages.set(languages.index("en"))
+            self.w.languages.setItems(languages)
+            if setLanguages in languages:
+                self.w.languages.set(languages.index(setLanguages))
 
-        language = self.popover.languages.getItem()
-        self.popover.previewText.set(f"{self.names.familyNames.get(language, '-')} {self.names.styleNames.get(language, '-')}")
+        language = self.w.languages.getItem()
+        self.w.previewText.set(f"{self.names.familyNames.get(language, '-')} {self.names.styleNames.get(language, '-')}")
+
+    def designspaceEditorDidChange(self, info):
+        self.build()
+
+    def designspaceEditorLabelsDidChange(self, info):
+        self.controlEdited(setLanguages=self.w.languages.getItem())
 
 
 class DesignspaceEditorController(WindowController):
@@ -474,6 +502,7 @@ class DesignspaceEditorController(WindowController):
             dragSettings=dict(type="sourcesListDragAndDropType", callback=self.dragCallback),
             selfDropSettings=dict(type="sourcesListDragAndDropType", operation=AppKit.NSDragOperationMove, callback=self.dropCallback),
         )
+        self.axes.list.designspaceContent = "axes"
         addToolTipForColumn(self.axes.list, "genericInfoButton", "Double click to pop over an axis map and label editor")
         addToolTipForColumn(self.axes.list, "axisRegisterd", "Axis tag and name is registered")
         addToolTipForColumn(self.axes.list, "axisHasMap", "Axis has a map")
@@ -528,6 +557,7 @@ class DesignspaceEditorController(WindowController):
             menuCallback=self.listMenuCallack,
             otherApplicationDropSettings=dict(type=AppKit.NSFilenamesPboardType, operation=AppKit.NSDragOperationCopy, callback=self.sourcesListDropCallback),
         )
+        self.sources.list.designspaceContent = "sources"
         addToolTipForColumn(self.sources.list, "genericInfoButton", "Double click to pop over an axis map and label editor")
         addToolTipForColumn(self.sources.list, "sourceHasPath", "Source is saved")
         addToolTipForColumn(self.sources.list, "sourceIsDefault", "Source is the default")
@@ -577,16 +607,16 @@ class DesignspaceEditorController(WindowController):
             columnDescriptions=instancesColumnDescriptions,
             menuCallback=self.listMenuCallack,
         )
-
+        self.instances.list.designspaceContent = "instances"
         # RULES
         self.rules.editor = CodeEditor((0, 0, 0, 0), lexer=DesignspaceLexer(), showLineNumbers=False, callback=self.rulesEditorCallback)
 
         # LABELS
         self.labels.tools = vanilla.SegmentedButton(
-            (-105, 5, -5, 22),
+            (-125, 5, -5, 22),
             selectionStyle="momentary",
             callback=self.labelsToolsCallback,
-            segmentDescriptions=[dict(title="Preview")]
+            segmentDescriptions=[dict(title="Labels Preview")]
         )
         self.labels.editor = CodeEditor((0, 30, 0, 0), lexer=DesignspaceLexer(), showLineNumbers=False, callback=self.locationLabelsEditorCallback)
 
@@ -614,6 +644,12 @@ class DesignspaceEditorController(WindowController):
         postEvent("designspaceEditorWillOpenDesignspace", designspace=self.document)
         self.w.open()
         postEvent("designspaceEditorDidOpenDesignspace", designspace=self.document)
+
+    def destroy(self):
+        try:
+            self.labelsPreview.w.close()
+        except Exception:
+            pass
 
     def load(self, path):
         if path is not None:
@@ -674,7 +710,7 @@ class DesignspaceEditorController(WindowController):
         # TODO self.updateLocations()
 
     def axisListDoubleClickCallback(self, sender):
-        self.axisPopover = AxisAttributesPopover(self.axes.list, closeCallback=self.setDocumentNeedSave)
+        self.axisPopover = AxisAttributesPopover(self.axes.list, self.document, closeCallback=self.setDocumentNeedSave)
 
     def axesListEditCallback(self, sender):
         self.setDocumentNeedSave(True)
@@ -755,9 +791,7 @@ class DesignspaceEditorController(WindowController):
         self.addSourceFromFont(font)
 
     def addSourceFromFont(self, font):
-        defaults = {}
-        for axisDescriptor in self.document.axes:
-            defaults[axisDescriptor.name] = axisDescriptor.default
+        defaultLocation = self.document.newDefaultLocation(bend=True)
         sourceDescriptor = self.document.writerClass.sourceDescriptorClass()
         sourceDescriptor.path = font.path
         if self.document.path is not None:
@@ -766,7 +800,7 @@ class DesignspaceEditorController(WindowController):
             sourceDescriptor.filename = font.path
         sourceDescriptor.familyName = font.info.familyName
         sourceDescriptor.styleName = font.info.styleName
-        sourceDescriptor.location.update(defaults)
+        sourceDescriptor.location.update(defaultLocation)
 
         self.document.addSource(sourceDescriptor)
         self.sources.list.append(self.wrapSourceDescriptor(sourceDescriptor))
@@ -798,7 +832,7 @@ class DesignspaceEditorController(WindowController):
         return sourceDescriptor
 
     def sourcesListDoubleClickCallback(self, sender):
-        self.sourcePopover = SourceAttributesPopover(self.sources.list, closeCallback=[self.updateSources, self.setDocumentNeedSave])
+        self.sourcePopover = SourceAttributesPopover(self.sources.list, self.document, closeCallback=[self.updateSources, self.setDocumentNeedSave])
 
     def sourcesListEditCallback(self, sender):
         self.updateSources()
@@ -937,13 +971,22 @@ class DesignspaceEditorController(WindowController):
 
     # labels
 
+    labelsPreview = None
+
     def labelsToolsCallback(self, sender):
-        self.labelPreviewPopover = LabelPreviewPopover(sender, document=self.document)
+        if self.document.findDefault() is None:
+            self.showMessage("No default is found.", "Place a source on the default location of all axes.")
+        else:
+            try:
+                self.labelsPreview.w.show()
+            except Exception:
+                self.labelsPreview = LabelsPreview(document=self.document)
 
     @coalescingDecorator(delay=0.2)
     def locationLabelsEditorCallback(self, sender):
         locationLabels = labelsParser.parseLocationLabels(sender.get(), self.document.writerClass.locationLabelDescriptorClass)
         self.document.locationLabels = locationLabels
+        postEvent("designspaceEditorLabelsDidChange", designspace=self.document)
         self.setDocumentNeedSave(True)
 
     # problems
@@ -989,8 +1032,14 @@ class DesignspaceEditorController(WindowController):
         axisName = column.title()
         item = sender[rowIndex]
 
+        defaultLocation = self.document.newDefaultLocation(bend=True)
+
         def menuCallback(sender):
             item[columnIdentifier] = float(sender.title())
+
+        def menuMakeDefaultCallback(sender):
+            for axisName, value in defaultLocation.items():
+                item[f"axis_{axisName}"] = value
 
         def sliderCallback(sender):
             item[columnIdentifier] = sender.get()
@@ -1001,10 +1050,9 @@ class DesignspaceEditorController(WindowController):
                 if hasattr(axisDescriptor, "values"):
                     menu.extend([dict(title=numberToSTring(value), callback=menuCallback) for value in axisDescriptor.values])
                 else:
-                    menu.append(dict(title=numberToSTring(axisDescriptor.minimum), callback=menuCallback))
-                    if axisDescriptor.minimum != axisDescriptor.default and axisDescriptor.maximum != axisDescriptor.default:
-                        menu.append(dict(title=numberToSTring(axisDescriptor.default), callback=menuCallback))
-                    menu.append(dict(title=numberToSTring(axisDescriptor.maximum), callback=menuCallback))
+                    values = set((axisDescriptor.minimum, axisDescriptor.default, axisDescriptor.maximum, defaultLocation[axisDescriptor.name]))
+                    for value in sorted(values):
+                        menu.append(dict(title=numberToSTring(value), callback=menuCallback))
                     menu.append("----")
 
                     self._menuGroup = vanilla.Group((0, 0, 150, 30))
@@ -1020,6 +1068,10 @@ class DesignspaceEditorController(WindowController):
                     menuItem = AppKit.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("sourceSlider", None, "")
                     menuItem.setView_(self._menuGroup.getNSView())
                     menu.append(menuItem)
+
+        if sender.designspaceContent == "sources":
+            menu.append("----")
+            menu.append(dict(title="Make Default", callback=menuMakeDefaultCallback))
 
         return menu
 
