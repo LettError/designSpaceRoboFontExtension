@@ -1,3 +1,8 @@
+"""
+# glyphname text spec
+
+<glyphName> <glyphName> ...
+"""
 
 def parseGlyphNames(text):
     return [glyphName.strip() for glyphName in text.split()]

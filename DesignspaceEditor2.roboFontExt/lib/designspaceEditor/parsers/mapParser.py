@@ -1,3 +1,9 @@
+"""
+# map text spac
+
+<input value> > <output value>
+...
+"""
 import re
 
 from .parserTools import getLines, stringToNumber

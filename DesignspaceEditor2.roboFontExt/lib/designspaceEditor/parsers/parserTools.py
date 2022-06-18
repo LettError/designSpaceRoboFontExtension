@@ -48,7 +48,7 @@ def stringToNumber(n):
     return n
 
 
-def numberToSTring(s):
+def numberToString(s):
     s = stringToNumber(s)
     if s is None:
         return None

@@ -1,7 +1,40 @@
+"""
+# axis label text spec
+
+# add localised axis label for language tag
+? <languageTag> '<localised axis label>'
+...
+
+# add axis label in a between minimum value, default value, maximum value
+<axis label> <minimumValue> <defaultValue> <maximumValue>
+# add localised axis lables for language tag
+? <languageTage '<localised axis label>'  # optional
+...
+
+# add axis label add a uservalue
+<axis label> <userValue>
+# add localised axis lables for language tag
+? <languageTage '<localised axis label>'  # optional
+...
+
+# optionally add (elidable) or (olderSibling) or [linkedUserValue]
+<axis label> <userValue> (elidable) (olderSibling) [<linkedUserValue>]
+
+
+# location label text spec
+
+<label name>
+    # indent
+    ? <languageTag> '<localised name>'
+
+    <axisName> <userValue>
+    ...
+"""
+
 import re
 from fontTools import designspaceLib
 
-from .parserTools import getLines, getBlocks, stringToNumber, numberToSTring
+from .parserTools import getLines, getBlocks, stringToNumber, numberToString
 
 
 axisLabelRE = re.compile(r"[\"|\']([a-zA-Z0-9\- ]+)[\"|\']\s*([0-9\.]*)\s*([0-9\.]*)\s*([0-9\.]*)")
@@ -69,17 +102,17 @@ def dumpAxisLabels(labelNames, axisLabels, indent="   "):
         labelText = [f"'{axisLabel.name}'"]
 
         if axisLabel.userMinimum is not None:
-            labelText.append(numberToSTring(axisLabel.userMinimum))
-        labelText.append(numberToSTring(axisLabel.userValue))
+            labelText.append(numberToString(axisLabel.userMinimum))
+        labelText.append(numberToString(axisLabel.userValue))
         if axisLabel.userMaximum is not None:
-            labelText.append(numberToSTring(axisLabel.userMaximum))
+            labelText.append(numberToString(axisLabel.userMaximum))
 
         if axisLabel.elidable:
             labelText.append("(elidable)")
         if axisLabel.olderSibling:
             labelText.append("(olderSibling)")
         if axisLabel.linkedUserValue:
-            labelText.append(f"[{numberToSTring(axisLabel.linkedUserValue)}]")
+            labelText.append(f"[{numberToString(axisLabel.linkedUserValue)}]")
 
         text.append(" ".join(labelText))
 

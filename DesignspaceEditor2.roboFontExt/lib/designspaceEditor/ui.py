@@ -21,7 +21,7 @@ from designspaceProblems import DesignSpaceChecker
 
 from designspaceEditor.designspaceLexer import DesignspaceLexer, TextLexer
 from designspaceEditor.parsers import mapParser, rulesParser, labelsParser, glyphNameParser
-from designspaceEditor.parsers.parserTools import numberToSTring
+from designspaceEditor.parsers.parserTools import numberToString
 from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges
 
 
@@ -143,7 +143,7 @@ class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
 
     def axisDiscreteValues(self):
         if self.axisIsDescrete():
-            return " ".join([numberToSTring(value) for value in self.axisDescriptor.values])
+            return " ".join([numberToString(value) for value in self.axisDescriptor.values])
         return ""
 
     def setAxisDiscreteValues_(self, value):
@@ -1048,11 +1048,11 @@ class DesignspaceEditorController(WindowController):
         for axisDescriptor in self.document.axes:
             if axisDescriptor.name == axisName:
                 if hasattr(axisDescriptor, "values"):
-                    menu.extend([dict(title=numberToSTring(value), callback=menuCallback) for value in axisDescriptor.values])
+                    menu.extend([dict(title=numberToString(value), callback=menuCallback) for value in axisDescriptor.values])
                 else:
                     values = set((axisDescriptor.minimum, axisDescriptor.default, axisDescriptor.maximum, defaultLocation[axisDescriptor.name]))
                     for value in sorted(values):
-                        menu.append(dict(title=numberToSTring(value), callback=menuCallback))
+                        menu.append(dict(title=numberToString(value), callback=menuCallback))
                     menu.append("----")
 
                     self._menuGroup = vanilla.Group((0, 0, 150, 30))

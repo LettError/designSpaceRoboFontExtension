@@ -1,7 +1,24 @@
+"""
+# rules text spec
+
+<name of the rule>
+    # indent
+    # list of subsititions
+    <glyphName> > <glyphName>
+    ...
+
+    # conditions
+    <axisName> <minimumValue> - <maximumValue>
+    ...
+    # condition set
+    <axisName> <minimumValue> - <maximumValue> <axisName> <minimumValue> - <maximumValue>
+    ...
+"""
+
 import re
 from fontTools import designspaceLib
 
-from .parserTools import getBlocks, getLines, stringToNumber, numberToSTring
+from .parserTools import getBlocks, getLines, stringToNumber, numberToString
 
 substitionRE = re.compile(r"([a-zA-Z0-9\.\*\+\-\:\^\|\~]+)\s+\>\s+([a-zA-Z0-9\.\*\+\-\:\^\|\~]+)")
 conditionsRE = re.compile(r"([a-zA-Z]+)\s+([0-9\.]+)-([0-9\.]+)")
@@ -41,7 +58,7 @@ def dumpRules(rules, indent="    "):
         for conditionSet in rule.conditionSets:
             conditionSetText = []
             for condition in conditionSet:
-                conditionSetText.append(f"{condition['name']} {numberToSTring(condition['minimum'])}-{numberToSTring(condition['maximum'])}")
+                conditionSetText.append(f"{condition['name']} {numberToString(condition['minimum'])}-{numberToString(condition['maximum'])}")
             text.append(indent + " ".join(conditionSetText))
         text.append("")
     return "\n".join(text)
