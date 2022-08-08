@@ -2,7 +2,7 @@
 
 ![Icon](designSpaceFileIcon.png)
 
-A RoboFont extension to create and edit designspace version 4 files. If you want a **preview**, **measuring tools**, more than **5 axes** and a **nice graphic** representation of the design space in [RoboFont](https://robofont.com), have a look at [Skateboard](http://new.superpolator.com/home/order/). For a specification of the **designspace** format go [to the designspace specification at the FontTools repository](https://fonttools.readthedocs.io/en/latest/designspaceLib/readme.html).
+A RoboFont extension to create and edit designspace version 4 files. If you want a **preview**, **measuring tools**, more than **5 axes** and a **nice graphic** representation of the design space in [RoboFont](https://robofont.com), have a look at [Skateboard](https://letterror.com/tools/skateboard.html). For a specification of the **designspace** format go [to the designspace specification at the FontTools repository](https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html).
 
 * Open, edit and save existing designspace files.
 * Start new designspace files.
