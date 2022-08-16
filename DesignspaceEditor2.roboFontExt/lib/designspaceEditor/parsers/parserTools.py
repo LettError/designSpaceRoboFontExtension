@@ -14,8 +14,7 @@ def getBlocks(text):
         line = line.rstrip()
         if not line:
             continue
-
-        if line.startswith(" "):
+        if line[0] in " \t":
             currentBlock.append(line)
         else:
             if currentTag is not None:
@@ -57,8 +56,11 @@ def numberToString(s):
 
 # t = """
 # foo
-#    bar
+#  bar
 #   more
+# foo
+# \tbar
+# \tmore
 
 # other thing
 #  small indent
