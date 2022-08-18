@@ -4,6 +4,7 @@
 <glyphName> <glyphName> ...
 """
 
+
 def parseGlyphNames(text):
     return [glyphName.strip() for glyphName in text.split()]
 
@@ -11,6 +12,8 @@ def parseGlyphNames(text):
 def dumpGlyphNames(glyphNames):
     return " ".join(glyphNames)
 
+
+# tests
 
 def test_parseGlyphNames():
     text = "a b c agrave \tb.alt     ccedilla"

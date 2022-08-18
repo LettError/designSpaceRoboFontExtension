@@ -2,8 +2,12 @@
 # map text spac
 
 <input value> > <output value>
+<input value> > <output value>
+<input value> > <output value>
 ...
 """
+
+import pytest
 import re
 
 from .parserTools import getLines, stringToNumber
@@ -25,17 +29,28 @@ def dumpMap(mapData):
     return "\n".join([f"{stringToNumber(inputValue)} > {stringToNumber(outputValue)}" for inputValue, outputValue in mapData])
 
 
+# tests
+
+@pytest.mark.parametrize("text,expected", [
+    ("", []),
+    ("10 > 20", [(10, 20)]),
+    ("10 > 20\n15 > 25", [(10, 20), (15, 25)]),
+    ("10>20\n15>      25", [(10, 20), (15, 25)]),
+])
+def test_parseMap(text, expected):
+    result = parseMap(text)
+    assert expected == result
 
 
+@pytest.mark.parametrize("amap,expected", [
+    ([], ""),
+    ([(10, 20)], "10 > 20"),
+    ([(10, 20), (15, 25)], "10 > 20\n15 > 25"),
+])
+def test_dumpMap(amap, expected):
+    result = dumpMap(amap)
+    assert expected == result
 
-# t = """
-# 10 >20
-# 0> 100
-# 20>1000
-# 10 >     40
-# """
 
-# d = parseMap(t)
-# r = dumpMap(d)
-
-# print(r)
+if __name__ == '__main__':
+    pytest.main([__file__])
