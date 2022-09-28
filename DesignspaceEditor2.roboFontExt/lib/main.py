@@ -1,7 +1,10 @@
+import builtins
+import os
+
+import AppKit
+
 from mojo.events import addObserver
 from designspaceEditor.ui import DesignspaceEditorController
-
-import os
 
 
 class DesignspaceOpener(object):
@@ -20,3 +23,16 @@ class DesignspaceOpener(object):
 
 
 DesignspaceOpener()
+
+
+def CurrentDesignspace():
+    for window in AppKit.NSApp().orderedWindows():
+        delegate = window.delegate()
+        if hasattr(delegate, "vanillaWrapper"):
+            controller = delegate.vanillaWrapper()
+            if controller.__class__.__name__ == "DesignspaceEditorController":
+                return controller.document
+    return None
+
+
+builtins.CurrentDesignspace = CurrentDesignspace
