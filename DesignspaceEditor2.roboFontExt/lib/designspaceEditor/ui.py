@@ -435,7 +435,7 @@ class DesignspaceEditorController(WindowController):
             itemIdentifier=tabItem.lower(),
             label=tabItem,
             callback=self.toolbarSelectTab,
-            imageObject=designspaceBundle.getResourceImage(f"toolbar_icon_{tabItem.lower()}"),
+            imageObject=designspaceBundle.getResourceImage(f"toolbar_30_30_icon_{tabItem.lower()}"),
             selectable=True,
         ) for tabItem in self.tabItems]
 
@@ -444,7 +444,7 @@ class DesignspaceEditorController(WindowController):
                 itemIdentifier="save",
                 label="Save",
                 callback=self.toolbarSave,
-                imageObject=designspaceBundle.getResourceImage("toolbar_icon_save"),
+                imageObject=designspaceBundle.getResourceImage("toolbar_30_30_icon_save"),
             ),
             # dict(
             #     itemIdentifier="generate",
@@ -456,7 +456,7 @@ class DesignspaceEditorController(WindowController):
             #     itemIdentifier="settings",
             #     label="Settings",
             #     callback=self.toolbarSettings,
-            #     imageObject=designspaceBundle.getResourceImage("toolbar_icon_settings"),
+            #     imageObject=designspaceBundle.getResourceImage("toolbar_30_30_icon_settings"),
             # ),
         ])
         self.w.addToolbar("DesignSpaceToolbar", toolbarItems)

@@ -2,10 +2,11 @@
 
 ![Icon](assets/designSpaceFileIcon.png)
 
-A RoboFont extension to create and edit designspace version 5.0 files. For a specification of the **designspace** format go [to the designspace specification at the FontTools repository](https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html).
+A RoboFont extension to create and edit designspace version 5.0 files. For a specification of the **designspace** 5 format go [to the designspace specification at the FontTools repository](https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html).
 
 The extension is capable of:
-* Opening, editing and saving existing designspace files.
+
+* Opening, editing and saving existing designspace format 4 and format 5 files.
 * Starting new designspace files.
 * Opening source UFOs
 
@@ -23,7 +24,9 @@ Yes, I know you can write the xml by hand, but ¯\\\_(ツ)__/¯.
 
 ## Toolbar
 
+
 ### Axes
+![DSE2 axes icon](assets/toolbar_100_100_icon_axes.png)
 
 Map syntax:
 
@@ -60,6 +63,7 @@ Labels syntax:
 ```
 
 ### Sources
+![DSE2 axes icon](assets/toolbar_100_100_icon_sources.png)
 
 Localised Family Name syntax:
 
@@ -77,6 +81,7 @@ a b c d
 ```
 
 ### Rules
+![DSE2 axes icon](assets/toolbar_100_100_icon_rules.png)
 
 Rules syntax:
 
@@ -95,6 +100,7 @@ switching a's
 ```
 
 ### Labels
+![DSE2 axes icon](assets/toolbar_100_100_icon_labels.png)
 
 Location Labels syntax:
 
@@ -114,6 +120,7 @@ Some Style
 ```
 
 ### Problems
+![DSE2 axes icon](assets/toolbar_100_100_icon_problems.png)
 
 ### History
 
