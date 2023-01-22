@@ -40,10 +40,10 @@ clr4 = aiColor(38, 15, 36)
 
 tp = 0.8    # transparency for some things
 m = 1.5    # outside margin
-d = 6.2    # line diameter
-fs = 6.5    # text button font size
+d = 8.6    # line diameter
+fs = 9.9    # text button font size
 
-forReals = False    # set to True to make individual files
+forReals = True    # set to True to make individual files
 if forReals:
     # save individual files in the resources folder
     folder = "../resources/"
@@ -80,7 +80,7 @@ if forReals:
     newDrawing()
 newPage(*iconSize)
 with savedState():
-    steps = 4
+    steps = 3
     for y in range(steps):
         fy = y / (steps-1)
         p1 = ip2((left, top), (right, top), fy)
@@ -102,7 +102,7 @@ if forReals:
     newDrawing()
 newPage(*iconSize)
 with savedState():
-    steps = 4
+    steps = 3
     for y in range(steps):
         fy = y / (steps-1)
         p1 = ip2((left, top), (right, top), fy)
@@ -129,7 +129,7 @@ if forReals:
     newDrawing()
 newPage(*iconSize)
 with savedState():
-    steps = 4
+    steps = 3
     stops = {}
     fills = {}
     for y in range(steps):
@@ -153,14 +153,10 @@ with savedState():
     ltp = 0.5
     stroke(*fills[(0,0)],ltp)
     line(stops[(0,0)], stops[(0,1)])
-    stroke(*fills[(1,1)],ltp)
-    line(stops[(1,1)], stops[(1,3)])
-    stroke(*fills[(2,3)],ltp)
-    line(stops[(2,1)], stops[(2,3)])
-    stroke(*fills[(1,0)],ltp)
-    line(stops[(1,0)], stops[(1,0)])
-    stroke(*fills[(3,0)],ltp)
-    line(stops[(2,1)], stops[(3,1)])
+    stroke(*fills[(0,1)],ltp)
+    line(stops[(1,0)], stops[(1,2)])
+    stroke(*fills[(2,1)],ltp)
+    line(stops[(2,1)], stops[(2,2)])
 if forReals:
     name = f"{folder}toolbar_icon_labels{output}"
     saveImage(name)
@@ -181,7 +177,7 @@ with savedState():
     line((right, top), (right, bottom))
     stroke(*clr3, tp)
     line((left, bottom), (right, bottom))
-    steps = 4
+    steps = 3
     # white rects
     fill(1)
     stroke(None)
@@ -207,7 +203,7 @@ if forReals:
     newDrawing()
 newPage(*iconSize)
 with savedState():
-    steps = 4
+    steps = 3
     for y in range(steps):
         fy = y / (steps-1)
         p1 = ip2((left, top), (right, top), fy)
@@ -255,7 +251,7 @@ if forReals:
     name = f"{folder}toolbar_icon_save{output}"
     saveImage(name)
 
-# rules icon
+# settings icon
 if forReals:
     newDrawing()
 newPage(*iconSize)
@@ -264,7 +260,7 @@ with savedState():
     font("ActionTextDark-Bold")
     fontSize(fs)
     fill(*clr2)
-    text("Settings", (textX,textY))
+    text("#", (textX,textY))
 if forReals:
     name = f"{folder}toolbar_icon_settings{output}"
     saveImage(name)
