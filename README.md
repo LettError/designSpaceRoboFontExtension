@@ -1,10 +1,10 @@
-# DesignSpaceEditor
+# DesignSpaceEditor2
 
 ![Icon](assets/designSpaceFileIcon.png)
 
-A RoboFont extension to create and edit designspace version 5.0 files. For a specification of the **designspace** 5 format go [to the designspace specification at the FontTools repository](https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html).
+A RoboFont extension to create and edit designspace version 4 and 5 files. For a specification of the **designspace** 5 format go [to the designspace specification at the FontTools repository](https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html).
 
-The extension is capable of:
+This extension is capable of:
 
 * Opening, editing and saving existing designspace format 4 and format 5 files.
 * Starting new designspace files.
@@ -25,8 +25,18 @@ Yes, I know you can write the xml by hand, but ¯\\\_(ツ)__/¯.
 ## Toolbar
 
 
-### Axes
+### Axes Tab
 ![DSE2 axes icon](assets/toolbar_100_100_icon_axes.png)
+
+**Buttons**
+
+* **Add Weight Axis**: adds a `wght` axis.
+* **Add Width Axis**: adds a `wdth` axis.
+* **Add Optical Axis**: adds a `opsz` axis.
+* **+** add a new axis.
+* **-** delete selected axis.
+
+Double click in the (i) icon opens a popover editor for **axis labels** and **axis maps**. The editor represents the labels and maps in a simple syntax for editing. When the panel is closed, the text is converted to designspace objects.
 
 Map syntax:
 
@@ -62,8 +72,33 @@ Labels syntax:
 ? fr 'Extra léger'
 ```
 
-### Sources
+### Sources Tab
 ![DSE2 axes icon](assets/toolbar_100_100_icon_sources.png)
+
+This tab shows which UFOs are part of this designspace.
+
+**Buttons**
+
+* **Open UFO** open a file dialog to pick a new UFO. It will be added to the default location. Edit the location!
+* **Add Open UFO's** adds all open UFOs as new sources. Edit the location!
+* **Replace UFO** Select one of the sources and replace it with a new ufo. 
+
+Double click in the (i) icon opens a popover editor for **Localised Family Name** and **Muted Glyphs**.
+
+**Columns**
+
+* ℹ️ button for the popover editors
+* 💾 indicates if the UFO is where we expect it to be
+* 📍(TBD)
+* **UFO** the UFO filename and path relative to the designspace document
+*  **Family Name** family name from the source UFO (some applications look for these names so they do not have to open the UFOs)
+*  **Style Name** style name from the source UFO
+*  **Layername** name of the layer. Leave blank for default, "foreground"
+*  🌐 (TBD)
+* 🔕 (TBD)
+* [columns for axis values]
+
+
 
 Localised Family Name syntax:
 
@@ -80,8 +115,22 @@ Muted Glyph syntax:
 a b c d
 ```
 
-### Rules
+### Instances Tab
+![DSE2 axes icon](assets/toolbar_100_100_icon_instances.png)
+
+This tab shows the instances defined for this designspace.
+
+**Columns**
+
+* **UFO** path and filename of destination UFO (if that is where you want to go obviously)
+* **Familiy Name** family name for the UFO
+* **Style Name** style name for the UFO
+* [columns for axis values]
+
+### Rules Tab
 ![DSE2 axes icon](assets/toolbar_100_100_icon_rules.png)
+
+The rules tab is an editor for defining rules and condition sets.
 
 Rules syntax:
 
@@ -99,8 +148,10 @@ switching a's
 	optical 500-1000	
 ```
 
-### Labels
+### Labels Tab
 ![DSE2 axes icon](assets/toolbar_100_100_icon_labels.png)
+
+The labels tab is an editor for defining labels, ranges etc.
 
 Location Labels syntax:
 
@@ -119,8 +170,10 @@ Some Style
 	boldness 30
 ```
 
-### Problems
+### Problems Tab
 ![DSE2 axes icon](assets/toolbar_100_100_icon_problems.png)
+
+This tab shows any problems this designspace may have. From problems in construction, missing ufos, missing or duplicate values. 
 
 ### History
 
