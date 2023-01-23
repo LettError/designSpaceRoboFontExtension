@@ -44,12 +44,12 @@ clr4 = aiColor(38, 15, 36)
 
 # slightly randomised + print, pick one you like!
 def bright():
-    return 255 * (0.75+0.25*random())
+    return 255 * (0.85+0.15*random())
 def dark():
-    return 255 * (0.25*random())
+    return 255 * (0.5*random())
 clr1 = aiColor(bright(), bright(), dark())
-clr3 = aiColor(bright(), dark(), bright())
-clr2 = aiColor(dark(), dark(), dark())
+clr2 = aiColor(dark(), bright(), bright())
+clr3 = aiColor(bright(), bright(), dark())
 clr4 = aiColor(bright(), dark(), dark())
 
 print(f"clr1 = {clr1}\t#clr1")
@@ -64,10 +64,16 @@ print(f"clr4 = {clr4}\t#clr4")
 #clr4 = (0.23727920172787428, 0.11471895002167495, 0.06909423615700111)	#clr4
 
 # reddish pinkish
-clr1 = (0.8667170913004896, 0.7609157785697633, 0.11981542934361156)	#clr1
-clr2 = (0.08753532445502746, 0.08598083773265949, 0.03144601823862467)	#clr2
-clr3 = (0.9660296604288963, 0.15837429135828235, 0.922434884401394)	#clr3
-clr4 = (0.9688990431243408, 0.15982308157810274, 0.191174059050476)	#clr4
+#clr1 = (0.8667170913004896, 0.7609157785697633, 0.11981542934361156)	#clr1
+#clr2 = (0.08753532445502746, 0.08598083773265949, 0.03144601823862467)	#clr2
+#clr3 = (0.9660296604288963, 0.15837429135828235, 0.922434884401394)	#clr3
+#clr4 = (0.9688990431243408, 0.15982308157810274, 0.191174059050476)	#clr4
+
+# tunes to make 
+clr1 = (1, .8, 0)	#clr1
+clr2 = (1, .2, 0)	#clr2
+clr3 = (1, .3, 0.9)	#clr4
+clr4 = (.5, 0, 1)	#clr4
 
 
 for w, h, output, folder, forReals in destinations:
@@ -83,7 +89,7 @@ for w, h, output, folder, forReals in destinations:
     tp = 0.8    # transparency for some things
     m = 0.05 * width()
     d = 0.272 * width()
-    fs = 0.33 * width()
+    fs = 0.44 * width()
 
     left, right = m+.5*d, width()-m-0.5*d
     top, bottom = height()-m-.5*d, m+0.5*d
@@ -103,13 +109,29 @@ for w, h, output, folder, forReals in destinations:
     if forReals:
         name = f"{folder}toolbar_{w}_{h}_icon_axes{output}"
         saveImage(name)
-
+    
+    def under():
+        steps = 3
+        for y in range(steps):
+            fy = y / (steps-1)
+            p1 = ip2((left, top), (right, top), fy)
+            p2 = ip2((left, bottom), (right, bottom), fy)
+            c1 = ip3(clr1, clr3, fy)
+            c2 = ip3(clr2, clr4, fy)
+            fill(1,1,1,0.5)
+            for x in range(steps):
+                fx = x / (steps-1)
+                p = ip2(p1, p2, fx)
+                oval(p[0]-.5*d,p[1]-.5*d, d, d)
+        
     # instances icon
     if forReals:
         newDrawing()
     newPage(*iconSize)
     with savedState():
-        steps = 3
+        # white underfills
+        under()
+        steps=3
         for y in range(steps):
             fy = y / (steps-1)
             p1 = ip2((left, top), (right, top), fy)
@@ -131,6 +153,7 @@ for w, h, output, folder, forReals in destinations:
         newDrawing()
     newPage(*iconSize)
     with savedState():
+        under()
         steps = 3
         for y in range(steps):
             fy = y / (steps-1)
@@ -150,10 +173,10 @@ for w, h, output, folder, forReals in destinations:
                     drawCenter=False
                 fill(*c, tps)    # transparency
                 oval(p[0]-.5*d,p[1]-.5*d, d, d)
-                if drawCenter:
-                    fill(1)
-                    dc = 0.5 * d
-                    oval(p[0]-.5*dc,p[1]-.5*dc, dc, dc)
+                # if drawCenter:
+                #     fill(1)
+                #     dc = 0.5 * d
+                #     oval(p[0]-.5*dc,p[1]-.5*dc, dc, dc)
     if forReals:
         name = f"{folder}toolbar_{w}_{h}_icon_sources{output}"
         saveImage(name)
@@ -165,6 +188,7 @@ for w, h, output, folder, forReals in destinations:
     windows = {}
     with savedState():
         # gridlines
+        under()
         strokeWidth(d)
         lineCap("round")
         stroke(*clr1, tp)
@@ -203,6 +227,7 @@ for w, h, output, folder, forReals in destinations:
         newDrawing()
     newPage(*iconSize)
     with savedState():
+        under()
         steps = 3
         stops = {}
         fills = {}
@@ -224,7 +249,7 @@ for w, h, output, folder, forReals in destinations:
         fill(None)
         strokeWidth(d)
         lineCap("round")
-        ltp = 0.5
+        ltp = 0.9
         stroke(*fills[(0,0)],ltp)
         line(stops[(0,0)], stops[(0,1)])
         stroke(*fills[(0,1)],ltp)
@@ -245,6 +270,7 @@ for w, h, output, folder, forReals in destinations:
         newDrawing()
     newPage(*iconSize)
     with savedState():
+        under()
         steps = 3
         for y in range(steps):
             fy = y / (steps-1)
@@ -279,12 +305,11 @@ for w, h, output, folder, forReals in destinations:
     textX = 0.05 * width()
     textY = 0.38 * width()
 
-    # rules icon
+    # save icon
     if forReals:
         newDrawing()
     newPage(*iconSize)
     with savedState():
-        pass
         font("ActionTextDark-Bold")
         fontSize(fs)
         fill(*clr3)
@@ -298,7 +323,6 @@ for w, h, output, folder, forReals in destinations:
         newDrawing()
     newPage(*iconSize)
     with savedState():
-        pass
         font("ActionTextDark-Bold")
         fontSize(fs)
         fill(*clr1)
