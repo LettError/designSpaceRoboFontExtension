@@ -72,8 +72,8 @@ print(f"clr4 = {clr4}\t#clr4")
 # tunes to make 
 clr1 = (1, .8, 0)	#clr1
 clr2 = (1, .2, 0)	#clr2
-clr3 = (1, .3, 0.9)	#clr4
-clr4 = (.5, 0, 1)	#clr4
+clr3 = (1, .2, 0.9)	#clr4
+clr4 = (.1, .1, 1)	#clr4
 
 
 for w, h, output, folder, forReals in destinations:
