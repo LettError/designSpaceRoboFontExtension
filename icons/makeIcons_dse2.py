@@ -195,7 +195,7 @@ for w, h, output, folder, forReals in destinations:
         line((left, top), (right, top))
         stroke(*clr2, tp)
         line((left, top), (left, bottom))
-        stroke(*clr2, tp)
+        stroke(*clr4, tp)
         line((right, top), (right, bottom))
         stroke(*clr3, tp)
         line((left, bottom), (right, bottom))
@@ -249,7 +249,7 @@ for w, h, output, folder, forReals in destinations:
         fill(None)
         strokeWidth(d)
         lineCap("round")
-        ltp = 0.9
+        ltp = 1
         stroke(*fills[(0,0)],ltp)
         line(stops[(0,0)], stops[(0,1)])
         stroke(*fills[(0,1)],ltp)
