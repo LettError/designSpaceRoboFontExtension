@@ -555,6 +555,8 @@ class DesignspaceEditorController(WindowController):
             columnDescriptions=sourcesColumnDescriptions,
             editCallback=self.sourcesListEditCallback,
             menuCallback=self.listMenuCallack,
+            dragSettings=dict(type="sourcesListDragAndDropType", callback=self.dragCallback),
+            selfDropSettings=dict(type="sourcesListDragAndDropType", operation=AppKit.NSDragOperationMove, callback=self.dropCallback),
             otherApplicationDropSettings=dict(type=AppKit.NSFilenamesPboardType, operation=AppKit.NSDragOperationCopy, callback=self.sourcesListDropCallback),
         )
         self.sources.list.designspaceContent = "sources"
@@ -606,6 +608,8 @@ class DesignspaceEditorController(WindowController):
             editCallback=self.instancesListEditCallback,
             columnDescriptions=instancesColumnDescriptions,
             menuCallback=self.listMenuCallack,
+            dragSettings=dict(type="sourcesListDragAndDropType", callback=self.dragCallback),
+            selfDropSettings=dict(type="sourcesListDragAndDropType", operation=AppKit.NSDragOperationMove, callback=self.dropCallback),
         )
         self.instances.list.designspaceContent = "instances"
         # RULES
