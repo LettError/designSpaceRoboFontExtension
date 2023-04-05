@@ -48,6 +48,8 @@ preferredAxes = [
 numberFormatter = AppKit.NSNumberFormatter.alloc().init()
 numberFormatter.setNumberStyle_(AppKit.NSNumberFormatterDecimalStyle)
 numberFormatter.setAllowsFloats_(True)
+numberFormatter.setLocalizesFormat_(False)
+numberFormatter.setUsesGroupingSeparator_(False)
 
 checkSymbol = "✓"
 defaultSymbol = "🔹"
