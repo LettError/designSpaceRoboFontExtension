@@ -1,3 +1,4 @@
+import AppKit
 from contextlib import contextmanager
 
 
@@ -64,3 +65,11 @@ class HoldChanges:
 
     def __exit__(self, type, value, traceback):
         self.release()
+
+
+def symbolImage(symbolName, color):
+    image = AppKit.NSImage.imageWithSystemSymbolName_accessibilityDescription_(symbolName, "")
+    configuration = AppKit.NSImageSymbolConfiguration.configurationWithHierarchicalColor_(
+        AppKit.NSColor.colorWithCalibratedRed_green_blue_alpha_(*color)
+    )
+    return image.imageWithSymbolConfiguration_(configuration)

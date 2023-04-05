@@ -1,3 +1,9 @@
+import ufoProcessor.ufoOperator
+import designspaceProblems
+import importlib
+importlib.reload(ufoProcessor.ufoOperator)
+importlib.reload(designspaceProblems)
+
 import os
 import weakref
 import AppKit
@@ -5,7 +11,7 @@ import AppKit
 import vanilla
 
 from fontTools import designspaceLib
-import ufoProcessor
+from ufoProcessor import ufoOperator
 
 from mojo.UI import CodeEditor, SliderEditStepper
 from mojo.events import postEvent, addObserver, removeObserver
@@ -22,11 +28,10 @@ from designspaceProblems import DesignSpaceChecker
 from designspaceEditor.designspaceLexer import DesignspaceLexer, TextLexer
 from designspaceEditor.parsers import mapParser, rulesParser, labelsParser, glyphNameParser
 from designspaceEditor.parsers.parserTools import numberToString
-from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges
+from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges, symbolImage
 
 
 designspaceBundle = ExtensionBundle("DesignspaceEditor2")
-
 
 registeredAxisTags = [
     ("italic", "ital"),
@@ -176,12 +181,12 @@ class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
 
 class BaseAttributePopover:
 
-    def __init__(self, listView, document, closeCallback=None):
+    def __init__(self, listView, operator, closeCallback=None):
         tableView = listView.getNSTableView()
         index = listView.getSelection()[0]
         item = listView[index]
         relativeRect = tableView.rectOfRow_(index)
-        self.document = document
+        self.operator = operator
         self.closeCallback = closeCallback
         self.popover = vanilla.Popover((400, 300))
         self.build(item)
@@ -249,7 +254,7 @@ class AxisAttributesPopover(BaseAttributePopover):
         )
 
     def axisLabelsEditorCallback(self, sender):
-        postEvent("designspaceEditorLabelsDidChange", designspace=self.document)
+        postEvent("designspaceEditorLabelsDidChange", designspace=self.operator)
         self.controleEditCallback(sender)
 
     def close(self):
@@ -326,9 +331,9 @@ class BaseButtonPopover:
 
 class LabelsPreview:
 
-    def __init__(self, document):
+    def __init__(self, operator):
         self.w = vanilla.FloatingWindow((250, 300), "Labels Preview")
-        self.document = document
+        self.operator = operator
         self.w.languages = vanilla.PopUpButton((10, 10, 80, 22), [], self.controlEdited)
         self.w.previewText = vanilla.TextBox((100, 10, -10, 22))
         self.build()
@@ -340,7 +345,7 @@ class LabelsPreview:
     def windowCloseCallback(self, sender):
         removeObserver(self, "designspaceEditorDidChange")
         removeObserver(self, "designspaceEditorLabelsDidChange")
-        self.document = None
+        self.operator = None
 
     def build(self):
         location = dict()
@@ -350,7 +355,7 @@ class LabelsPreview:
         self.w.controls = vanilla.Group((0, 40, 0, 0))
 
         y = 10
-        for axis in self.document.axes:
+        for axis in self.operator.axes:
             setattr(
                 self.w.controls,
                 f"{axis.name}_name",
@@ -380,7 +385,7 @@ class LabelsPreview:
 
     def getControlLocation(self):
         location = dict()
-        for axis in self.document.axes:
+        for axis in self.operator.axes:
             if hasattr(self.w.controls, f"{axis.name}_control"):
                 control = getattr(self.w.controls, f"{axis.name}_control")
                 if hasattr(axis, "values"):
@@ -391,7 +396,7 @@ class LabelsPreview:
         return location
 
     def controlEdited(self, sender=None, setLanguages=None):
-        self.names = designspaceLib.statNames.getStatNames(self.document, self.getControlLocation())
+        self.names = designspaceLib.statNames.getStatNames(self.operator, self.getControlLocation())
         if setLanguages:
             languages = list(sorted(set(list(self.names.familyNames.keys()) + list(self.names.styleNames.keys()))))
             self.w.languages.setItems(languages)
@@ -417,7 +422,7 @@ class DesignspaceEditorController(WindowController):
             self.load(path)
 
     def build(self):
-        self.document = ufoProcessor.DesignSpaceProcessor()
+        self.operator = ufoOperator.UFOOperator()
 
         self.w = vanilla.Window((850, 500), "Designspace Editor", minSize=(720, 400))
         self.w.vanillaWrapper = weakref.ref(self)
@@ -442,11 +447,19 @@ class DesignspaceEditorController(WindowController):
         ) for tabItem in self.tabItems]
 
         toolbarItems.extend([
+            dict(itemIdentifier=AppKit.NSToolbarSpaceItemIdentifier),
             dict(
                 itemIdentifier="save",
                 label="Save",
                 callback=self.toolbarSave,
-                imageObject=designspaceBundle.getResourceImage("toolbar_30_30_icon_save"),
+                imageObject=symbolImage("square.and.arrow.down", (1, 0, 1, 1))
+            ),
+            dict(
+                itemIdentifier="help",
+                label="Help",
+                callback=self.toolbarHelp,
+                imageObject=symbolImage("questionmark.circle", (1, 0, 1, 1))
+
             ),
             # dict(
             #     itemIdentifier="generate",
@@ -461,20 +474,24 @@ class DesignspaceEditorController(WindowController):
             #     imageObject=designspaceBundle.getResourceImage("toolbar_30_30_icon_settings"),
             # ),
         ])
-        self.w.addToolbar("DesignSpaceToolbar", toolbarItems)
+        self.w.addToolbar("DesignSpaceToolbar", toolbarItems, addStandardItems=False)
 
         # AXES
         axesToolsSsegmentDescriptions = [
             dict(title="+", width=20),
             dict(title="-", width=20),
         ]
-        axesToolsSsegmentDescriptions.extend([dict(title=f"Add {preferredAxis[0].title()} Axis") for preferredAxis in preferredAxes])
-
         self.axes.tools = vanilla.SegmentedButton(
             (10, 5, 400, 22),
             selectionStyle="momentary",
             callback=self.axisToolsCallback,
             segmentDescriptions=axesToolsSsegmentDescriptions
+        )
+        self.axes.editorTools = vanilla.SegmentedButton(
+            (72, 5, 370, 22),
+            selectionStyle="momentary",
+            callback=self.axisEditorToolsCallback,
+            segmentDescriptions=[dict(title=f"Add {preferredAxis[0].title()} Axis") for preferredAxis in preferredAxes]
         )
 
         axisDoubleClickCell = RFDoubleClickCell.alloc().init()
@@ -619,7 +636,7 @@ class DesignspaceEditorController(WindowController):
 
         # LABELS
         self.labels.tools = vanilla.SegmentedButton(
-            (-125, 5, -5, 22),
+            (10, 5, 125, 22),
             selectionStyle="momentary",
             callback=self.labelsToolsCallback,
             segmentDescriptions=[dict(title="Labels Preview")]
@@ -647,9 +664,9 @@ class DesignspaceEditorController(WindowController):
         self.w.getNSWindow().toolbar().setSelectedItemIdentifier_("axes")
 
     def started(self):
-        postEvent("designspaceEditorWillOpenDesignspace", designspace=self.document)
+        postEvent("designspaceEditorWillOpenDesignspace", designspace=self.operator)
         self.w.open()
-        postEvent("designspaceEditorDidOpenDesignspace", designspace=self.document)
+        postEvent("designspaceEditorDidOpenDesignspace", designspace=self.operator)
 
     def destroy(self):
         try:
@@ -661,18 +678,18 @@ class DesignspaceEditorController(WindowController):
         if path is not None:
             fileName = os.path.basename(path)
             try:
-                self.document.read(path)
+                self.operator.read(path)
             except Exception as e:
                 self.showMessage(
                     "DesignSpaceEdit can't open this file",
                     informativeText=f"Error reading {fileName}.\n{e}."
                 )
 
-            self.axes.list.set([AxisListItem(axisDescriptor, self) for axisDescriptor in self.document.axes])
-            self.sources.list.set([self.wrapSourceDescriptor(sourceDescriptor) for sourceDescriptor in self.document.sources])
-            self.instances.list.set([self.wrapInstanceDescriptor(instanceDescriptor) for instanceDescriptor in self.document.instances])
-            self.rules.editor.set(rulesParser.dumpRules(self.document.rules))
-            self.labels.editor.set(labelsParser.dumpLocationLabels(self.document.locationLabels))
+            self.axes.list.set([AxisListItem(axisDescriptor, self) for axisDescriptor in self.operator.axes])
+            self.sources.list.set([self.wrapSourceDescriptor(sourceDescriptor) for sourceDescriptor in self.operator.sources])
+            self.instances.list.set([self.wrapInstanceDescriptor(instanceDescriptor) for instanceDescriptor in self.operator.instances])
+            self.rules.editor.set(rulesParser.dumpRules(self.operator.rules))
+            self.labels.editor.set(labelsParser.dumpLocationLabels(self.operator.locationLabels))
 
             self.setWindowTitleFromPath(path)
             self.updateColumnHeadersFromAxes()
@@ -685,38 +702,43 @@ class DesignspaceEditorController(WindowController):
             # remove
             for index in reversed(self.axes.list.getSelection()):
                 item = self.axes.list[index]
-                self.document.axes.remove(item.axisDescriptor)
+                self.operator.axes.remove(item.axisDescriptor)
                 self.axes.list.remove(item)
         else:
-            if value == 0:
-                # add
-                name = f"newAxis{len(self.document.axes) + 1}"
-                tag = f"nwx{len(self.document.axes) + 1}"
-                minimum = 0
-                maximum = 1000
-                default = 0
-            else:
-                name, tag, minimum, maximum, default = preferredAxes[value - 2]
-
-            if self.validateAxisName(name) and self.validateAxisTag(tag):
-                axisDescriptor = self.document.writerClass.axisDescriptorClass()
-                axisDescriptor.name = name
-                axisDescriptor.tag = tag
-                axisDescriptor.minimum = minimum
-                axisDescriptor.maximum = maximum
-                axisDescriptor.default = default
-                self.document.axes.append(axisDescriptor)
-                self.axes.list.append(AxisListItem(axisDescriptor, self))
-            else:
-                print(f"Duplicate axis: '{name}'")
-                return
+            # add
+            name = f"newAxis{len(self.operator.axes) + 1}"
+            tag = f"nwx{len(self.operator.axes) + 1}"
+            minimum = 0
+            maximum = 1000
+            default = 0
+            self._addAxis(name, tag, minimum, maximum, default)
 
         self.setDocumentNeedSave(True)
         self.updateColumnHeadersFromAxes()
-        # TODO self.updateLocations()
+
+    def axisEditorToolsCallback(self, sender):
+        value = sender.get()
+        name, tag, minimum, maximum, default = preferredAxes[value]
+        self._addAxis(name, tag, minimum, maximum, default)
+        self.setDocumentNeedSave(True)
+        self.updateColumnHeadersFromAxes()
+
+    def _addAxis(self, name, tag, minimum, maximum, default):
+        if self.validateAxisName(name) and self.validateAxisTag(tag):
+            axisDescriptor = self.operator.addAxisDescriptor(
+                name=name,
+                tag=tag,
+                minimum=minimum,
+                maximum=maximum,
+                default=default
+            )
+            self.axes.list.append(AxisListItem(axisDescriptor, self))
+        else:
+            print(f"Duplicate axis: '{name}'")
+
 
     def axisListDoubleClickCallback(self, sender):
-        self.axisPopover = AxisAttributesPopover(self.axes.list, self.document, closeCallback=self.setDocumentNeedSave)
+        self.axisPopover = AxisAttributesPopover(self.axes.list, self.operator, closeCallback=self.setDocumentNeedSave)
 
     def axesListEditCallback(self, sender):
         self.setDocumentNeedSave(True)
@@ -745,7 +767,7 @@ class DesignspaceEditorController(WindowController):
             # remove
             for index in reversed(self.sources.list.getSelection()):
                 item = self.sources.list[index]
-                self.document.sources.remove(item["object"])
+                self.operator.sources.remove(item["object"])
                 self.sources.list.remove(item)
 
     def sourcesEditorToolsCallback(self, sender):
@@ -755,7 +777,7 @@ class DesignspaceEditorController(WindowController):
             self.openSelectedItem(self.sources.list)
         elif value == 1:
             # Add Open UFO's
-            existingSourcePaths = [sourceDescriptor.path for sourceDescriptor in self.document.sources]
+            existingSourcePaths = [sourceDescriptor.path for sourceDescriptor in self.operator.sources]
             for font in AllFonts():
                 if font.path not in existingSourcePaths:
                     self.addSourceFromFont(font)
@@ -773,8 +795,8 @@ class DesignspaceEditorController(WindowController):
                         sourceDescriptor.path = font.path
                         sourceDescriptor.familyName = font.info.familyName
                         sourceDescriptor.styleName = font.info.styleName
-                        if self.document.path is not None:
-                            sourceDescriptor.filename = os.path.relpath(font.path, os.path.dirname(self.document.path))
+                        if self.operator.path is not None:
+                            sourceDescriptor.filename = os.path.relpath(font.path, os.path.dirname(self.operator.path))
                         else:
                             sourceDescriptor.filename = font.path
                         item.update(self.wrapSourceDescriptor(sourceDescriptor))
@@ -797,25 +819,25 @@ class DesignspaceEditorController(WindowController):
         self.addSourceFromFont(font)
 
     def addSourceFromFont(self, font):
-        defaultLocation = self.document.newDefaultLocation(bend=True)
-        sourceDescriptor = self.document.writerClass.sourceDescriptorClass()
-        sourceDescriptor.path = font.path
-        if self.document.path is not None:
-            sourceDescriptor.filename = os.path.relpath(font.path, os.path.dirname(self.document.path))
+        defaultLocation = self.operator.newDefaultLocation(bend=True)
+        if self.operator.path is not None:
+            filename = os.path.relpath(font.path, os.path.dirname(self.operator.path))
         else:
-            sourceDescriptor.filename = font.path
-        sourceDescriptor.familyName = font.info.familyName
-        sourceDescriptor.styleName = font.info.styleName
-        sourceDescriptor.location.update(defaultLocation)
-
-        self.document.addSource(sourceDescriptor)
+            filename = font.path
+        sourceDescriptor = self.operator.addSourceDescriptor(
+            path=font.path,
+            filename=filename,
+            familyName=font.info.familyName,
+            styleName=font.info.styleName,
+            location=defaultLocation
+        )
         self.sources.list.append(self.wrapSourceDescriptor(sourceDescriptor))
         self.setDocumentNeedSave(True)
 
     def wrapSourceDescriptor(self, sourceDescriptor):
         wrapped = dict(
             sourceHasPath=checkSymbol if sourceDescriptor.path and os.path.exists(sourceDescriptor.path) else "",
-            sourceIsDefault=defaultSymbol if sourceDescriptor == self.document.findDefault() else "",
+            sourceIsDefault=defaultSymbol if sourceDescriptor == self.operator.findDefault() else "",
             sourceUFOFileName=sourceDescriptor.filename if sourceDescriptor.filename is not None and sourceDescriptor.filename != sourceDescriptor.path else "[pending save]",
             sourceFamilyName=sourceDescriptor.familyName or "",
             sourceStyleName=sourceDescriptor.styleName or "",
@@ -833,12 +855,12 @@ class DesignspaceEditorController(WindowController):
         sourceDescriptor.familyName = wrappedSourceDescriptor["sourceFamilyName"] if wrappedSourceDescriptor["sourceFamilyName"] else None
         sourceDescriptor.styleName = wrappedSourceDescriptor["sourceStyleName"] if wrappedSourceDescriptor["sourceStyleName"] else None
         sourceDescriptor.layerName = wrappedSourceDescriptor["sourceLayerName"] if wrappedSourceDescriptor["sourceLayerName"] else None
-        for axis in self.document.axes:
+        for axis in self.operator.axes:
             sourceDescriptor.location[axis.name] = wrappedSourceDescriptor.get(f"axis_{axis.name}", axis.default)
         return sourceDescriptor
 
     def sourcesListDoubleClickCallback(self, sender):
-        self.sourcePopover = SourceAttributesPopover(self.sources.list, self.document, closeCallback=[self.updateSources, self.setDocumentNeedSave])
+        self.sourcePopover = SourceAttributesPopover(self.sources.list, self.operator, closeCallback=[self.updateSources, self.setDocumentNeedSave])
 
     def sourcesListEditCallback(self, sender):
         self.updateSources()
@@ -846,7 +868,7 @@ class DesignspaceEditorController(WindowController):
 
     def sourcesListDropCallback(self, sender, dropInfo):
         isProposal = dropInfo["isProposal"]
-        existingUFOPaths = [sourceDescriptor.path for sourceDescriptor in self.document.sources]
+        existingUFOPaths = [sourceDescriptor.path for sourceDescriptor in self.operator.sources]
 
         paths = dropInfo["data"]
         paths = [path for path in paths if os.path.splitext(path)[-1].lower() == ".ufo" and path not in existingUFOPaths]
@@ -873,16 +895,16 @@ class DesignspaceEditorController(WindowController):
         value = sender.get()
         if value == 0:
             # add
-            if self.document.instances:
-                familyName = self.document.instances[0].familyName
-            elif self.document.sources:
-                familyName = self.document.sources[0].familyName
+            if self.operator.instances:
+                familyName = self.operator.instances[0].familyName
+            elif self.operator.sources:
+                familyName = self.operator.sources[0].familyName
             else:
                 familyName = "NewFamily"
-            styleName = f"Style_{len(self.document.instances)}"
-            instanceDescriptor = self.document.addInstanceDescriptor(
+            styleName = f"Style_{len(self.operator.instances)}"
+            instanceDescriptor = self.operator.addInstanceDescriptor(
                 familyName=familyName,
-                designLocation=self.document.newDefaultLocation(),
+                designLocation=self.operator.newDefaultLocation(),
                 styleName=styleName,
                 filename=os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{familyName}-{styleName}.ufo")
             )
@@ -891,7 +913,7 @@ class DesignspaceEditorController(WindowController):
             # remove
             for index in reversed(self.instances.list.getSelection()):
                 item = self.instances.list[index]
-                self.document.instances.remove(item["object"])
+                self.operator.instances.remove(item["object"])
                 self.instances.list.remove(item)
         self.setDocumentNeedSave(True)
 
@@ -913,7 +935,7 @@ class DesignspaceEditorController(WindowController):
         instanceDescriptor = wrappedInstanceDescriptor["object"]
         instanceDescriptor.familyName = wrappedInstanceDescriptor["instanceFamilyName"]
         instanceDescriptor.styleName = wrappedInstanceDescriptor["instanceStyleName"]
-        for axis in self.document.axes:
+        for axis in self.operator.axes:
             instanceDescriptor.designLocation[axis.name] = wrappedInstanceDescriptor.get(f"axis_{axis.name}", axis.default)
         return instanceDescriptor
 
@@ -927,14 +949,14 @@ class DesignspaceEditorController(WindowController):
             for index in self.instances.list.getSelection():
                 item = self.instances.list[index]
                 instanceDescriptor = item["object"]
-                newInstanceDescriptor = self.document.addInstanceDescriptor(**instanceDescriptor.asdict())
+                newInstanceDescriptor = self.operator.addInstanceDescriptor(**instanceDescriptor.asdict())
                 self.instances.list.append(self.wrapInstanceDescriptor(newInstanceDescriptor))
         elif value == 1:
             # Add Sources as Instances
-            existingLocations = [instanceDescriptor.designLocation for instanceDescriptor in self.document.instances]
-            for sourceDescriptor in self.document.sources:
+            existingLocations = [instanceDescriptor.designLocation for instanceDescriptor in self.operator.instances]
+            for sourceDescriptor in self.operator.sources:
                 if sourceDescriptor.location not in existingLocations:
-                    newInstanceDescriptor = self.document.addInstanceDescriptor(
+                    newInstanceDescriptor = self.operator.addInstanceDescriptor(
                         familyName=sourceDescriptor.familyName,
                         styleName=sourceDescriptor.styleName,
                         designLocation=sourceDescriptor.location,
@@ -944,13 +966,13 @@ class DesignspaceEditorController(WindowController):
 
         elif value in (2, 3):
             # Generate with MutatorMath or VarLib
-            if self.document.path is None:
+            if self.operator.path is None:
                 self.showMessage("Save the designspace first.", "Instances are generated in a relative path next to the designspace file.")
             else:
-                self.document.useVarlib = value == 3
-                self.document.roundGeometry = True
-                self.document.loadFonts()
-                self.document.findDefault()
+                self.operator.useVarlib = value == 3
+                self.operator.roundGeometry = True
+                self.operator.loadFonts()
+                self.operator.findDefault()
                 selection = self.instances.list.getSelection()
                 if selection:
                     items = [self.instances.list[index] for index in selection]
@@ -959,7 +981,7 @@ class DesignspaceEditorController(WindowController):
                 for item in items:
                     instanceDescriptor = item["object"]
                     with TryExcept(self, "Generate Instance"):
-                        font = self.document.makeInstance(instanceDescriptor)
+                        font = self.operator.makeInstance(instanceDescriptor)
                         if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
                             os.makedirs(os.path.dirname(instanceDescriptor.path))
                         font.save(path=instanceDescriptor.path)
@@ -971,8 +993,8 @@ class DesignspaceEditorController(WindowController):
 
     @coalescingDecorator(delay=0.2)
     def rulesEditorCallback(self, sender):
-        rules = rulesParser.parseRules(sender.get(), self.document.writerClass.ruleDescriptorClass)
-        self.document.rules = rules
+        rules = rulesParser.parseRules(sender.get(), self.operator.writerClass.ruleDescriptorClass)
+        self.operator.rules = rules
         self.setDocumentNeedSave(True)
 
     # labels
@@ -980,19 +1002,19 @@ class DesignspaceEditorController(WindowController):
     labelsPreview = None
 
     def labelsToolsCallback(self, sender):
-        if self.document.findDefault() is None:
+        if self.operator.findDefault() is None:
             self.showMessage("No default is found.", "Place a source on the default location of all axes.")
         else:
             try:
                 self.labelsPreview.w.show()
             except Exception:
-                self.labelsPreview = LabelsPreview(document=self.document)
+                self.labelsPreview = LabelsPreview(operator=self.operator)
 
     @coalescingDecorator(delay=0.2)
     def locationLabelsEditorCallback(self, sender):
-        locationLabels = labelsParser.parseLocationLabels(sender.get(), self.document.writerClass.locationLabelDescriptorClass)
-        self.document.locationLabels = locationLabels
-        postEvent("designspaceEditorLabelsDidChange", designspace=self.document)
+        locationLabels = labelsParser.parseLocationLabels(sender.get(), self.operator.writerClass.locationLabelDescriptorClass)
+        self.operator.locationLabels = locationLabels
+        postEvent("designspaceEditorLabelsDidChange", designspace=self.operator)
         self.setDocumentNeedSave(True)
 
     # problems
@@ -1005,7 +1027,7 @@ class DesignspaceEditorController(WindowController):
 
     def validate(self):
         # validate with the designspaceProblems checker
-        checker = DesignSpaceChecker(self.document)
+        checker = DesignSpaceChecker(self.operator)
         checker.checkEverything()
         report = []
         for problem in checker.problems:
@@ -1038,7 +1060,7 @@ class DesignspaceEditorController(WindowController):
         axisName = column.title()
         item = sender[rowIndex]
 
-        defaultLocation = self.document.newDefaultLocation(bend=True)
+        defaultLocation = self.operator.newDefaultLocation(bend=True)
 
         def menuCallback(sender):
             item[columnIdentifier] = float(sender.title())
@@ -1051,7 +1073,7 @@ class DesignspaceEditorController(WindowController):
             item[columnIdentifier] = sender.get()
 
         menu = []
-        for axisDescriptor in self.document.axes:
+        for axisDescriptor in self.operator.axes:
             if axisDescriptor.name == axisName:
                 if hasattr(axisDescriptor, "values"):
                     menu.extend([dict(title=numberToString(value), callback=menuCallback) for value in axisDescriptor.values])
@@ -1082,7 +1104,7 @@ class DesignspaceEditorController(WindowController):
         return menu
 
     def convertAxisTo(self, axisDescriptor, destinationClass, **kwargs):
-        index = self.document.axes.index(axisDescriptor)
+        index = self.operator.axes.index(axisDescriptor)
         newAxisDescriptor = destinationClass(
             tag=axisDescriptor.tag,
             name=axisDescriptor.name,
@@ -1093,19 +1115,19 @@ class DesignspaceEditorController(WindowController):
             axisLabels=axisDescriptor.axisLabels,
             **kwargs
         )
-        self.document.axes[index] = newAxisDescriptor
+        self.operator.axes[index] = newAxisDescriptor
         return newAxisDescriptor
 
     def convertContinuousAxisToDiscreteAxis(self, axisDescriptor):
         return self.convertAxisTo(
             axisDescriptor,
-            self.document.writerClass.discreteAxisDescriptorClass
+            self.operator.writerClass.discreteAxisDescriptorClass
         )
 
     def convertDiscreteAxisToContinuousAxis(self, axisDescriptor):
         return self.convertAxisTo(
             axisDescriptor,
-            self.document.writerClass.axisDescriptorClass,
+            self.operator.writerClass.axisDescriptorClass,
             minimum=min(0, axisDescriptor.default),
             maximum=max(1000, axisDescriptor.default)
         )
@@ -1153,7 +1175,7 @@ class DesignspaceEditorController(WindowController):
         if self.holdChanges:
             return
         if state:
-            postEvent("designspaceEditorDidChange", designspace=self.document)
+            postEvent("designspaceEditorDidChange", designspace=self.operator)
             self.w.getNSWindow().setDocumentEdited_(True)
         else:
             self.w.getNSWindow().setDocumentEdited_(False)
@@ -1168,7 +1190,7 @@ class DesignspaceEditorController(WindowController):
             for column in list(tableView.tableColumns()):
                 if column.identifier().startswith("axis_"):
                     tableView.removeTableColumn_(column)
-            for axis in self.document.axes:
+            for axis in self.operator.axes:
                 identifier = f"axis_{axis.name}"
                 column = AppKit.NSTableColumn.alloc().initWithIdentifier_(identifier)
                 column.headerCell().setTitle_(axis.name)
@@ -1221,13 +1243,13 @@ class DesignspaceEditorController(WindowController):
     # validation
 
     def validateAxisName(self, name):
-        for axisDescriptor in self.document.axes:
+        for axisDescriptor in self.operator.axes:
             if axisDescriptor.name == name:
                 return False
         return True
 
     def validateAxisTag(self, tag):
-        for axisDescriptor in self.document.axes:
+        for axisDescriptor in self.operator.axes:
             if axisDescriptor.tag == tag:
                 return False
         return True
@@ -1245,7 +1267,7 @@ class DesignspaceEditorController(WindowController):
     def toolbarSave(self, sender):
 
         def saveDesignspace(path):
-            # so we have the path for this document
+            # so we have the path for this operator
             # we need to make sure the sources and instances are all in the right place
             root = os.path.dirname(path)
             for wrappedSourceDescriptor in self.sources.list:
@@ -1257,23 +1279,23 @@ class DesignspaceEditorController(WindowController):
                     instanceDescriptor.filename = os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}.ufo")
                 instanceDescriptor.path = os.path.abspath(os.path.join(root, instanceDescriptor.filename))
 
-            # TODO self.document.lib[self.mathModelPrefKey] = self.mathModelPref
-            self.document.write(path)
+            # TODO self.operator.lib[self.mathModelPrefKey] = self.mathModelPref
+            self.operator.write(path)
             self.updateSources()
             self.setWindowTitleFromPath(path)
             self.setDocumentNeedSave(False)
 
-        if len(self.document.axes) == 0:
+        if len(self.operator.axes) == 0:
             self.showMessage(
                 messageText="No axes defined!",
                 informativeText="The designspace needs at least one axis before saving."
             )
 
-        elif self.document.path is None or AppKit.NSEvent.modifierFlags() & AppKit.NSAlternateKeyMask:
+        elif self.operator.path is None or AppKit.NSEvent.modifierFlags() & AppKit.NSAlternateKeyMask:
             # check if w have defined any axes
             # can't save without axes
             # get a filepath first
-            sourcePaths = set([os.path.dirname(source.path) for source in self.document.sources if source.path])
+            sourcePaths = set([os.path.dirname(source.path) for source in self.operator.sources if source.path])
             saveToDir = None
             if sourcePaths:
                 saveToDir = sorted(sourcePaths)[0]
@@ -1286,7 +1308,10 @@ class DesignspaceEditorController(WindowController):
                 callback=saveDesignspace
             )
         else:
-            saveDesignspace(self.document.path)
+            saveDesignspace(self.operator.path)
+
+    def toolbarHelp(self, sender):
+        designspaceBundle.openHelp()
 
     def toolbarSettings(self, sender):
         pass
@@ -1300,6 +1325,6 @@ if __name__ == '__main__':
     path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v4_original.designspace'
     #path = "/Users/frederik/Desktop/designSpaceEditorText/testFiles/Untitled.designspace"
     path = None
-    path = '/Users/frederik/Documents/dev/letterror/ufoProcessor/Tests/202206 discrete spaces/test.ds5.designspace'
-    path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v5.designspace'
+    #path = '/Users/frederik/Documents/dev/letterror/ufoProcessor/Tests/202206 discrete spaces/test.ds5.designspace'
+    #path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v5.designspace'
     DesignspaceEditorController(path)
