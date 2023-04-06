@@ -50,6 +50,8 @@ preferredAxes = [
     # ("slant", "slnt", -90, 0, 90),
 ]
 
+designspacenotesLibKey = "designspaceEdit.notes"
+
 numberFormatter = AppKit.NSNumberFormatter.alloc().init()
 numberFormatter.setNumberStyle_(AppKit.NSNumberFormatterDecimalStyle)
 numberFormatter.setAllowsFloats_(True)
@@ -430,7 +432,7 @@ class DesignspaceEditorController(WindowController):
         self.w.vanillaWrapper = weakref.ref(self)
         self.w.bind("should close", self.windowShouldClose)
 
-        self.tabItems = ["Axes", "Sources", "Instances", "Rules", "Labels", "Problems"]
+        self.tabItems = ["Axes", "Sources", "Instances", "Rules", "Labels", "Problems", "Notes"]
         self.w.tabs = vanilla.Tabs((0, 0, 0, 0), self.tabItems, showTabs=False)
 
         self.axes = self.w.tabs[0]
@@ -439,7 +441,8 @@ class DesignspaceEditorController(WindowController):
         self.rules = self.w.tabs[3]
         self.labels = self.w.tabs[4]
         self.problems = self.w.tabs[5]
-
+        self.notes = self.w.tabs[6]
+        
         toolbarItems = [dict(
             itemIdentifier=tabItem.lower(),
             label=tabItem,
@@ -663,8 +666,10 @@ class DesignspaceEditorController(WindowController):
             dict(title="Specifically", key="problemData", minWidth=200, width=200, maxWidth=1000),
         ]
         self.problems.list = vanilla.List((0, 30, 0, 0), [], columnDescriptions=problemsColumnDescriptions)
-
-        # self.w.tabs.set(3)
+        
+        # NOTES        
+        self.notes.editor = vanilla.TextEditor((0, 0, 0, 0), callback=self.notesEditorCallback)
+                
         self.w.getNSWindow().toolbar().setSelectedItemIdentifier_("axes")
 
     def started(self):
@@ -694,6 +699,7 @@ class DesignspaceEditorController(WindowController):
             self.instances.list.set([self.wrapInstanceDescriptor(instanceDescriptor) for instanceDescriptor in self.operator.instances])
             self.rules.editor.set(rulesParser.dumpRules(self.operator.rules))
             self.labels.editor.set(labelsParser.dumpLocationLabels(self.operator.locationLabels))
+            self.notes.editor.set(self.operator.lib.get(designspacenotesLibKey, ""))
 
             self.setWindowTitleFromPath(path)
             self.updateColumnHeadersFromAxes()
@@ -1026,7 +1032,13 @@ class DesignspaceEditorController(WindowController):
         if value == 0:
             # validate
             self.validate()
-
+    
+    # notes
+    @coalescingDecorator(delay=0.2)
+    def notesEditorCallback(self, sender):
+        self.operator.lib[designspacenotesLibKey] = sender.get()
+        self.setDocumentNeedSave(True)
+        
     def validate(self):
         # validate with the designspaceProblems checker
         checker = DesignSpaceChecker(self.operator)
@@ -1334,5 +1346,5 @@ if __name__ == '__main__':
     #path = "/Users/frederik/Desktop/designSpaceEditorText/testFiles/Untitled.designspace"
     #path = None
     #path = '/Users/frederik/Documents/dev/letterror/ufoProcessor/Tests/202206 discrete spaces/test.ds5.designspace'
-    #path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v5.designspace'
+    path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v5.designspace'
     DesignspaceEditorController(path)
