@@ -31,7 +31,7 @@ def CurrentDesignspace():
         if hasattr(delegate, "vanillaWrapper"):
             controller = delegate.vanillaWrapper()
             if controller.__class__.__name__ == "DesignspaceEditorController":
-                return controller.document
+                return controller.operator
     return None
 
 
