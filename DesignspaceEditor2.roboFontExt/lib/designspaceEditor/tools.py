@@ -73,3 +73,45 @@ def symbolImage(symbolName, color):
         AppKit.NSColor.colorWithCalibratedRed_green_blue_alpha_(*color)
     )
     return image.imageWithSymbolConfiguration_(configuration)
+
+
+class NumberListFormatter(AppKit.NSFormatter):
+
+    def __new__(cls, *arg, **kwrags):
+        self = cls.alloc().init()
+        return self
+
+    def stringForObjectValue_(self, obj):
+        def formatNumber(value):
+            if value == "":
+                return ""
+            value = float(value)
+            if value.is_integer():
+                return f"{int(value)}"
+            else:
+                return f"{value:.3f}"
+
+        if obj is None or isinstance(obj, AppKit.NSNull):
+            return " "
+        if isinstance(obj, (tuple, list)) and len(obj) == 2:
+            # anisotropic
+            x, y = obj
+            return f"{formatNumber(x)} {formatNumber(y)}"
+        return formatNumber(obj)
+
+    def getObjectValue_forString_errorDescription_(self, value, string, error):
+        string = str(string)
+        string = string.strip()
+        if not string:
+            return True, 0, error
+        try:
+            if " " in string:
+                parts = string.split(" ")
+                if len(parts) == 2:
+                    x, y = parts
+                    return True, (float(x), float(y)), error
+            else:
+                return True, float(string), error
+        except Exception:
+            pass
+        return False, string, error
