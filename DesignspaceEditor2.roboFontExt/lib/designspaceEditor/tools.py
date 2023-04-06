@@ -1,5 +1,6 @@
 import AppKit
 from contextlib import contextmanager
+from mojo.events import postEvent
 
 
 def holdRecursionDecorator(func):
@@ -65,6 +66,36 @@ class HoldChanges:
 
     def __exit__(self, type, value, traceback):
         self.release()
+
+
+class SendNotification:
+
+    exitPrefix = {
+        "Will": "Did"
+    }
+    notificationPrefix = "desingspaceEditor"
+
+    def __init__(self, who="", prefix="Will", action="Change", **kwargs):
+        self.who = who
+        self.prefix = prefix
+        self.action = action
+        self.kwargs = kwargs
+
+    def __enter__(self):
+        postEvent(f"{self.notificationPrefix}{self.who}{self.prefix}{self.action}", **self.kwargs)
+        return self
+
+    def __exit__(self, type, value, traceback):
+        prefix = self.exitPrefix.get(self.prefix)
+        if prefix is not None:
+            postEvent(f"{self.notificationPrefix}{self.who}{prefix}{self.action}", **self.kwargs)
+
+    def __setitem__(self, key, value):
+        self.kwargs[key] = value
+
+    @classmethod
+    def single(self, who="", prefix="Did", action="Change", **kwargs):
+        postEvent(f"{self.notificationPrefix}{who}{prefix}{action}", **kwargs)
 
 
 def symbolImage(symbolName, color):

@@ -1,9 +1,3 @@
-import ufoProcessor.ufoOperator
-import designspaceProblems
-import importlib
-importlib.reload(ufoProcessor.ufoOperator)
-importlib.reload(designspaceProblems)
-
 import os
 import weakref
 import AppKit
@@ -14,7 +8,7 @@ from fontTools import designspaceLib
 from ufoProcessor import ufoOperator
 
 from mojo.UI import CodeEditor, SliderEditStepper
-from mojo.events import postEvent, addObserver, removeObserver
+from mojo.events import addObserver, removeObserver
 from mojo.subscriber import WindowController
 from mojo.extensions import getExtensionDefault, ExtensionBundle
 from mojo.roboFont import AllFonts, OpenFont
@@ -28,7 +22,7 @@ from designspaceProblems import DesignSpaceChecker
 from designspaceEditor.designspaceLexer import DesignspaceLexer, TextLexer
 from designspaceEditor.parsers import mapParser, rulesParser, labelsParser, glyphNameParser
 from designspaceEditor.parsers.parserTools import numberToString
-from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges, symbolImage, NumberListFormatter
+from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges, symbolImage, NumberListFormatter, SendNotification
 
 
 designspaceBundle = ExtensionBundle("DesignspaceEditor2")
@@ -242,7 +236,7 @@ class AxisAttributesPopover(BaseAttributePopover):
             mapParser.dumpMap(self.axisDescriptor.map),
             lexer=DesignspaceLexer(),
             showLineNumbers=False,
-            callback=self.controleEditCallback
+            callback=self.axisMapEditorCallback
         )
         # if self.isDiscreteAxis:
         #     self.axisMap.editor.setPosSize((10, 40, -10, -10))
@@ -257,8 +251,12 @@ class AxisAttributesPopover(BaseAttributePopover):
             callback=self.axisLabelsEditorCallback
         )
 
+    def axisMapEditorCallback(self, sender):
+        SendNotification.single("AxisLabels", prefix="Did", designspace=self.operator)
+        self.controleEditCallback(sender)
+
     def axisLabelsEditorCallback(self, sender):
-        postEvent("designspaceEditorLabelsDidChange", designspace=self.operator)
+        SendNotification.single("AxisLabels", prefix="Did", designspace=self.operator)
         self.controleEditCallback(sender)
 
     def close(self):
@@ -442,7 +440,7 @@ class DesignspaceEditorController(WindowController):
         self.labels = self.w.tabs[4]
         self.problems = self.w.tabs[5]
         self.notes = self.w.tabs[6]
-        
+
         toolbarItems = [dict(
             itemIdentifier=tabItem.lower(),
             label=tabItem,
@@ -524,6 +522,7 @@ class DesignspaceEditorController(WindowController):
             [],
             editCallback=self.axesListEditCallback,
             columnDescriptions=axesColumnDescriptions,
+            selectionCallback=self.axesListSelectionCallback,
             dragSettings=dict(type="sourcesListDragAndDropType", callback=self.dragCallback),
             selfDropSettings=dict(type="sourcesListDragAndDropType", operation=AppKit.NSDragOperationMove, callback=self.dropCallback),
         )
@@ -580,6 +579,7 @@ class DesignspaceEditorController(WindowController):
             columnDescriptions=sourcesColumnDescriptions,
             editCallback=self.sourcesListEditCallback,
             menuCallback=self.listMenuCallack,
+            selectionCallback=self.sourceListSelectionCallback,
             dragSettings=dict(type="sourcesListDragAndDropType", callback=self.dragCallback),
             selfDropSettings=dict(type="sourcesListDragAndDropType", operation=AppKit.NSDragOperationMove, callback=self.dropCallback),
             otherApplicationDropSettings=dict(type=AppKit.NSFilenamesPboardType, operation=AppKit.NSDragOperationCopy, callback=self.sourcesListDropCallback),
@@ -633,6 +633,7 @@ class DesignspaceEditorController(WindowController):
             editCallback=self.instancesListEditCallback,
             columnDescriptions=instancesColumnDescriptions,
             menuCallback=self.listMenuCallack,
+            selectionCallback=self.instancesListSelectionCallback,
             dragSettings=dict(type="sourcesListDragAndDropType", callback=self.dragCallback),
             selfDropSettings=dict(type="sourcesListDragAndDropType", operation=AppKit.NSDragOperationMove, callback=self.dropCallback),
         )
@@ -666,22 +667,29 @@ class DesignspaceEditorController(WindowController):
             dict(title="Specifically", key="problemData", minWidth=200, width=200, maxWidth=1000),
         ]
         self.problems.list = vanilla.List((0, 30, 0, 0), [], columnDescriptions=problemsColumnDescriptions)
-        
-        # NOTES        
+
+        # NOTES
         self.notes.editor = vanilla.TextEditor((0, 0, 0, 0), callback=self.notesEditorCallback)
-                
+
         self.w.getNSWindow().toolbar().setSelectedItemIdentifier_("axes")
 
+        addObserver(self, "fontDidOpen", "roboFontFontDidOpen")
+        addObserver(self, "fontWillClose", "roboFontFontWillClose")
+        addObserver(self, "designspaceEditorExternalChange", "designspaceEditorExternalChange")
+
     def started(self):
-        postEvent("designspaceEditorWillOpenDesignspace", designspace=self.operator)
-        self.w.open()
-        postEvent("designspaceEditorDidOpenDesignspace", designspace=self.operator)
+        with SendNotification(action="OpenDesignspace", designspace=self.operator):
+            self.w.open()
 
     def destroy(self):
         try:
             self.labelsPreview.w.close()
         except Exception:
             pass
+
+        removeObserver(self, "fontDidOpen")
+        removeObserver(self, "fontWillClose")
+        removeObserver(self, "designspaceEditorExternalChange")
 
     def load(self, path):
         if path is not None:
@@ -693,15 +701,17 @@ class DesignspaceEditorController(WindowController):
                     "DesignSpaceEdit can't open this file",
                     informativeText=f"Error reading {fileName}.\n{e}."
                 )
+            self.loadObjects()
+            self.setWindowTitleFromPath(path)
 
+    def loadObjects(self):
+        with self.holdChanges:
             self.axes.list.set([AxisListItem(axisDescriptor, self) for axisDescriptor in self.operator.axes])
             self.sources.list.set([self.wrapSourceDescriptor(sourceDescriptor) for sourceDescriptor in self.operator.sources])
             self.instances.list.set([self.wrapInstanceDescriptor(instanceDescriptor) for instanceDescriptor in self.operator.instances])
             self.rules.editor.set(rulesParser.dumpRules(self.operator.rules))
             self.labels.editor.set(labelsParser.dumpLocationLabels(self.operator.locationLabels))
             self.notes.editor.set(self.operator.lib.get(designspacenotesLibKey, ""))
-
-            self.setWindowTitleFromPath(path)
             self.updateColumnHeadersFromAxes()
 
     # AXES
@@ -712,7 +722,8 @@ class DesignspaceEditorController(WindowController):
             # remove
             for index in reversed(self.axes.list.getSelection()):
                 item = self.axes.list[index]
-                self.operator.axes.remove(item.axisDescriptor)
+                with SendNotification("Axes", action="RemoveAxis", designspace=self.operator):
+                    self.operator.axes.remove(item.axisDescriptor)
                 self.axes.list.remove(item)
         else:
             # add
@@ -723,34 +734,46 @@ class DesignspaceEditorController(WindowController):
             default = 0
             self._addAxis(name, tag, minimum, maximum, default)
 
-        self.setDocumentNeedSave(True)
+        self.setDocumentNeedSave(True, who="Axes", prefix="Did")
         self.updateColumnHeadersFromAxes()
 
     def axisEditorToolsCallback(self, sender):
         value = sender.get()
         name, tag, minimum, maximum, default = preferredAxes[value]
         self._addAxis(name, tag, minimum, maximum, default)
-        self.setDocumentNeedSave(True)
+
+        self.setDocumentNeedSave(True, who="Axes")
         self.updateColumnHeadersFromAxes()
 
     def _addAxis(self, name, tag, minimum, maximum, default):
         if self.validateAxisName(name) and self.validateAxisTag(tag):
-            axisDescriptor = self.operator.addAxisDescriptor(
-                name=name,
-                tag=tag,
-                minimum=minimum,
-                maximum=maximum,
-                default=default
-            )
+            with SendNotification("Axes", action="AddAxis", designspace=self.operator) as notification:
+                axisDescriptor = self.operator.addAxisDescriptor(
+                    name=name,
+                    tag=tag,
+                    minimum=minimum,
+                    maximum=maximum,
+                    default=default
+                )
+                notification["axis"] = axisDescriptor
             self.axes.list.append(AxisListItem(axisDescriptor, self))
         else:
             print(f"Duplicate axis: '{name}'")
 
     def axisListDoubleClickCallback(self, sender):
-        self.axisPopover = AxisAttributesPopover(self.axes.list, self.operator, closeCallback=self.setDocumentNeedSave)
+        self.axisPopover = AxisAttributesPopover(self.axes.list, self.operator, closeCallback=self.axesChangedCallback)
 
     def axesListEditCallback(self, sender):
-        self.setDocumentNeedSave(True)
+        self.axesChangedCallback()
+
+    def axesChangedCallback(self):
+        self.setDocumentNeedSave(True, who="Axes", prefix="Did")
+
+    def axesListSelectionCallback(self, sender):
+        if self.holdChanges:
+            return
+        selectedSources = [sender[index] for index in sender.getSelection()]
+        SendNotification.single("Axes", action="ChangeSelection", selectedSources=selectedSources)
 
     # SOURCES
 
@@ -776,7 +799,8 @@ class DesignspaceEditorController(WindowController):
             # remove
             for index in reversed(self.sources.list.getSelection()):
                 item = self.sources.list[index]
-                self.operator.sources.remove(item["object"])
+                with SendNotification("Sources", action="RemoveSource", designspace=self.operator):
+                    self.operator.sources.remove(item["object"])
                 self.sources.list.remove(item)
 
     def sourcesEditorToolsCallback(self, sender):
@@ -822,6 +846,7 @@ class DesignspaceEditorController(WindowController):
                     messageText="Cannot replace source UFO's",
                     informativeText="Selection only one source item to be replace"
                 )
+        SendNotification.single("Sources", designspace=self.operator)
 
     def addSourceFromPath(self, path):
         font = OpenFont(path, showInterface=False)
@@ -833,13 +858,15 @@ class DesignspaceEditorController(WindowController):
             filename = os.path.relpath(font.path, os.path.dirname(self.operator.path))
         else:
             filename = font.path
-        sourceDescriptor = self.operator.addSourceDescriptor(
-            path=font.path,
-            filename=filename,
-            familyName=font.info.familyName,
-            styleName=font.info.styleName,
-            location=defaultLocation
-        )
+        with SendNotification("Sources", action="AddSource", designspace=self.operator) as notification:
+            sourceDescriptor = self.operator.addSourceDescriptor(
+                path=font.path,
+                filename=filename,
+                familyName=font.info.familyName,
+                styleName=font.info.styleName,
+                location=defaultLocation
+            )
+            notification["source"] = sourceDescriptor
         self.sources.list.append(self.wrapSourceDescriptor(sourceDescriptor))
         self.setDocumentNeedSave(True)
 
@@ -873,7 +900,13 @@ class DesignspaceEditorController(WindowController):
 
     def sourcesListEditCallback(self, sender):
         self.updateSources()
-        self.setDocumentNeedSave(True)
+        self.setDocumentNeedSave(True, who="Sources", prefix="Did")
+
+    def sourceListSelectionCallback(self, sender):
+        if self.holdChanges:
+            return
+        selectedSources = [sender[index] for index in sender.getSelection()]
+        SendNotification.single("Sources", action="ChangeSelection", selectedSources=selectedSources)
 
     def sourcesListDropCallback(self, sender, dropInfo):
         isProposal = dropInfo["isProposal"]
@@ -911,20 +944,24 @@ class DesignspaceEditorController(WindowController):
             else:
                 familyName = "NewFamily"
             styleName = f"Style_{len(self.operator.instances)}"
-            instanceDescriptor = self.operator.addInstanceDescriptor(
-                familyName=familyName,
-                designLocation=self.operator.newDefaultLocation(),
-                styleName=styleName,
-                filename=os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{familyName}-{styleName}.ufo")
-            )
-            self.instances.list.append(self.wrapInstanceDescriptor(instanceDescriptor))
+            with SendNotification("Instances", action="AddInstance", designspace=self.operator) as notification:
+                instanceDescriptor = self.operator.addInstanceDescriptor(
+                    familyName=familyName,
+                    designLocation=self.operator.newDefaultLocation(),
+                    styleName=styleName,
+                    filename=os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{familyName}-{styleName}.ufo")
+                )
+                notification["instance"] = instanceDescriptor
+            with self.holdChanges:
+                self.instances.list.append(self.wrapInstanceDescriptor(instanceDescriptor))
         elif value == 1:
             # remove
             for index in reversed(self.instances.list.getSelection()):
                 item = self.instances.list[index]
-                self.operator.instances.remove(item["object"])
+                with SendNotification("Instances", action="RemoveInstance", designspace=self.operator):
+                    self.operator.instances.remove(item["object"])
                 self.instances.list.remove(item)
-        self.setDocumentNeedSave(True)
+        self.setDocumentNeedSave(True, who="Instances")
 
     def wrapInstanceDescriptor(self, instanceDescriptor):
         wrapped = dict(
@@ -955,20 +992,26 @@ class DesignspaceEditorController(WindowController):
             for index in self.instances.list.getSelection():
                 item = self.instances.list[index]
                 instanceDescriptor = item["object"]
-                newInstanceDescriptor = self.operator.addInstanceDescriptor(**instanceDescriptor.asdict())
-                self.instances.list.append(self.wrapInstanceDescriptor(newInstanceDescriptor))
+                with SendNotification("Instances", action="AddInstance", designspace=self.operator) as notification:
+                    newInstanceDescriptor = self.operator.addInstanceDescriptor(**instanceDescriptor.asdict())
+                    notification["instance"] = newInstanceDescriptor
+                with self.holdChanges:
+                    self.instances.list.append(self.wrapInstanceDescriptor(newInstanceDescriptor))
         elif value == 1:
             # Add Sources as Instances
             existingLocations = [instanceDescriptor.designLocation for instanceDescriptor in self.operator.instances]
             for sourceDescriptor in self.operator.sources:
                 if sourceDescriptor.location not in existingLocations:
-                    newInstanceDescriptor = self.operator.addInstanceDescriptor(
-                        familyName=sourceDescriptor.familyName,
-                        styleName=sourceDescriptor.styleName,
-                        designLocation=sourceDescriptor.location,
-                        filename=os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{sourceDescriptor.familyName}-{sourceDescriptor.styleName}.ufo")
-                    )
-                    self.instances.list.append(self.wrapInstanceDescriptor(newInstanceDescriptor))
+                    with SendNotification("Instances", action="AddInstance", designspace=self.operator) as notification:
+                        newInstanceDescriptor = self.operator.addInstanceDescriptor(
+                            familyName=sourceDescriptor.familyName,
+                            styleName=sourceDescriptor.styleName,
+                            designLocation=sourceDescriptor.location,
+                            filename=os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{sourceDescriptor.familyName}-{sourceDescriptor.styleName}.ufo")
+                        )
+                        notification["instance"] = newInstanceDescriptor
+                    with self.holdChanges:
+                        self.instances.list.append(self.wrapInstanceDescriptor(newInstanceDescriptor))
 
         elif value in (2, 3):
             # Generate with MutatorMath or VarLib
@@ -995,15 +1038,23 @@ class DesignspaceEditorController(WindowController):
     def instancesListEditCallback(self, sender):
         for wrappedInstanceDescriptor in sender:
             self.unwrapInstanceDescriptor(wrappedInstanceDescriptor)
-        self.setDocumentNeedSave(True)
+        print("instances changes", sender)
+        self.setDocumentNeedSave(True, who="Instances")
+
+    def instancesListSelectionCallback(self, sender):
+        if self.holdChanges:
+            return
+        selectedSources = [sender[index] for index in sender.getSelection()]
+        SendNotification.single("Instances", action="ChangeSelection", selectedSources=selectedSources)
 
     # rules
 
     @coalescingDecorator(delay=0.2)
     def rulesEditorCallback(self, sender):
         rules = rulesParser.parseRules(sender.get(), self.operator.writerClass.ruleDescriptorClass)
-        self.operator.rules = rules
-        self.setDocumentNeedSave(True)
+        self.operator.rules.clear()
+        self.operator.rules.extend(rules)
+        self.setDocumentNeedSave(True, who="Rules")
 
     # labels
 
@@ -1021,9 +1072,9 @@ class DesignspaceEditorController(WindowController):
     @coalescingDecorator(delay=0.2)
     def locationLabelsEditorCallback(self, sender):
         locationLabels = labelsParser.parseLocationLabels(sender.get(), self.operator.writerClass.locationLabelDescriptorClass)
-        self.operator.locationLabels = locationLabels
-        postEvent("designspaceEditorLabelsDidChange", designspace=self.operator)
-        self.setDocumentNeedSave(True)
+        self.operator.locationLabels.clear()
+        self.operator.locationLabels.extend(locationLabels)
+        self.setDocumentNeedSave(True, who="Labels", prefix="Did",)
 
     # problems
 
@@ -1032,13 +1083,13 @@ class DesignspaceEditorController(WindowController):
         if value == 0:
             # validate
             self.validate()
-    
+
     # notes
     @coalescingDecorator(delay=0.2)
     def notesEditorCallback(self, sender):
         self.operator.lib[designspacenotesLibKey] = sender.get()
-        self.setDocumentNeedSave(True)
-        
+        self.setDocumentNeedSave(True, who="Notes", prefix="Did",)
+
     def validate(self):
         # validate with the designspaceProblems checker
         checker = DesignSpaceChecker(self.operator)
@@ -1159,7 +1210,8 @@ class DesignspaceEditorController(WindowController):
                 if path is None:
                     continue
                 try:
-                    OpenFont(path, showInterface=True)
+                    font = OpenFont(path, showInterface=True)
+                    SendNotification.single("Sources", action="Open", font=font, designspace=self.operator)
                 except Exception as e:
                     print(f"Bad UFO: {path}, {e}")
                     pass
@@ -1187,11 +1239,13 @@ class DesignspaceEditorController(WindowController):
             )
         return not self.w.getNSWindow().isDocumentEdited()
 
-    def setDocumentNeedSave(self, state=True):
+    def setDocumentNeedSave(self, state=True, **notificationsKwargs):
         if self.holdChanges:
             return
         if state:
-            postEvent("designspaceEditorDidChange", designspace=self.operator)
+            if notificationsKwargs:
+                SendNotification.single(designspace=self.operator, **notificationsKwargs)
+            SendNotification.single(designspace=self.operator)
             self.w.getNSWindow().setDocumentEdited_(True)
         else:
             self.w.getNSWindow().setDocumentEdited_(False)
@@ -1336,6 +1390,23 @@ class DesignspaceEditorController(WindowController):
     def toolbarSettings(self, sender):
         pass
 
+    # notifications
+
+    def roboFontFontDidOpen(self, notification):
+        font = notification["font"]
+        for sourceDescriptor in self.operator.sources:
+            if sourceDescriptor.path == font.path:
+                SendNotification.single("Sources", action="OpenUFO")
+
+    def roboFontFontWillClose(self, notification):
+        font = notification["font"]
+        for sourceDescriptor in self.operator.sources:
+            if sourceDescriptor.path == font.path:
+                SendNotification.single("Sources", action="CloseUFO")
+
+    def designspaceEditorExternalChange(self, notification):
+        # external change happend, update everything!
+        self.loadObjects()
 
 if __name__ == '__main__':
     pathForBundle = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
