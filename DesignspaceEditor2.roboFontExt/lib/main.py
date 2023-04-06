@@ -4,7 +4,18 @@ import os
 import AppKit
 
 from mojo.events import addObserver
+from mojo.extensions import ExtensionBundle
 from designspaceEditor.ui import DesignspaceEditorController
+
+
+oldBundle = ExtensionBundle("DesignSpaceEdit")
+
+if oldBundle.bundleExists():
+    from vanilla.dialogs import message
+    message(
+        "Found older version of Designspace edit.",
+        "An old version of Designspace edit is still installed. This can cause issues while opening designspace files."
+    )
 
 
 class DesignspaceOpener(object):
