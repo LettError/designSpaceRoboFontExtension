@@ -28,7 +28,7 @@ from designspaceProblems import DesignSpaceChecker
 from designspaceEditor.designspaceLexer import DesignspaceLexer, TextLexer
 from designspaceEditor.parsers import mapParser, rulesParser, labelsParser, glyphNameParser
 from designspaceEditor.parsers.parserTools import numberToString
-from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges, symbolImage
+from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges, symbolImage, NumberListFormatter
 
 
 designspaceBundle = ExtensionBundle("DesignspaceEditor2")
@@ -55,6 +55,8 @@ numberFormatter.setNumberStyle_(AppKit.NSNumberFormatterDecimalStyle)
 numberFormatter.setAllowsFloats_(True)
 numberFormatter.setLocalizesFormat_(False)
 numberFormatter.setUsesGroupingSeparator_(False)
+
+numberListFormatter = NumberListFormatter.alloc().init()
 
 checkSymbol = "✓"
 defaultSymbol = "🔹"
@@ -454,6 +456,7 @@ class DesignspaceEditorController(WindowController):
                 callback=self.toolbarSave,
                 imageObject=symbolImage("square.and.arrow.down", (1, 0, 1, 1))
             ),
+            # dict(itemIdentifier=AppKit.NSToolbarSpaceItemIdentifier),
             dict(
                 itemIdentifier="help",
                 label="Help",
@@ -631,6 +634,7 @@ class DesignspaceEditorController(WindowController):
             selfDropSettings=dict(type="sourcesListDragAndDropType", operation=AppKit.NSDragOperationMove, callback=self.dropCallback),
         )
         self.instances.list.designspaceContent = "instances"
+
         # RULES
         self.rules.editor = CodeEditor((0, 0, 0, 0), lexer=DesignspaceLexer(), showLineNumbers=False, callback=self.rulesEditorCallback)
 
@@ -735,7 +739,6 @@ class DesignspaceEditorController(WindowController):
             self.axes.list.append(AxisListItem(axisDescriptor, self))
         else:
             print(f"Duplicate axis: '{name}'")
-
 
     def axisListDoubleClickCallback(self, sender):
         self.axisPopover = AxisAttributesPopover(self.axes.list, self.operator, closeCallback=self.setDocumentNeedSave)
@@ -925,9 +928,6 @@ class DesignspaceEditorController(WindowController):
             object=instanceDescriptor
         )
         for axis, value in instanceDescriptor.designLocation.items():
-            if isinstance(value, tuple):
-                # with anisotropic coordinates take the the horizontal one
-                value = value[0]
             wrapped[f"axis_{axis}"] = value
         return wrapped
 
@@ -987,6 +987,8 @@ class DesignspaceEditorController(WindowController):
                         font.save(path=instanceDescriptor.path)
 
     def instancesListEditCallback(self, sender):
+        for wrappedInstanceDescriptor in sender:
+            self.unwrapInstanceDescriptor(wrappedInstanceDescriptor)
         self.setDocumentNeedSave(True)
 
     # rules
@@ -1081,21 +1083,23 @@ class DesignspaceEditorController(WindowController):
                     values = set((axisDescriptor.minimum, axisDescriptor.default, axisDescriptor.maximum, defaultLocation[axisDescriptor.name]))
                     for value in sorted(values):
                         menu.append(dict(title=numberToString(value), callback=menuCallback))
-                    menu.append("----")
 
-                    self._menuGroup = vanilla.Group((0, 0, 150, 30))
-                    self._menuGroup.slider = vanilla.Slider(
-                        (10, 0, 130, 22),
-                        minValue=axisDescriptor.minimum,
-                        maxValue=axisDescriptor.maximum,
-                        value=item[columnIdentifier],
-                        callback=sliderCallback,
-                        sizeStyle="mini"
-                    )
-                    self._menuGroup.getNSView().setFrame_(((0, 0), (150, 30)))
-                    menuItem = AppKit.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("sourceSlider", None, "")
-                    menuItem.setView_(self._menuGroup.getNSView())
-                    menu.append(menuItem)
+                    if not isinstance(item[columnIdentifier], (tuple, list)):
+                        menu.append("----")
+                        self._menuGroup = vanilla.Group((0, 0, 150, 30))
+
+                        self._menuGroup.slider = vanilla.Slider(
+                            (10, 0, 130, 22),
+                            minValue=axisDescriptor.minimum,
+                            maxValue=axisDescriptor.maximum,
+                            value=item[columnIdentifier],
+                            callback=sliderCallback,
+                            sizeStyle="mini"
+                        )
+                        self._menuGroup.getNSView().setFrame_(((0, 0), (150, 30)))
+                        menuItem = AppKit.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("sourceSlider", None, "")
+                        menuItem.setView_(self._menuGroup.getNSView())
+                        menu.append(menuItem)
 
         if sender.designspaceContent == "sources":
             menu.append("----")
@@ -1185,7 +1189,11 @@ class DesignspaceEditorController(WindowController):
         self.w.setTitle(os.path.basename(path))
 
     def updateColumnHeadersFromAxes(self):
-        for listObject in [self.sources.list, self.instances.list]:
+        updateLists = [
+            (self.sources.list, dict()),
+            (self.instances.list, dict(formatter=numberListFormatter))
+        ]
+        for listObject, options in updateLists:
             tableView = listObject.getNSTableView()
             for column in list(tableView.tableColumns()):
                 if column.identifier().startswith("axis_"):
@@ -1203,7 +1211,7 @@ class DesignspaceEditorController(WindowController):
                 cell = column.dataCell()
                 cell.setDrawsBackground_(False)
                 cell.setStringValue_("")
-                cell.setFormatter_(numberFormatter)
+                cell.setFormatter_(options.get("formatter", numberFormatter))
 
                 listObject._arrayController.addObserver_forKeyPath_options_context_(listObject._editObserver, f"arrangedObjects.{identifier}", AppKit.NSKeyValueObservingOptionNew, 0)
                 listObject.getNSTableView().addTableColumn_(column)
@@ -1322,9 +1330,9 @@ if __name__ == '__main__':
     designspaceBundle = ExtensionBundle(path=pathForBundle)
 
     path = "/Users/frederik/Documents/dev/JustVanRossum/fontgoggles/Tests/data/MutatorSans/MutatorSans.designspace"
-    path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v4_original.designspace'
+    #path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v4_original.designspace'
     #path = "/Users/frederik/Desktop/designSpaceEditorText/testFiles/Untitled.designspace"
-    path = None
+    #path = None
     #path = '/Users/frederik/Documents/dev/letterror/ufoProcessor/Tests/202206 discrete spaces/test.ds5.designspace'
     #path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v5.designspace'
     DesignspaceEditorController(path)
