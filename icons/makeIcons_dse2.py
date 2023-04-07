@@ -3,6 +3,8 @@
 # then I lost the script
 # so, rebuilt in 2023.
 
+from roundedRect import roundedRect
+
 forReals = True    # set to True to make individual files
 
 #iconSize = (30,30)
@@ -11,6 +13,8 @@ iconSize = (100,100)
 output = ".pdf"
 output = ".png"
 
+stops = {}
+fills = {}
 destinations = [
     (30,30, ".pdf", "../DesignspaceEditor2.roboFontExt/resources/", True),
     (100,100, ".png", "../assets/", True),
@@ -90,9 +94,12 @@ for w, h, output, folder, forReals in destinations:
     m = 0.05 * width()
     d = 0.272 * width()
     fs = 0.44 * width()
+    docLineWidth = 0.05*width()
 
     left, right = m+.5*d, width()-m-0.5*d
     top, bottom = height()-m-.5*d, m+0.5*d
+    wdth = width()-2*m
+    hght = height()-2*m
     steps = 103
     items = {}
     with savedState():
@@ -123,7 +130,10 @@ for w, h, output, folder, forReals in destinations:
                 fx = x / (steps-1)
                 p = ip2(p1, p2, fx)
                 oval(p[0]-.5*d,p[1]-.5*d, d, d)
-        
+                stops[(x,y)] = p
+        # remove before final XX
+        #fill(0.4)
+        #rect(0,0,width(),height())
     # instances icon
     if forReals:
         newDrawing()
@@ -229,8 +239,6 @@ for w, h, output, folder, forReals in destinations:
     with savedState():
         under()
         steps = 3
-        stops = {}
-        fills = {}
         for y in range(steps):
             fy = y / (steps-1)
             p1 = ip2((left, top), (right, top), fy)
@@ -301,6 +309,61 @@ for w, h, output, folder, forReals in destinations:
     if forReals:
         name = f"{folder}toolbar_{w}_{h}_icon_rules{output}"
         saveImage(name)
+
+
+
+    # notes icon
+    if forReals:
+        newDrawing()
+    newPage(*iconSize)
+    stops = {}
+    fills = {}
+    with savedState():
+        under()
+        steps = 3
+        y = 0
+        fy = y / (steps-1)
+        p1 = ip2((left, top), (right, top), fy)
+        p2 = ip2((left, bottom), (right, bottom), fy)
+        c1 = ip3(clr1, clr3, fy)
+        c2 = ip3(clr2, clr4, fy)
+        for x in range(steps):
+            fx = x / (steps-1)
+            p = ip2(p1, p2, fx)
+            c = ip3(c1, c2, fx)
+            fill(*c, tp)    # transparency
+            oval(p[0]-.5*d,p[1]-.5*d, d, d)
+            stops[(y, x)] = p
+        
+        with savedState():
+            # draw a document
+            gray = 0.8
+            fill(gray, gray, gray, 0.5)
+            colMargin = 0.09*width()
+            colLeft = left+.68*d + colMargin
+            colRight = left+.68*d + wdth-1.22*d - colMargin
+            mm = 0.08
+            ccl = ip(colLeft, colRight, mm)
+            ccr = ip(colLeft, colRight, 1-mm)
+            colTop = bottom-.5*d + hght
+            colBottom = bottom-.5*d
+            colWidth = colRight-colLeft
+            colHeight = colTop-colBottom
+            roundedRect(left+.68*d, bottom-.5*d, wdth-1.22*d, hght, .4*d )
+            stroke(0.4)
+            strokeWidth(docLineWidth)
+            colLines = 10
+            for i in range(2, colLines-3):
+                factor = i/(colLines-2)
+                y = ip(colTop, colBottom, factor)
+                stroke(0)
+                line((ccl, y), (ccr, y))
+            
+    if forReals:
+        name = f"{folder}toolbar_{w}_{h}_icon_notes{output}"
+        saveImage(name)
+    print('stops', stops)
+
 
     textX = 0.05 * width()
     textY = 0.38 * width()
