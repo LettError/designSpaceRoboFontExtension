@@ -337,7 +337,7 @@ for w, h, output, folder, forReals in destinations:
         
         with savedState():
             # draw a document
-            gray = 0.89
+            gray = 0.79
             fill(gray, gray, gray, 0.5)
             colMargin = 0.09*width()
             colLeft = left+.68*d + colMargin
