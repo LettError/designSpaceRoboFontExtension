@@ -319,7 +319,7 @@ for w, h, output, folder, forReals in destinations:
     stops = {}
     fills = {}
     with savedState():
-        under()
+        #under()
         steps = 3
         y = 0
         fy = y / (steps-1)
@@ -337,7 +337,7 @@ for w, h, output, folder, forReals in destinations:
         
         with savedState():
             # draw a document
-            gray = 0.8
+            gray = 0.89
             fill(gray, gray, gray, 0.5)
             colMargin = 0.09*width()
             colLeft = left+.68*d + colMargin
@@ -357,7 +357,10 @@ for w, h, output, folder, forReals in destinations:
                 factor = i/(colLines-2)
                 y = ip(colTop, colBottom, factor)
                 stroke(0)
-                line((ccl, y), (ccr, y))
+                lim = 1
+                if i%6==0:
+                    lim = .79
+                line((ccl, y), (lim*ccr, y))
             
     if forReals:
         name = f"{folder}toolbar_{w}_{h}_icon_notes{output}"
