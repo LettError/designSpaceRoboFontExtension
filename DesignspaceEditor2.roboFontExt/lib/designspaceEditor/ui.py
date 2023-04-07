@@ -717,24 +717,25 @@ class DesignspaceEditorController(WindowController):
     # AXES
 
     def axisToolsCallback(self, sender):
-        value = sender.get()
-        if value == 1:
-            # remove
-            for index in reversed(self.axes.list.getSelection()):
-                item = self.axes.list[index]
-                with SendNotification("Axes", action="RemoveAxis", designspace=self.operator):
-                    self.operator.axes.remove(item.axisDescriptor)
-                self.axes.list.remove(item)
-        else:
-            # add
-            name = f"newAxis{len(self.operator.axes) + 1}"
-            tag = f"nwx{len(self.operator.axes) + 1}"
-            minimum = 0
-            maximum = 1000
-            default = 0
-            self._addAxis(name, tag, minimum, maximum, default)
+        with self.holdChanges:
+            value = sender.get()
+            if value == 1:
+                # remove
+                for index in reversed(self.axes.list.getSelection()):
+                    item = self.axes.list[index]
+                    with SendNotification("Axes", action="RemoveAxis", designspace=self.operator):
+                        self.operator.axes.remove(item.axisDescriptor)
+                    self.axes.list.remove(item)
+            else:
+                # add
+                name = f"newAxis{len(self.operator.axes) + 1}"
+                tag = f"nwx{len(self.operator.axes) + 1}"
+                minimum = 0
+                maximum = 1000
+                default = 0
+                self._addAxis(name, tag, minimum, maximum, default)
 
-        self.setDocumentNeedSave(True, who="Axes", prefix="Did")
+        self.setDocumentNeedSave(True, who="Axes")
         self.updateColumnHeadersFromAxes()
 
     def axisEditorToolsCallback(self, sender):
@@ -785,23 +786,25 @@ class DesignspaceEditorController(WindowController):
             # TODO self.enableInstanceList()
             # TODO  self.updatePaths()
 
-        value = sender.get()
-        if value == 0:
-            # add
-            self.showGetFile(
-                messageText="Add new UFO",
-                allowsMultipleSelection=True,
-                fileTypes=["ufo"],
-                callback=addSourceCallback
-            )
+        with self.holdChanges:
+            value = sender.get()
+            if value == 0:
+                # add
+                self.showGetFile(
+                    messageText="Add new UFO",
+                    allowsMultipleSelection=True,
+                    fileTypes=["ufo"],
+                    callback=addSourceCallback
+                )
 
-        elif value == 1:
-            # remove
-            for index in reversed(self.sources.list.getSelection()):
-                item = self.sources.list[index]
-                with SendNotification("Sources", action="RemoveSource", designspace=self.operator):
-                    self.operator.sources.remove(item["object"])
-                self.sources.list.remove(item)
+            elif value == 1:
+                # remove
+                for index in reversed(self.sources.list.getSelection()):
+                    item = self.sources.list[index]
+                    with SendNotification("Sources", action="RemoveSource", designspace=self.operator):
+                        self.operator.sources.remove(item["object"])
+                    self.sources.list.remove(item)
+        self.setDocumentNeedSave(True, who="Sources")
 
     def sourcesEditorToolsCallback(self, sender):
         value = sender.get()
@@ -900,7 +903,7 @@ class DesignspaceEditorController(WindowController):
 
     def sourcesListEditCallback(self, sender):
         self.updateSources()
-        self.setDocumentNeedSave(True, who="Sources", prefix="Did")
+        self.setDocumentNeedSave(True, who="Sources")
 
     def sourceListSelectionCallback(self, sender):
         if self.holdChanges:
@@ -934,33 +937,34 @@ class DesignspaceEditorController(WindowController):
     # INSTANCES
 
     def instancesToolsCallback(self, sender):
-        value = sender.get()
-        if value == 0:
-            # add
-            if self.operator.instances:
-                familyName = self.operator.instances[0].familyName
-            elif self.operator.sources:
-                familyName = self.operator.sources[0].familyName
-            else:
-                familyName = "NewFamily"
-            styleName = f"Style_{len(self.operator.instances)}"
-            with SendNotification("Instances", action="AddInstance", designspace=self.operator) as notification:
-                instanceDescriptor = self.operator.addInstanceDescriptor(
-                    familyName=familyName,
-                    designLocation=self.operator.newDefaultLocation(),
-                    styleName=styleName,
-                    filename=os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{familyName}-{styleName}.ufo")
-                )
-                notification["instance"] = instanceDescriptor
-            with self.holdChanges:
-                self.instances.list.append(self.wrapInstanceDescriptor(instanceDescriptor))
-        elif value == 1:
-            # remove
-            for index in reversed(self.instances.list.getSelection()):
-                item = self.instances.list[index]
-                with SendNotification("Instances", action="RemoveInstance", designspace=self.operator):
-                    self.operator.instances.remove(item["object"])
-                self.instances.list.remove(item)
+        with self.holdChanges:
+            value = sender.get()
+            if value == 0:
+                # add
+                if self.operator.instances:
+                    familyName = self.operator.instances[0].familyName
+                elif self.operator.sources:
+                    familyName = self.operator.sources[0].familyName
+                else:
+                    familyName = "NewFamily"
+                styleName = f"Style_{len(self.operator.instances)}"
+                with SendNotification("Instances", action="AddInstance", designspace=self.operator) as notification:
+                    instanceDescriptor = self.operator.addInstanceDescriptor(
+                        familyName=familyName,
+                        designLocation=self.operator.newDefaultLocation(),
+                        styleName=styleName,
+                        filename=os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{familyName}-{styleName}.ufo")
+                    )
+                    notification["instance"] = instanceDescriptor
+
+                    self.instances.list.append(self.wrapInstanceDescriptor(instanceDescriptor))
+            elif value == 1:
+                # remove
+                for index in reversed(self.instances.list.getSelection()):
+                    item = self.instances.list[index]
+                    with SendNotification("Instances", action="RemoveInstance", designspace=self.operator):
+                        self.operator.instances.remove(item["object"])
+                    self.instances.list.remove(item)
         self.setDocumentNeedSave(True, who="Instances")
 
     def wrapInstanceDescriptor(self, instanceDescriptor):
@@ -1074,7 +1078,7 @@ class DesignspaceEditorController(WindowController):
         locationLabels = labelsParser.parseLocationLabels(sender.get(), self.operator.writerClass.locationLabelDescriptorClass)
         self.operator.locationLabels.clear()
         self.operator.locationLabels.extend(locationLabels)
-        self.setDocumentNeedSave(True, who="Labels", prefix="Did",)
+        self.setDocumentNeedSave(True, who="Labels")
 
     # problems
 
@@ -1088,7 +1092,7 @@ class DesignspaceEditorController(WindowController):
     @coalescingDecorator(delay=0.2)
     def notesEditorCallback(self, sender):
         self.operator.lib[designspacenotesLibKey] = sender.get()
-        self.setDocumentNeedSave(True, who="Notes", prefix="Did",)
+        self.setDocumentNeedSave(True, who="Notes")
 
     def validate(self):
         # validate with the designspaceProblems checker
