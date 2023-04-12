@@ -35,7 +35,6 @@ registeredAxisTags = [
     ("weight", "wght"),
 ]
 
-
 preferredAxes = [
     ("weight", "wght", 0, 1000, 0),
     ("width", "wdth", 0, 1000, 0),
@@ -546,7 +545,7 @@ class DesignspaceEditorController(WindowController):
 
         sourcesEditorToolsSsegmentDescriptions = [
             dict(title="Open UFO"),
-            dict(title="Add Open UFO's"),
+            dict(title="Add Open UFOs"),
             # dict(title="Load Names"),
             dict(title="Replace UFO")
         ]
@@ -812,7 +811,7 @@ class DesignspaceEditorController(WindowController):
             # Open UFO
             self.openSelectedItem(self.sources.list)
         elif value == 1:
-            # Add Open UFO's
+            # Add Open UFOs
             existingSourcePaths = [sourceDescriptor.path for sourceDescriptor in self.operator.sources]
             for font in AllFonts():
                 if font.path not in existingSourcePaths:
@@ -846,7 +845,7 @@ class DesignspaceEditorController(WindowController):
                 )
             else:
                 self.showMessage(
-                    messageText="Cannot replace source UFO's",
+                    messageText="Cannot replace source UFOs",
                     informativeText="Selection only one source item to be replace"
                 )
         SendNotification.single("Sources", designspace=self.operator)
@@ -1370,21 +1369,28 @@ class DesignspaceEditorController(WindowController):
             )
 
         elif self.operator.path is None or AppKit.NSEvent.modifierFlags() & AppKit.NSAlternateKeyMask:
-            # check if w have defined any axes
-            # can't save without axes
-            # get a filepath first
-            sourcePaths = set([os.path.dirname(source.path) for source in self.operator.sources if source.path])
-            saveToDir = None
-            if sourcePaths:
-                saveToDir = sorted(sourcePaths)[0]
+            if self.operator.path is None:
+                # check if w have defined any axes
+                # can't save without axes
+                # get a filepath first
+                sourcePaths = set([os.path.dirname(source.path) for source in self.operator.sources if source.path])
+                saveToDir = None
+                saveToName = 'Untitled'
+                if sourcePaths:
+                    saveToDir = sorted(sourcePaths)[0]
+            else:
+                saveToDir  = os.path.dirname(self.operator.path)
+                saveToName = os.path.basename(self.operator.path)
 
             self.showPutFile(
                 messageText="Save designspace:",
                 directory=saveToDir,
+                fileName=saveToName,
                 canCreateDirectories=True,
                 fileTypes=['designspace'],
                 callback=saveDesignspace
             )
+
         else:
             saveDesignspace(self.operator.path)
 
