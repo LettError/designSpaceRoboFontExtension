@@ -567,8 +567,8 @@ class DesignSpaceChecker(object):
                     self.problems.append(DesignSpaceProblem(5,3, dict(fontObj=self.nf, groupName=sourceGroupName)))
                 else:
                     # check if they have the same members
-                    sourceGroupMembers = fontObj.groups[sourceGroupName]
-                    defaultGroupMembers = self.nf.groups[sourceGroupName]
+                    sourceGroupMembers = list(fontObj.groups[sourceGroupName])
+                    defaultGroupMembers = list(self.nf.groups[sourceGroupName])
                     if sourceGroupMembers != defaultGroupMembers:
                         # 5,2 kerning group members do not match
                         deets = f'{sourceGroupName}: {sourceGroupMembers}, {defaultGroupMembers}'
