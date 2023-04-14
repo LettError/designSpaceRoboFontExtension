@@ -71,7 +71,7 @@ class UnicodeCollector(object):
 class DesignSpaceChecker(object):
     _registeredTags = dict(wght = 'weight', wdth = 'width', slnt = 'slant', opsz = 'optical', ital = 'italic')
     _structuralProblems = [
-        
+
     ]
 
     def __init__(self, pathOrObject):
@@ -112,7 +112,7 @@ class DesignSpaceChecker(object):
                 else:
                     return ad.minimum, ad.default, ad.maximum
         return None
-    
+
     def hasStructuralProblems(self):
         # check if we have any errors from categories file / axes / sources
         # this does not guarantee there won't be other problems!
@@ -154,7 +154,7 @@ class DesignSpaceChecker(object):
             self.checkFontInfo()
             self.checkGlyphs()
             self.checkRules()
-            
+
     def checkDesignSpaceGeometry(self):
         # 1.0	no axes defined
         if len(self.ds.axes) == 0:
@@ -184,7 +184,7 @@ class DesignSpaceChecker(object):
                 axisOK = False
 
             # problem: in order to check the validity of the axis values
-            # we need to get the mapped values for minimum, default and maximum. 
+            # we need to get the mapped values for minimum, default and maximum.
             # but any problems in the axis map can only be determined if we
             # are sure the axis is valid.
             axisMin, axisDef, axisMax = self.data_getAxisValues(axisName, mapped=False)
@@ -276,7 +276,7 @@ class DesignSpaceChecker(object):
                         # or a faster scan that doesn't load the whole ufo?
                         if not sd.layerName in getUFOLayers(sd.path):
                             self.problems.append(DesignSpaceProblem(2,3, dict(path=sd.path, layerName=sd.layerName)))
-                if sd.location is None:            
+                if sd.location is None:
                     # 2,4 source location missing
                     self.problems.append(DesignSpaceProblem(2,4, dict(path=sd.path)))
                 else:
@@ -360,7 +360,7 @@ class DesignSpaceChecker(object):
         if sum(checks)<=1:
             return lastAxis
         return False
-    
+
     def checkInstances(self):
         axisValues = self.data_getAxisValues()
         defaultLocation = self.ds.newDefaultLocation(bend=True)
@@ -368,7 +368,7 @@ class DesignSpaceChecker(object):
         if len(self.ds.instances) == 0:
             self.problems.append(DesignSpaceProblem(3, 10))
         for i, jd in enumerate(self.ds.instances):
-            if jd.location is None:            
+            if jd.location is None:
                 # 3,1   instance location missing
                 self.problems.append(DesignSpaceProblem(3,1, dict(path=jd.path)))
             else:
@@ -407,7 +407,7 @@ class DesignSpaceChecker(object):
             if len(items) > 1:
                 deets = f"multiple instances at {prettyLocation(items[0][1].location)}"
                 self.problems.append(DesignSpaceProblem(3,4, dict(location=items[0][1].location, instances=[b for a,b in items]), details=deets))
-        
+
         # 3,5   instance location is anisotropic
         for i, jd in enumerate(self.ds.instances):
             # 3,6   missing family name
@@ -423,7 +423,7 @@ class DesignSpaceChecker(object):
                 deets = f"no location for {jd.familyName} {jd.styleName}"
                 self.problems.append(DesignSpaceProblem(3,8, dict(instance=jd), details=deets))
         # 3,9   duplicate instances
-    
+
     def checkGlyphs(self):
         # check all glyphs in all fonts
         # need to load the fonts before we can do this
@@ -486,7 +486,7 @@ class DesignSpaceChecker(object):
                     continue
                 if ad.name not in anchors:
                     anchors[ad.name] = 0
-                anchors[ad.name] += 1                
+                anchors[ad.name] += 1
             # collect patterns of the whole glyph
             # the pattern is the key
             if not pat in patterns:
@@ -600,7 +600,7 @@ class DesignSpaceChecker(object):
             # 6,4 source font unitsPerEm value different from default unitsPerEm
             if fontObj.info.unitsPerEm != self.nf.info.unitsPerEm:
                 self.problems.append(DesignSpaceProblem(6,4, dict(fontObj=fontObj, fontValue=fontObj.info.unitsPerEm, defaultValue=self.nf.info.unitsPerEm)))
-    
+
     def checkRules(self):
         # check the rules in the designspace
         # 7.0 source glyph missing
@@ -620,7 +620,7 @@ class DesignSpaceChecker(object):
             if not rd.subs:
                 # 7.3 no substition glyphs defined
                 self.problems.append(DesignSpaceProblem(7,3, data=dict(rule=name)))
-                
+
             if len(rd.conditionSets) == 0:
                 # 7.4 no conditionset defined
                 self.problems.append(DesignSpaceProblem(7,4, data=dict(rule=name)))
@@ -646,7 +646,7 @@ class DesignSpaceChecker(object):
                         else:
                             if cd['minimum'] < min(axisValues[cd['name']]) or cd['maximum'] > max(axisValues[cd['name']]):
                                 # 7.6 condition values out of axis bounds
-                                self.problems.append(DesignSpaceProblem(7,6, data=dict(rule=name, axisValues=axisValues[cd['name']], 
+                                self.problems.append(DesignSpaceProblem(7,6, data=dict(rule=name, axisValues=axisValues[cd['name']],
                                     conditionMinimum=cd.get('minimum'), conditionDefault=cd.get('default'), conditionMaximum=cd.get('maximum'))))
                     else:
                         if cd.get('minimum') == None:
@@ -677,7 +677,7 @@ if __name__ == "__main__":
     #                 print("\t -- "+str(n))
 
     pass
-    
+
     p = '../../tests/viable.designspace'
     dc = DesignSpaceChecker(p)
     dc.checkEverything()
