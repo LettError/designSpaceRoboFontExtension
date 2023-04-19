@@ -11,58 +11,146 @@
 <h1 id="toc_0">DesignSpaceEditor2</h1>
 
 
-<p>A RoboFont extension to create and edit designspace version 4 and 5 files. For a specification of the <strong>designspace</strong> 5 format go <a href="https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html">to the designspace specification at the FontTools repository</a>.</p>
+<p>A RoboFont extension to create and edit designspaces format 4 and 5. For a specification of the <strong>designspace</strong> 5 format go
+    <a
+        href="https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html"
+        >
+        to the designspace specification at the FontTools repository
+    </a>.
+</p>
 
-<p>This extension is capable of:</p>
+<p>This extension can:</p>
 
 <ul>
-<li>Opening, editing and saving existing designspace format 4 and format 5 files.</li>
-<li>Starting new designspace files.</li>
-<li>Opening source UFOs</li>
+<li>Open, edit and save existing designspace format 4 and format 5 files.</li>
+<li>Start a new designspace.</li>
+<li>Edit all sorts of labels and localisations.</li>
+<li>Opening source UFOs.</li>
+<li>Validate designspaces and point out compatibility and structural issues.</li>
 </ul>
 
 <h2 id="toc_1">Usage</h2>
 
 <ol>
-<li>Open an existing designspace file or start a new one.</li>
+<li>From the RF extensions menu, open an existing designspace file or create a new one.</li>
 <li>Define some axes. Give them useful names.</li>
-<li>Then load some source UFOs.</li>
+<li>Then add some source UFOs.</li>
 <li>Then save the document in the same folder as your sources, or one level up. The document will store a relative path to the sources and instances.</li>
 <li>Define instances and whatever else you need to do.</li>
 <li>Save.</li>
 </ol>
 
-<p>Yes, I know you can write the xml by hand, but ¯\_(ツ)__/¯.</p>
 
-<h2 id="toc_2">Toolbar</h2>
+<p><img src="../resources/toolbar_500_500_icon_axes.png" alt="DSE2 axes icon"></p>
 
-<h3 id="toc_3">Axes Tab</h3>
+<h2 id="toc_2">Axes Tab</h3>
 
-<p><img src="../resources/toolbar_30_30_icon_axes.pdf" alt="DSE2 axes icon"></p>
-
-<p><strong>Buttons</strong></p>
+<h3>Buttons</h3>
 
 <ul>
-<li><strong>Add Weight Axis</strong>: adds a <code>wght</code> axis.</li>
-<li><strong>Add Width Axis</strong>: adds a <code>wdth</code> axis.</li>
-<li><strong>Add Optical Axis</strong>: adds a <code>opsz</code> axis.</li>
-<li><strong>+</strong> add a new axis.</li>
-<li><strong>-</strong> delete selected axis.</li>
+<li><strong>Add Weight Axis</strong>: a new continuous <code>wght</code> axis from 0 to 1000.</li>
+<li><strong>Add Width Axis</strong>: a new continuous <code>wdth</code> axis from 0 to 1000</li>
+<li><strong>Add Optical Axis</strong>: a new <code>opsz</code> axis.</li>
+<li><strong>+</strong> add a new axis: add a new axis with any name.</li>
+<li><strong>—</strong> delete the selected axis. <strong>Note: no undo!</strong></li>
 </ul>
 
-<p>Double click in the (i) icon opens a popover editor for <strong>axis labels</strong> and <strong>axis maps</strong>. The editor represents the labels and maps in a simple syntax for editing. When the panel is closed, the text is converted to designspace objects.</p>
+<h3>Columns</h3>
 
-<p>Map syntax:</p>
+<table>
+    <tr>
+        <td>(i)
+        </td>
+        <td>
+            Double click the icon to get the popover editor for <strong>axis labels</strong> and <strong>axis maps</strong>. The editor represents the labels and maps in a simple syntax for editing. When the panel is closed, the text is converted to designspace objects. (XX use the SF Symbols SVG here).
+        </td>
+    </tr>
+    <tr>
+        <td>Name
+        </td>
+        <td>Nice human readable name for this axis.
+        </td>
+    </tr>
+    <tr>
+        <td>Tag
+        </td>
+        <td>A 4-letter tag, <em>the technical name</em> of this axis. All lowercase for a standard, pre-defined axis, such as <code>wght</code>, <code>wdth</code>, <code>opsz</code>, <code>ital</code> and <code>slnt</code>. Use all-uppercase for your own axes. <code>FORK</code>, <code>MONO</code>.
+        </td>
+    </tr>
+    <tr>
+        <td>Minimum
+        </td>
+        <td>The minimum value of the axis.
+        </td>
+    </tr>
+    <tr>
+        <td>Maximum
+        </td>
+        <td>The maximum value of the axis.
+        </td>
+    </tr>
+    <tr>
+        <td>Default
+        </td>
+        <td>The default value of the axis. The default needs to be between minimum and maximum.
+        </td>
+    </tr>
+    <tr>
+        <td>Discrete Values
+        </td>
+        <td>Space separated numbers: <code>30 60 100</code> if this is to be a discrete axis. You still need to add default, minimum and maximum values. Leave empy if this is to be a continuous, interpolating axis.
+        </td>
+    </tr>
+    <tr>
+        <td>Hidden</td>
+        <td>Corresponds with the OpenType variable font specification flag <strong>HIDDEN_AXiS</strong>. to "provided to indicate a recommendation by the font developer that the axis not be exposed directly to end users in application user interfaces."</td>
+    </tr>
+    <tr>
+        <td>📈
+        </td>
+        <td>Indicates this axis has a map. Click the (i) for the editor.
+        </td>
+    </tr>
+    <tr>
+        <td>🏷️
+        </td>
+        <td>Indicates this axis has tags. Click the (i) for the editor.
+        </td>
+    </tr>
+</table>
 
-<div><pre><code class="language-none"># input value &gt; output value
+
+
+<h3>Map syntax</h3>
+
+<div><pre><code class="language-none"># user space value &gt; designspace value
 50 &gt; 10
 100 &gt; 20
 125 &gt; 66
 150 &gt; 990</code></pre></div>
 
-<p>Labels syntax:</p>
+<ul>
+    <li>
+    <a
+        href="https://fonttools.readthedocs.io/en/latest/designspaceLib/scripting.html#option-add-a-map"
+        target="_blank"
+        alt="link to documentation on the avar table">
+            FontTools.designspaceLib documentation on how these values are stored in the designspace.
+    </a>    
+    </li>
+    <li>
+    <a
+        href="https://learn.microsoft.com/en-gb/typography/opentype/spec/avar"
+        target="_blank"
+        alt="link to documentation on the avar table">
+            OpenType documentation on how these valus are used in a variable font.
+    </a>
+    </li>
+</ul>
 
-<div><pre><code class="language-none"># if it start with ? it will be a localised axis name
+<h3>Labels syntax</h3>
+
+<div><pre><code class="language-none"># if the line starts with a <b>?</b> it will be a localised axis name
 # starts with a ? &lt;language tag&gt; &lt;localised string&gt;
 ? fr &#39;Chasse&#39;
 
@@ -82,9 +170,22 @@
 ? de &#39;Extraleicht&#39;
 ? fr &#39;Extra léger&#39;</code></pre></div>
 
-<h3 id="toc_4">Sources Tab</h3>
+<ul>
+    <li>
+    <a
+        href="https://learn.microsoft.com/en-us/typography/opentype/spec/languagetags"
+        target="_blank"
+        alt="link to documentation on the avar table">
+            OpenType documentation for language codes.
+    </a>    
+    </li>
+</ul>
 
-<p><img src="../resources/toolbar_30_30_icon_sources.pdf" alt="DSE2 sources icon"></p>
+
+
+<p><img src="../resources/toolbar_500_500_icon_sources.png" alt="DSE2 sources icon"></p>
+
+<h2 id="toc_3">Sources Tab</h3>
 
 <p>This tab shows which UFOs are part of this designspace.</p>
 
@@ -98,100 +199,170 @@
 
 <p>Double click in the (i) icon opens a popover editor for <strong>Localised Family Name</strong> and <strong>Muted Glyphs</strong>.</p>
 
-<p><strong>Columns</strong></p>
+<h3>Sources Columns</h3>
 
-<ul>
-<li>ℹ️ button for the popover editors</li>
-<li>💾 indicates if the UFO is where we expect it to be</li>
-<li>📍(TBD)</li>
-<li><strong>UFO</strong> the UFO filename and path relative to the designspace document</li>
-<li> <strong>Family Name</strong> family name from the source UFO (some applications look for these names so they do not have to open the UFOs)</li>
-<li> <strong>Style Name</strong> style name from the source UFO</li>
-<li> <strong>Layername</strong> name of the layer. Leave blank for default, &quot;foreground&quot;</li>
-<li> 🌐 (TBD)</li>
-<li>🔕 (TBD)</li>
-<li>[columns for axis values]</li>
-</ul>
+<table>
+    <tr>
+        <td>ℹ️</td>
+        <td>button for the popover editor</td>
+    </tr>
+    <tr>
+        <td>💾</td>
+        <td>shows a checkmark if the UFO is where we expect it to be</td>
+    </tr>
+    <tr>
+        <td>📍</td>
+        <td>Indicates this source is the default.</td>
+    </tr>
+    <tr>
+        <td><strong>UFO</strong></td>
+        <td>the UFO filename and path relative to the designspace document</td>
+    </tr>
+    <tr>
+        <td><strong>Family Name</strong></td>
+        <td>family name from the source UFO font info. Some applications look for these names so they do not have to open the UFOs. <em>Optional</em></td>
+    </tr>
+    <tr>
+        <td><strong>Style Name</strong></td>
+        <td>style name from the source UFO font info. Some applications look for these names so they do not have to open the UFOs. <em>Optional</em></td>
+    </tr>
+    <tr>
+        <td><strong>Layer Name</strong></td>
+        <td>name of the layer to be used as a source. Leave blank for default, &quot;foreground&quot;. <em>Optional</em></td>
+    </tr>
+    <tr>
+        <td>🌐</td>
+        <td>indicates if there are localised names for this source. Click the (i) for the editor.</td>
+    </tr>
+    <tr>
+        <td>🔕</td>
+        <td>indicates if there are muted glyphs in this source. Click the (i) for the editor.</td>
+    </tr>
+    <tr>
+        <td>column for each axis</td>
+        <td>Axis values, <strong>in designspace coordinates.</strong><br>If you have discrete axes, make sure this value matches one of the values of the axis. Make sure it is between axis minimum and axis maximum. No anisotropy.</td>
+    </tr>
+</table>
 
-<p>Localised Family Name syntax:</p>
+<h3>Localised Family Name syntax</h3>
 
 <div><pre><code class="language-none"># starts with a ? &lt;language tag&gt; &lt;localised string&gt;
 ? fr &#39;Montserrat&#39;
 ? ja &#39;モンセラート&#39;</code></pre></div>
 
-<p>Muted Glyph syntax:</p>
+<h3>Muted Glyph syntax</h3>
 
 <div><pre><code class="language-none"># a space separated list of glyph names
 a b c d</code></pre></div>
 
-<h3 id="toc_5">Instances Tab</h3>
 
-<p><img src="../resources/toolbar_30_30_icon_instances.pdf" alt="DSE2 instances icon"></p>
+<p><img src="../resources/toolbar_500_500_icon_instances.png" alt="DSE2 instances icon"></p>
 
-<p>This tab shows the instances defined for this designspace.</p>
+<h2 id="toc_4">Instances Tab</h3>
 
-<p><strong>Columns</strong></p>
+<p>This tab shows the instances defined for this designspace. These instances can be different things in different contexts. Each instance can be compiled to separate UFO files. But it can also be interpreted as an instance item in a variable font.</p>
 
-<ul>
-<li><strong>UFO</strong> path and filename of destination UFO (if that is where you want to go obviously)</li>
-<li><strong>Familiy Name</strong> family name for the UFO</li>
-<li><strong>Style Name</strong> style name for the UFO</li>
-<li>[columns for axis values]</li>
-</ul>
+<h3>Instances Columns</h3>
 
-<h3 id="toc_6">Rules Tab</h3>
+<table>
+    <tr>
+        <td>UFO
+        </td>
+        <td>path and filename of destination UFO (if that is where you want to go obviously)
+        </td>
+    </tr>
+    <tr>
+        <td><strong>Family Name</strong>
+        </td>
+        <td>Family name for the UFO
+        </td>
+    </tr>
+    <tr>
+        <td><strong>Style Name</strong>
+        </td>
+        <td>Style name for the UFO
+        </td>
+    </tr>
+    <tr>
+        <td>column for each axis</td>
+        <td>Axis values, <strong>in userspace coordinates</strong>. Accepts 2 values, separated by a space, for an anisotropic location.</td>
+    </tr>
+</table>
 
-<p><img src="../resources/toolbar_30_30_icon_rules.pdf" alt="DSE2 rules icon"></p>
+<h3>Anisotropic instances</h3>
+The axis columns accepts a second value after a space to indicate an anisotropic location. For instance: <code>900 800</code> means: <em>horizontal interpolation at value <code>900</code> and vertical interpolation at value <code>800</code></em>. Anisotropy is not supported in Variable Fonts. Tools that generate fonts from designspaces may ignore the second value, or ignore the instance. It is a useful tool during design and so designspaces can store them.
+<br/>Note: it is not clear what to expect of interactions between an axis map and an anisotropic location. The authors advise to experiment with anisotropy <strong>before</strong> defining axis maps.
 
-<p>The rules tab is an editor for defining rules and condition sets.</p>
 
-<p>Rules syntax:</p>
+<p><img src="../resources/toolbar_500_500_icon_rules.png" alt="DSE2 rules icon"></p>
 
-<div><pre><code class="language-none"># a comment
-# name of the rule
+<h2 id="toc_5">Rules Tab</h3>
+
+<p>The rules tab is an editor for defining rules and condition sets. Tools may interpret these into <code>rvrn</code> features.</p>
+
+<h3>Rules syntax</h3>
+
+<div><pre><code class="language-none"># lines starting with an octothorpe are comments
+
+# The name of the rule starts on a new line.
+# The contents of the rule is indented:
 switching a&#39;s
-    # a list of source glyph &gt; substituted glyph    a &gt; a.alt
+    # a list of source glyph &gt; substituted glyph
+    a &gt; a.alt
     agrave &gt; agrave.alt
 
-    # conditions
+    # conditions that trigger the rule:
     # &lt;axis name&gt; startRange-endRange
+    optical 500-1000
+
     # a condition set with two conditions
     weight 800-1000 width 200-1000
-    optical 500-1000</code></pre></div>
+</code></pre></div>
 
-<h3 id="toc_7">Labels Tab</h3>
 
-<p><img src="../resources/toolbar_30_30_icon_labels.pdf" alt="DSE2 labels icon"></p>
+<p><img src="../resources/toolbar_500_500_icon_labels.png" alt="DSE2 labels icon"></p>
 
-<p>The labels tab is an editor for defining labels, ranges etc.</p>
+<h2 id="toc_6">Labels Tab</h3>
 
-<p>Location Labels syntax:</p>
+<p>The labels tab is an editor for defining labels, ranges etc. that can be used to define parts of a STAT table.</p>
 
-<div><pre><code class="language-none"># styleName
-Some Style
-    # optionally localisation
+<h3>Location Labels syntax</h3>
+
+<div><pre><code class="language-none"># lines starting with an octothorpe are comments
+
+# styleName
+Neue Style Italic
+
+    # optional localisations
     # starts with a ? &lt;language tag&gt; &lt;localised string&gt;
     ?  fr  &quot;Un Style&quot;
     # optionally translation
     ?  fr  &quot;Un Style&quot;
+    
     # location name if the axis and value
     weight 300
     width 40
     Italic 1
     boldness 30</code></pre></div>
 
-<h3 id="toc_8">Problems Tab</h3>
+<p><img src="../resources/toolbar_500_500_icon_problems.png" alt="DSE2 problems icon"></p>
 
-<p><img src="../resources/toolbar_30_30_icon_problems.pdf" alt="DSE2 problems icon"></p>
+<h2 id="toc_7">Problems Tab</h3>
 
-<p>This tab shows any problems this designspace may have. From problems in construction, missing ufos, missing or duplicate values.</p>
+<p>This tab shows some of the problems this designspace may have. From structural issues that block any further processing, to missing ufos, missing or duplicate values, and glyphs with incompatible constructions. 
+This uses <a
+    href="https://github.com/LettError/DesignspaceProblems"
+    >DesignspaceProblems.
+</a> to do the analysis.
+
+</p>
 
 
-<h3 id="toc_8">Notes Tab</h3>
+<p><img src="../resources/toolbar_500_500_icon_notes.png" alt="DSE2 notes icon"></p>
 
-<p><img src="../resources/toolbar_30_30_icon_notes.pdf" alt="DSE2 notes icon"></p>
+<h2 id="toc_7">Notes Tab</h3>
 
-<p>This tab is for notes that are stored in the Designspace.</p>
+<p>This tab is for your notes that are stored in the Designspace. This can be any kind of note or remark. Notes are not processed.</p>
 
 </body>
 </html>

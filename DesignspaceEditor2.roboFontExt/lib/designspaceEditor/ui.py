@@ -55,6 +55,7 @@ numberListFormatter = NumberListFormatter.alloc().init()
 
 checkSymbol = "✓"
 defaultSymbol = "🔹"
+defaultDiscreteSymbol = "🔸"
 dotSymbol = "⚬"
 
 try:

@@ -4,28 +4,24 @@
 
 A RoboFont extension to create and edit designspace version 4 and 5 files. For a specification of the **designspace** 5 format go [to the designspace specification at the FontTools repository](https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html).
 
-This extension is capable of:
+This extension can:
 
-* Opening, editing and saving existing designspace format 4 and format 5 files.
-* Starting new designspace files.
-* Opening source UFOs
+* Open, edit and save existing designspace format 4 and format 5 files.
+* Start a new designspace files.
+* Open source UFOs
+* Validate designspaces and point out compatibility and structural issues.
 
 ## Usage
 
-1. Open an existing designspace file or start a new one.
+1. From the RF extensions menu, open an existing designspace file or create a new one.
 1. Define some axes. Give them useful names.
 1. Then load some source UFOs.
 1. Then save the document in the same folder as your sources, or one level up. The document will store a relative path to the sources and instances.
 1. Define instances and whatever else you need to do.
 1. Save.
 
-Yes, I know you can write the xml by hand, but ¯\\\_(ツ)__/¯.
 
-
-## Toolbar
-
-
-### Axes Tab
+## Axes Tab
 ![DSE2 axes icon](assets/toolbar_100_100_icon_axes.png)
 
 **Buttons**
