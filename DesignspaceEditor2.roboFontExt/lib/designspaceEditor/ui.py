@@ -398,7 +398,7 @@ class LabelsPreview:
         return location
 
     def controlEdited(self, sender=None, setLanguages=None):
-        self.names = designspaceLib.statNames.getStatNames(self.operator, self.getControlLocation())
+        self.names = designspaceLib.statNames.getStatNames(self.operator.doc, self.getControlLocation())
         if setLanguages:
             languages = list(sorted(set(list(self.names.familyNames.keys()) + list(self.names.styleNames.keys()))))
             self.w.languages.setItems(languages)
@@ -1042,7 +1042,6 @@ class DesignspaceEditorController(WindowController):
     def instancesListEditCallback(self, sender):
         for wrappedInstanceDescriptor in sender:
             self.unwrapInstanceDescriptor(wrappedInstanceDescriptor)
-        print("instances changes", sender)
         self.setDocumentNeedSave(True, who="Instances")
 
     def instancesListSelectionCallback(self, sender):
