@@ -73,7 +73,7 @@ class SendNotification:
     exitPrefix = {
         "Will": "Did"
     }
-    notificationPrefix = "desingspaceEditor"
+    notificationPrefix = "designspaceEditor"
 
     def __init__(self, who="", prefix="Will", action="Change", **kwargs):
         self.who = who

@@ -5,6 +5,7 @@ import AppKit
 
 from mojo.events import addObserver
 from mojo.extensions import ExtensionBundle
+from mojo.subscriber import registerSubscriberEvent
 from designspaceEditor.ui import DesignspaceEditorController
 
 
@@ -47,3 +48,92 @@ def CurrentDesignspace():
 
 
 builtins.CurrentDesignspace = CurrentDesignspace
+
+
+# register subscriber events
+
+designspaceEvents = [
+    # document
+    "designspaceEditorWillOpenDesignspace",
+    "designspaceEditorDidOpenDesignspace",
+    "designspaceEditorDidCloseDesignspace",
+
+    # axis
+    "designspaceEditorAxisLabelsDidChange",
+    "designspaceEditorAxisMapDidChange",
+
+    "designspaceEditorAxesWillRemoveAxis",
+    "designspaceEditorAxesDidRemoveAxis",
+
+    "designspaceEditorAxesWillAddAxis",
+    "designspaceEditorAxesDidAddAxis",
+
+    "designspaceEditorAxesDidChangeSelection",
+    "designspaceEditorAxesDidChange",
+
+    # sources
+    "designspaceEditorSourcesWillRemoveSource",
+    "designspaceEditorSourcesDidRemoveSource",
+
+    "designspaceEditorSourcesWillAddSource",
+    "designspaceEditorSourcesDidAddSource",
+
+    "designspaceEditorSourcesDidChangeSelection",
+
+    "designspaceEditorSourcesDidCloseUFO",
+    "designspaceEditorSourcesDidOpenUFO",
+    "designspaceEditorSourcesDidChanged",
+
+    # instances
+    "designspaceEditorInstancesWillRemoveInstance",
+    "designspaceEditorInstancesDidRemoveInstance",
+
+    "designspaceEditorInstancesWillAddInstance",
+    "designspaceEditorInstancesDidAddInstance",
+
+    "designspaceEditorInstancesDidChangeSelection",
+
+    "designspaceEditorInstancesDidOpen",
+    "designspaceEditorInstancesDidChange",
+
+    # rules
+    "designspaceEditorRulesDidChange",
+
+    # labels
+    "designspaceEditorLabelsDidChange",
+
+    # notes
+    "designspaceEditorNotesDidChange",
+
+    # any change
+    "designspaceEditorDidChange",
+]
+
+
+def designspaceEventExtractor(subscriber, info):
+    info["designspace"] = info["lowLevelEvents"][-1].get("designspace")
+
+
+def designspaceSelectionEventExtractor(subscriber, info):
+    designspaceEventExtractor(subscriber, info)
+    info["selectedItems"] = info["lowLevelEvents"][-1]["selectedItems"]
+
+
+eventInfoExtractionFunctionsMap = dict(
+    designspaceEditorAxesDidChangeSelection=designspaceSelectionEventExtractor,
+    designspaceEditorSourcesDidChangeSelection=designspaceSelectionEventExtractor,
+    designspaceEditorInstancesDidChangeSelection=designspaceSelectionEventExtractor
+)
+
+for event in designspaceEvents:
+    documentation = "".join([" " + c if c.isupper() else c for c in event.replace("designspaceEditor", "")]).lower().strip()
+    registerSubscriberEvent(
+        subscriberEventName=event,
+        methodName=event,
+        lowLevelEventNames=[event],
+        dispatcher="roboFont",
+        documentation=f"Send when a Designspace Editor {documentation}.",
+        eventInfoExtractionFunction=eventInfoExtractionFunctionsMap.get(event, designspaceEventExtractor),
+        delay=.2,
+        debug=True
+    )

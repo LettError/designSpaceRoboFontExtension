@@ -252,11 +252,11 @@ class AxisAttributesPopover(BaseAttributePopover):
         )
 
     def axisMapEditorCallback(self, sender):
-        SendNotification.single("AxisLabels", prefix="Did", designspace=self.operator)
+        SendNotification.single("AxisMap", designspace=self.operator)
         self.controleEditCallback(sender)
 
     def axisLabelsEditorCallback(self, sender):
-        SendNotification.single("AxisLabels", prefix="Did", designspace=self.operator)
+        SendNotification.single("AxisLabels", designspace=self.operator)
         self.controleEditCallback(sender)
 
     def close(self):
@@ -687,6 +687,9 @@ class DesignspaceEditorController(WindowController):
         except Exception:
             pass
 
+        SendNotification.single(action="CloseDesignspace", designspace=self.operator)
+        del self.operator
+
         removeObserver(self, "fontDidOpen")
         removeObserver(self, "fontWillClose")
         removeObserver(self, "designspaceEditorExternalChange")
@@ -696,6 +699,7 @@ class DesignspaceEditorController(WindowController):
             fileName = os.path.basename(path)
             try:
                 self.operator.read(path)
+                self.operator.loadFonts()
             except Exception as e:
                 self.showMessage(
                     "DesignSpaceEdit can't open this file",
@@ -768,13 +772,13 @@ class DesignspaceEditorController(WindowController):
         self.axesChangedCallback()
 
     def axesChangedCallback(self):
-        self.setDocumentNeedSave(True, who="Axes", prefix="Did")
+        self.setDocumentNeedSave(True, who="Axes")
 
     def axesListSelectionCallback(self, sender):
         if self.holdChanges:
             return
-        selectedSources = [sender[index] for index in sender.getSelection()]
-        SendNotification.single("Axes", action="ChangeSelection", selectedSources=selectedSources)
+        selectedItems = [sender[index] for index in sender.getSelection()]
+        SendNotification.single("Axes", action="ChangeSelection", selectedItems=selectedItems, designspace=self.operator)
 
     # SOURCES
 
@@ -908,8 +912,8 @@ class DesignspaceEditorController(WindowController):
     def sourceListSelectionCallback(self, sender):
         if self.holdChanges:
             return
-        selectedSources = [sender[index] for index in sender.getSelection()]
-        SendNotification.single("Sources", action="ChangeSelection", selectedSources=selectedSources)
+        selectedItems = [sender[index] for index in sender.getSelection()]
+        SendNotification.single("Sources", action="ChangeSelection", selectedItems=selectedItems, designspace=self.operator)
 
     def sourcesListDropCallback(self, sender, dropInfo):
         isProposal = dropInfo["isProposal"]
@@ -1047,8 +1051,8 @@ class DesignspaceEditorController(WindowController):
     def instancesListSelectionCallback(self, sender):
         if self.holdChanges:
             return
-        selectedSources = [sender[index] for index in sender.getSelection()]
-        SendNotification.single("Instances", action="ChangeSelection", selectedSources=selectedSources)
+        selectedItems = [sender[index] for index in sender.getSelection()]
+        SendNotification.single("Instances", action="ChangeSelection", selectedItems=selectedItems, designspace=self.operator)
 
     # rules
 
@@ -1130,15 +1134,15 @@ class DesignspaceEditorController(WindowController):
 
         defaultLocation = self.operator.newDefaultLocation(bend=True)
 
-        def menuCallback(sender):
-            item[columnIdentifier] = float(sender.title())
+        def menuCallback(menuItem):
+            item[columnIdentifier] = float(menuItem.title())
 
-        def menuMakeDefaultCallback(sender):
+        def menuMakeDefaultCallback(menuItem):
             for axisName, value in defaultLocation.items():
                 item[f"axis_{axisName}"] = value
 
-        def sliderCallback(sender):
-            item[columnIdentifier] = sender.get()
+        def sliderCallback(slider):
+            item[columnIdentifier] = slider.get()
 
         menu = []
         for axisDescriptor in self.operator.axes:
@@ -1379,7 +1383,7 @@ class DesignspaceEditorController(WindowController):
                 if sourcePaths:
                     saveToDir = sorted(sourcePaths)[0]
             else:
-                saveToDir  = os.path.dirname(self.operator.path)
+                saveToDir = os.path.dirname(self.operator.path)
                 saveToName = os.path.basename(self.operator.path)
 
             self.showPutFile(
@@ -1406,17 +1410,18 @@ class DesignspaceEditorController(WindowController):
         font = notification["font"]
         for sourceDescriptor in self.operator.sources:
             if sourceDescriptor.path == font.path:
-                SendNotification.single("Sources", action="OpenUFO")
+                SendNotification.single("Sources", action="OpenUFO", designspace=self.operator)
 
     def roboFontFontWillClose(self, notification):
         font = notification["font"]
         for sourceDescriptor in self.operator.sources:
             if sourceDescriptor.path == font.path:
-                SendNotification.single("Sources", action="CloseUFO")
+                SendNotification.single("Sources", action="CloseUFO", designspace=self.operator)
 
     def designspaceEditorExternalChange(self, notification):
         # external change happend, update everything!
         self.loadObjects()
+
 
 if __name__ == '__main__':
     pathForBundle = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -1427,5 +1432,5 @@ if __name__ == '__main__':
     #path = "/Users/frederik/Desktop/designSpaceEditorText/testFiles/Untitled.designspace"
     #path = None
     #path = '/Users/frederik/Documents/dev/letterror/ufoProcessor/Tests/202206 discrete spaces/test.ds5.designspace'
-    path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v5.designspace'
+    #path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v5.designspace'
     DesignspaceEditorController(path)
