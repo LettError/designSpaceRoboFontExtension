@@ -17,6 +17,7 @@ stops = {}
 fills = {}
 destinations = [
     (30,30, ".pdf", "../DesignspaceEditor2.roboFontExt/resources/", True),
+    (30,30, ".png", "../DesignspaceEditor2.roboFontExt/resources/", True),
     (500,500, ".png", "../DesignspaceEditor2.roboFontExt/resources/", True),
     (100,100, ".png", "../assets/", True),
     (1000,1000, ".png", "../icons/", True),
@@ -400,3 +401,51 @@ for w, h, output, folder, forReals in destinations:
 
     if not forReals:
         saveImage(f"all_icons_{w}_{h}_dse2_preview.pdf")
+
+
+
+    names = [
+        ("􀅴", "SFPro-Regular", "info.circle"),
+        ("􀈄", "SFPro-Regular", "square.and.arrow.down"),
+        ("􀁜", "SFPro-Regular", "questionmark.circle"),
+        ("􀅵", "SFPro-Regular", "info.circle.fill"),
+        ("􁌵", "SFPro-Regular", "info.bubble.fill"),
+        ]
+        
+
+
+destinations = [
+    (30,30, ".pdf", "../DesignspaceEditor2.roboFontExt/resources/", True),
+    (25,25, ".png", "../DesignspaceEditor2.roboFontExt/resources/", True),
+    (25,25, ".svg", "../DesignspaceEditor2.roboFontExt/resources/", True),
+    ]
+
+for w, h, output, folder, forReals in destinations:
+
+    # items based on SFSymbols
+    # width and height of the square output document
+    dim = min(w, h)
+
+
+    for sym, fontName, symbolName in names:
+        newDrawing()
+        newPage(dim,dim)
+        margin = 85/325 * width()
+        bp = BezierPath()
+        fs = FormattedString()
+        fs.font(fontName)
+        fs.fontSize(219/275 * width())
+        fs.append(sym)
+        bp.text(fs)
+        xMin, yMin, xMax, yMax = bp.bounds()
+        ws = xMax-xMin
+        hs = yMax-yMin
+        ss = w/(width()-2*margin)
+        with savedState():
+            fill(0)
+            translate(width()*.5, height()*.5)
+            translate(-xMin, -yMin)
+            translate(-.5*ws, -.5*hs)
+            drawPath(bp)
+        saveImage(f"{folder}toolbar_{w}_{h}_{symbolName}{output}")
+    
