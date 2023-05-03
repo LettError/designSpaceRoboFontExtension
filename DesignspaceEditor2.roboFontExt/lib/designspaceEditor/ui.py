@@ -24,6 +24,8 @@ from designspaceEditor.parsers import mapParser, rulesParser, labelsParser, glyp
 from designspaceEditor.parsers.parserTools import numberToString
 from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges, symbolImage, NumberListFormatter, SendNotification
 
+from designspaceEditor.instancesPreview import InstancesPreview
+
 
 designspaceBundle = ExtensionBundle("DesignspaceEditor2")
 
@@ -605,16 +607,32 @@ class DesignspaceEditorController(WindowController):
 
         instancesEditorToolsSsegmentDescriptions = [
             dict(title="Duplicate"),
-            dict(title="Add Sources as Instances"),
-            dict(title="Generate with MutatorMath"),
-            dict(title="Generate with VarLib")
+            dict(title="Add Sources as Instances")
         ]
         self.instances.editorTools = vanilla.SegmentedButton(
-            (72, 5, 570, 22),
+            (72, 5, 250, 22),
             selectionStyle="momentary",
             callback=self.instancesEditorToolsCallback,
             segmentDescriptions=instancesEditorToolsSsegmentDescriptions
         )
+        instancesEditorGenerateToolsSsegmentDescriptions = [
+            dict(title="Generate with MutatorMath"),
+            dict(title="Generate with VarLib")
+        ]
+        self.instances.generateTools = vanilla.SegmentedButton(
+            (330, 5, 320, 22),
+            selectionStyle="momentary",
+            callback=self.instancesEditorGenerateToolsCallback,
+            segmentDescriptions=instancesEditorGenerateToolsSsegmentDescriptions
+        )
+
+        self.instances.previewTools = vanilla.SegmentedButton(
+            (660, 5, 130, 22),
+            selectionStyle="momentary",
+            callback=self.instancesEditorPreviewToolsCallback,
+            segmentDescriptions=[dict(title="Instances Preview")]
+        )
+
 
         # instancesDoubleClickCell = RFDoubleClickCell.alloc().init()
         # instancesDoubleClickCell.setDoubleClickCallback_(self.instancesListDoubleClickCallback)
@@ -682,10 +700,11 @@ class DesignspaceEditorController(WindowController):
             self.w.open()
 
     def destroy(self):
-        try:
-            self.labelsPreview.w.close()
-        except Exception:
-            pass
+        for controller in [self.labelsPreview, self.instancesPreview]:
+            try:
+                controller.w.close()
+            except Exception:
+                pass
 
         SendNotification.single(action="CloseDesignspace", designspace=self.operator)
         del self.operator
@@ -1021,27 +1040,37 @@ class DesignspaceEditorController(WindowController):
                     with self.holdChanges:
                         self.instances.list.append(self.wrapInstanceDescriptor(newInstanceDescriptor))
 
-        elif value in (2, 3):
-            # Generate with MutatorMath or VarLib
-            if self.operator.path is None:
-                self.showMessage("Save the designspace first.", "Instances are generated in a relative path next to the designspace file.")
-            else:
-                self.operator.useVarlib = value == 3
-                self.operator.roundGeometry = True
-                self.operator.loadFonts()
-                self.operator.findDefault()
-                selection = self.instances.list.getSelection()
-                if selection:
-                    items = [self.instances.list[index] for index in selection]
-                else:
-                    items = self.instances.list
-                for item in items:
-                    instanceDescriptor = item["object"]
-                    with TryExcept(self, "Generate Instance"):
-                        font = self.operator.makeInstance(instanceDescriptor)
-                        if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
-                            os.makedirs(os.path.dirname(instanceDescriptor.path))
-                        font.save(path=instanceDescriptor.path)
+    def instancesEditorGenerateToolsCallback(self, sender):
+        if self.operator.path is None:
+            self.showMessage("Save the designspace first.", "Instances are generated in a relative path next to the designspace file.")
+            return
+
+        value = sender.get()
+
+        self.operator.useVarlib = value == 1
+        self.operator.roundGeometry = True
+        self.operator.loadFonts()
+        self.operator.findDefault()
+        selection = self.instances.list.getSelection()
+        if selection:
+            items = [self.instances.list[index] for index in selection]
+        else:
+            items = self.instances.list
+        for item in items:
+            instanceDescriptor = item["object"]
+            with TryExcept(self, "Generate Instance"):
+                font = self.operator.makeInstance(instanceDescriptor)
+                if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
+                    os.makedirs(os.path.dirname(instanceDescriptor.path))
+                font.save(path=instanceDescriptor.path)
+
+    instancesPreview = None
+
+    def instancesEditorPreviewToolsCallback(self, sender):
+        try:
+            self.instancesPreview.w.show()
+        except Exception:
+            self.instancesPreview = InstancesPreview(operator=self.operator)
 
     def instancesListEditCallback(self, sender):
         for wrappedInstanceDescriptor in sender:
@@ -1130,7 +1159,7 @@ class DesignspaceEditorController(WindowController):
         column = tableView.tableColumns()[columnIndex]
         columnIdentifier = column.identifier()
         axisName = column.title()
-        item = sender[rowIndex]
+        item = tableView.dataSource().arrangedObjects()[rowIndex]
 
         defaultLocation = self.operator.newDefaultLocation(bend=True)
 
@@ -1140,6 +1169,10 @@ class DesignspaceEditorController(WindowController):
         def menuMakeDefaultCallback(menuItem):
             for axisName, value in defaultLocation.items():
                 item[f"axis_{axisName}"] = value
+
+        def revealInFinderCallback(menuItem):
+            workspace = AppKit.NSWorkspace.sharedWorkspace()
+            workspace.selectFile_inFileViewerRootedAtPath_(item["object"].path, "")
 
         def sliderCallback(slider):
             item[columnIdentifier] = slider.get()
@@ -1174,6 +1207,9 @@ class DesignspaceEditorController(WindowController):
         if sender.designspaceContent == "sources":
             menu.append("----")
             menu.append(dict(title="Make Default", callback=menuMakeDefaultCallback))
+            if item["object"].path and os.path.exists(item["object"].path):
+                menu.append("----")
+                menu.append(dict(title="Reveal in Finder", callback=revealInFinderCallback))
 
         return menu
 
@@ -1417,6 +1453,16 @@ class DesignspaceEditorController(WindowController):
         for sourceDescriptor in self.operator.sources:
             if sourceDescriptor.path == font.path:
                 SendNotification.single("Sources", action="CloseUFO", designspace=self.operator)
+
+    def roboFontFontDidChange(self, notification):
+        print(notification)
+
+    def roboFontFontDocumentDidChangeExternally(self, notification):
+        print("roboFontFontDocumentDidChangeExternally")
+        font = notification["font"]
+        for sourceDescriptor in self.operator.sources:
+            if sourceDescriptor.path == font.path:
+                SendNotification.single("Sources", action="DidChangeExternally", designspace=self.operator)
 
     def designspaceEditorExternalChange(self, notification):
         # external change happend, update everything!
