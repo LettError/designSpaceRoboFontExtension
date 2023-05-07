@@ -16,10 +16,11 @@ numberFormatter.setUsesGroupingSeparator_(False)
 
 infoImage = AppKit.NSImage.imageWithSystemSymbolName_accessibilityDescription_("info.circle.fill", None)
 
+
 def doubleClickCell(callback, image=None):
     cell = RFDoubleClickCell.alloc().init()
     cell.setDoubleClickCallback_(callback)
-    cell.setImage_(image)    
+    cell.setImage_(image)
     return cell
 
 
@@ -30,40 +31,41 @@ class Controller(ezui.WindowController):
         = ToolbarTabs
         * ToolbarTab: Axis                  @axisTab
         > |---|                             @axisTable
-        > * HorizontalStack                 @axisStack  
+        > * HorizontalStack                 @axisStack
         >> (+-)
-        >> (...)                            @axisActions     
-        
+        >> (...)                            @axisActions
+
         * ToolbarTab: Sources               @sourcesTab
         >|---|                              @sourcesTable
         > * HorizontalStack                 @sourcesStack
         >> (+-)
-        >> (...)                            @sourcesActions    
-        
+        >> (...)                            @sourcesActions
+
         * ToolbarTab: Intances              @instancesTab
-        > |---|                             @instancesTable  
-        > * HorizontalStack                 @instancesStack     
+        > |---|                             @instancesTable
+        > * HorizontalStack                 @instancesStack
         >> (+-)
-        >> (...)                            @instancesActions   
-        
+        >> ( Preview Instances )            @instancesPreview
+        >> (...)                            @instancesActions
+
         * ToolbarTab: Rules                 @rulesTab
         > * CodeEditor                      @rulesEditor
-        
+
         * ToolbarTab: Labels                @labelsTab
         > * CodeEditor                      @labelsEditor
         > * HorizontalStack                 @labelsStack
-        >> ( Preview Labels )               @labelsPreviewButton 
-        
-        
+        >> ( Preview Labels )               @labelsPreviewButton
+
+
         * ToolbarTab: Problems              @problemsTab
         > |---|                             @problemsTable
         > * HorizontalStack                 @problemsStack
         >> ( Validate Designspace )         @problemsValidateButton
-        
+
         * ToolbarTab: Notes                 @notesTab
         > [[__]]                            @notesEditor
         """
-        
+
         marginDescriptions = dict(margins=(10, 0, 10, 10))
         descriptionData = dict(
             axisTab=dict(
@@ -73,7 +75,7 @@ class Controller(ezui.WindowController):
             axisTable=dict(
                 width="fill",
                 height="fill",
-                columnDescriptions = [
+                columnDescriptions=[
                     dict(title="", identifier="genericInfoButton", width=20, editable=False, cell=doubleClickCell(self.axisListDoubleClickCallback, infoImage)),#, cell=axisDoubleClickCell),
                     dict(title="Ⓡ", identifier="axisRegisterd", width=20, allowsSorting=False, editable=False),
                     dict(title="Name", identifier="axisName", allowsSorting=False, editable=True),
@@ -90,12 +92,12 @@ class Controller(ezui.WindowController):
             ),
             axisActions=dict(
                 itemDescriptions=[
-                    dict(identifier="basicItem", text="Add Weight Axis"),
-                    dict(identifier="basicItem", text="Add Width Axis"),
-                    dict(identifier="basicItem", text="Add Optical Axis"),
+                    dict(identifier="axisAddWeightAxis", text="Add Weight Axis"),
+                    dict(identifier="axisAddWidthAxis", text="Add Width Axis"),
+                    dict(identifier="axisAddOpticalAxis", text="Add Optical Axis"),
                 ]
             ),
-            
+
             sourcesTab=dict(
                 image=designspaceBundle.getResourceImage("toolbar_30_30_icon_sources")
             ),
@@ -103,7 +105,7 @@ class Controller(ezui.WindowController):
             sourcesTable=dict(
                 width="fill",
                 height="fill",
-                columnDescriptions = [
+                columnDescriptions=[
                     dict(title="", identifier="genericInfoButton", width=20, editable=False, cell=doubleClickCell(self.sourceListDoubleClickCallback, infoImage)),
                     dict(title="💾", identifier="sourceHasPath", width=20, editable=False),
                     dict(title="📍", identifier="sourceIsDefault", width=20, editable=False),
@@ -123,15 +125,15 @@ class Controller(ezui.WindowController):
                     dict(identifier="basicItem", text="Replace UFO"),
                 ]
             ),
-            
+
             instancesTab=dict(
                 image=designspaceBundle.getResourceImage("toolbar_30_30_icon_instances")
             ),
-            instancesStack=marginDescriptions, 
+            instancesStack=marginDescriptions,
             instancesTable=dict(
                 width="fill",
                 height="fill",
-                columnDescriptions = [
+                columnDescriptions=[
                     dict(title="UFO", identifier="instanceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False),
                     dict(title="Famiy Name", identifier="instanceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
                     dict(title="Style Name", identifier="instanceStyleName", editable=True, width=130, minWidth=130, maxWidth=250),
@@ -146,7 +148,7 @@ class Controller(ezui.WindowController):
                     dict(identifier="basicItem", text="Generate With VarLib"),
                 ]
             ),
-            
+
             rulesTab=dict(
                 image=designspaceBundle.getResourceImage("toolbar_30_30_icon_rules")
             ),
@@ -155,7 +157,7 @@ class Controller(ezui.WindowController):
                 height="fill",
                 showLineNumbers=False
             ),
-            
+
             labelsTab=dict(
                 image=designspaceBundle.getResourceImage("toolbar_30_30_icon_labels")
             ),
@@ -170,7 +172,7 @@ class Controller(ezui.WindowController):
                     dict(identifier="basicItem", text="Preview Labels"),
                ]
             ),
-            
+
             problemsTab=dict(
                 image=designspaceBundle.getResourceImage("toolbar_30_30_icon_problems")
             ),
@@ -182,10 +184,10 @@ class Controller(ezui.WindowController):
                     dict(title="", identifier="problemIcon", width=20),
                     dict(title="Where", identifier="problemClass", width=130),
                     dict(title="What", identifier="problemDescription", minWidth=200, width=200, maxWidth=1000),
-                    dict(title="Specifically", identifier="problemData", minWidth=200, width=200, maxWidth=1000),                
+                    dict(title="Specifically", identifier="problemData", minWidth=200, width=200, maxWidth=1000),
                 ]
             ),
-            
+
             notesTab=dict(
                 image=designspaceBundle.getResourceImage("toolbar_30_30_icon_notes")
             ),
@@ -205,37 +207,53 @@ class Controller(ezui.WindowController):
             controller=self,
             margins=0
         )
-        
+
         self.w.addToolbarItem(dict(itemIdentifier=AppKit.NSToolbarSpaceItemIdentifier))
         self.w.addToolbarItem(dict(
             itemIdentifier="save",
             label="Save",
             imageObject=ezui.makeImage(symbolName="square.and.arrow.down", symbolConfiguration=dict(renderingMode="hierarchical", colors=[(1, 0, 1, 1), ])),
-            callback=self.toobarSaveCallback     
+            callback=self.toobarSaveCallback
         ))
         self.w.addToolbarItem(dict(
             itemIdentifier="help",
             label="Help",
             imageObject=ezui.makeImage(symbolName="questionmark.circle", symbolConfiguration=dict(renderingMode="hierarchical", colors=[(1, 0, 1, 1), ])),
-            callback=self.toolbarHelpCallback     
+            callback=self.toolbarHelpCallback
         ))
-    
+
     def started(self):
         self.w.open()
-    
+
+    # axis
+
     def axisListDoubleClickCallback(self, sender):
         print("axisListDoubleClickCallback")
-    
+
+    def axisAddWeightAxisCallback(self, sender):
+        print("axisAddWeightAxisCallback")
+
+    def axisAddWidthAxisCallback(self, sender):
+        print("axisAddWidthAxisCallback")
+
+    def axisAddOpticalAxisCallback(self, sender):
+        print("axisAddOpticalAxisCallback")
+
+    # sources
+
     def sourceListDoubleClickCallback(self, sender):
         print("sourceListDoubleClickCallback")
 
+    # instances
+
+
     # toolbar
-    
+
     def toobarSaveCallback(self, sender):
         print("save")
-    
+
     def toolbarHelpCallback(self, sender):
         print("help")
-        
-        
-Controller()    
+
+
+Controller()
