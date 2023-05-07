@@ -5,7 +5,7 @@ from mojo.subscriber import WindowController, Subscriber, registerRoboFontSubscr
 from mojo.roboFont import RFont, RGlyph
 
 
-class InstancesPreview(WindowController, Subscriber):
+class InstancesPreview(Subscriber, WindowController):
 
     debug = True
 
@@ -13,7 +13,7 @@ class InstancesPreview(WindowController, Subscriber):
         self.operator = operator
         dummyFont = RFont(showInterface=False)
 
-        self.w = vanilla.Window((700, 400), minSize=(500, 300))
+        self.w = vanilla.FloatingWindow((700, 400), "Instances Preview", minSize=(500, 300))
         self.w.input = vanilla.EditText((10, 10, -10, 22), callback=self.inputCallback)
         self.w.hl = vanilla.HorizontalLine((0, 41, 0, 1))
         self.w.preview = MultiLineView((0, 42, 0, 0), pointSize=40)
@@ -53,6 +53,6 @@ class InstancesPreview(WindowController, Subscriber):
 
 
 if __name__ == '__main__':
-    c = InstancesPreview(CurrentDesignspace())
+    c = InstancesPreview(operator=CurrentDesignspace())
     c.w.input.set("HELLO")
     c.inputCallback(c.w.input)
