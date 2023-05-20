@@ -33,7 +33,9 @@ def getUFOLayers(ufoPath):
     # </plist>
     layercontentsPath = os.path.join(ufoPath, "layercontents.plist")
     if os.path.exists(layercontentsPath):
-        p = plistlib.readPlist(layercontentsPath)
+        with open(layercontentsPath, "rb") as f:
+            p = plistlib.load(f)
+        
         return [a for a, b in p]
     return []
 
