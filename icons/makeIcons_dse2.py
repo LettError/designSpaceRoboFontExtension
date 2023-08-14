@@ -83,7 +83,9 @@ clr4 = (.1, .1, 1)	#clr4
 
 
 for w, h, output, folder, forReals in destinations:
+
     iconSize = w,h
+
     # axes icon
     if forReals:
         newDrawing()
@@ -136,7 +138,9 @@ for w, h, output, folder, forReals in destinations:
         # remove before final XX
         #fill(0.4)
         #rect(0,0,width(),height())
+
     # instances icon
+    instanceColors = {}
     if forReals:
         newDrawing()
     newPage(*iconSize)
@@ -154,6 +158,7 @@ for w, h, output, folder, forReals in destinations:
                 fx = x / (steps-1)
                 p = ip2(p1, p2, fx)
                 c = ip3(c1, c2, fx)
+                instanceColors[(x,y)] = c
                 fill(*c, tp)    # transparency
                 oval(p[0]-.5*d,p[1]-.5*d, d, d)
     if forReals:
@@ -192,6 +197,58 @@ for w, h, output, folder, forReals in destinations:
     if forReals:
         name = f"{folder}toolbar_{w}_{h}_icon_sources{output}"
         saveImage(name)
+
+
+    # variable fonts icon
+    print("xx", instanceColors)
+    # axes icon
+    if forReals:
+        newDrawing()
+    newPage(*iconSize)
+    # first time we have a canvas size
+    # we have to calculate the measurements
+    # so that the icons will look the same
+    # regardless of scale
+    tp = 0.8    # transparency for some things
+    m = 0.05 * width()
+    d = 0.272 * width()
+    fs = 0.44 * width()
+    docLineWidth = 0.05*width()
+
+    left, centerx, right = m+.5*d, .5*width(), width()-m-0.5*d
+    top, centery, bottom = height()-m-.5*d, .5*height(),    m+0.5*d
+    wdth = width()-2*m
+    hght = height()-2*m
+    steps = 50
+    items = {}
+    with savedState():
+        for i in range(steps):
+            f = i/steps
+            #c1 = ip3(clr1, clr2, f)
+            c1 = ip3(instanceColors[(0,0)], instanceColors[(1,1)], f)
+            c2 = ip3(instanceColors[(0,1)], instanceColors[(1,0)], f)
+            p1 = ip2((left, top), (centerx,  centery), f)
+            p2 = ip2((centerx, top), (left, centery), f)
+            fill(*c1)
+            oval(p1[0]-.5*d,p1[1]-.5*d, d, d)
+            fill(*c2)
+            oval(p2[0]-.5*d,p2[1]-.5*d, d, d)
+    with savedState():
+        for i in range(steps):
+            f = i/steps
+            c1 = ip3(instanceColors[(2,0)], instanceColors[(2,2)], f)
+            c2 = ip3(instanceColors[(0,2)], instanceColors[(1,2)], f)
+            p1 = ip2((left, bottom), (right,  bottom), f)
+            p2 = ip2((right, top), (right, centery), f)
+            fill(*c1)
+            oval(p1[0]-.5*d,p1[1]-.5*d, d, d)
+            fill(*c2)
+            oval(p2[0]-.5*d,p2[1]-.5*d, d, d)
+    if forReals:
+        name = f"{folder}toolbar_{w}_{h}_icon_variable_fonts{output}"
+        saveImage(name)
+
+
 
     # problems icon
     if forReals:
@@ -233,7 +290,7 @@ for w, h, output, folder, forReals in destinations:
         name = f"{folder}toolbar_{w}_{h}_icon_problems{output}"
         saveImage(name)
 
-    # labels icon
+    # location labels icon
     # defines groups and relations between locations
     if forReals:
         newDrawing()
@@ -272,7 +329,7 @@ for w, h, output, folder, forReals in destinations:
         for p in holes:
             rect(*windows[p])
     if forReals:
-        name = f"{folder}toolbar_{w}_{h}_icon_labels{output}"
+        name = f"{folder}toolbar_{w}_{h}_icon_location_labels{output}"
         saveImage(name)
 
     # rules icon

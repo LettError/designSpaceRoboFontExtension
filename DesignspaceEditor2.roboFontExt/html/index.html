@@ -29,7 +29,19 @@
 <li>Validate designspaces and point out compatibility and structural issues.</li>
 </ul>
 
-<h2 id="toc_1">Usage</h2>
+<h2 id="toc">Contents</h2>
+<ul>
+    <li><a href="#toc_1">Designspace Editor Usage</a></li>
+    <li><a href="#toc_2">Axes Tab</a></li>
+    <li><a href="#toc_3">Sources Tab</a></li>
+    <li><a href="#toc_4">Instances Tab</a></li>
+    <li><a href="#toc_5">Rules Tab</a></li>
+    <li><a href="#toc_6">Location Labels Tab</a></li>
+    <li><a href="#toc_8">Variable Fonts Tab</a></li>
+    <li><a href="#toc_9">Problems Tab</a></li>
+</ul>
+
+<h2 id="toc_1">Designspace Editor Usage</h2>
 
 <ol>
 <li>From the RF extensions menu, open an existing designspace file or create a new one.</li>
@@ -43,7 +55,7 @@
 
 <p><img src="../resources/toolbar_500_500_icon_axes.png" alt="DSE2 axes icon"></p>
 
-<h2 id="toc_2">Axes Tab</h3>
+<h2 id="toc_2">Axes Tab <a href="#toc">↑</a></h3>
 
 <h3>Buttons</h3>
 
@@ -185,7 +197,7 @@
 
 <p><img src="../resources/toolbar_500_500_icon_sources.png" alt="DSE2 sources icon"></p>
 
-<h2 id="toc_3">Sources Tab</h3>
+<h2 id="toc_3">Sources Tab <a href="#toc">↑</a></h3>
 
 <p>This tab shows which UFOs are part of this designspace.</p>
 
@@ -258,7 +270,7 @@ a b c d</code></pre></div>
 
 <p><img src="../resources/toolbar_500_500_icon_instances.png" alt="DSE2 instances icon"></p>
 
-<h2 id="toc_4">Instances Tab</h3>
+<h2 id="toc_4">Instances Tab <a href="#toc">↑</a></h3>
 
 <p>This tab shows the instances defined for this designspace. These instances can be different things in different contexts. Each instance can be compiled to separate UFO files. But it can also be interpreted as an instance item in a variable font.</p>
 
@@ -296,7 +308,7 @@ The axis columns accepts a second value after a space to indicate an anisotropic
 
 <p><img src="../resources/toolbar_500_500_icon_rules.png" alt="DSE2 rules icon"></p>
 
-<h2 id="toc_5">Rules Tab</h3>
+<h2 id="toc_5">Rules Tab <a href="#toc">↑</a></h3>
 
 <p>The rules tab is an editor for defining rules and condition sets. Tools may interpret these into <code>rvrn</code> features.</p>
 
@@ -322,9 +334,9 @@ switching a&#39;s
 
 <p><img src="../resources/toolbar_500_500_icon_labels.png" alt="DSE2 labels icon"></p>
 
-<h2 id="toc_6">Labels Tab</h3>
+<h2 id="toc_6">Location Labels Tab <a href="#toc">↑</a></h3>
 
-<p>The labels tab is an editor for defining labels, ranges etc. that can be used to define parts of a STAT table.</p>
+<p>XX Clarify. The labels tab is an editor for defining labels, ranges etc. that can be used to define parts of a STAT table.</p>
 
 <h3>Location Labels syntax</h3>
 
@@ -347,7 +359,48 @@ Neue Style Italic
 
 <p><img src="../resources/toolbar_500_500_icon_problems.png" alt="DSE2 problems icon"></p>
 
-<h2 id="toc_7">Problems Tab</h3>
+<h2 id="toc_8">Variable Fonts Tab <a href="#toc">↑</a></h3>
+<p>Info about the variable fonts</p>
+
+<a href="https://fonttools.readthedocs.io/en/latest/designspaceLib/xml.html#variable-fonts-element" target="_blank">See also fonttools documentation</a>
+
+<h3>Variable Fonts syntax</h3>
+
+<div><pre><code class="language-none"># lines starting with an octothorpe are comments
+
+# variable font text spec
+
+&lt;name of the variableFont&gt;
+    # indent
+    &gt; '&lt;fileName of the variable font file&gt;'   # optional
+
+    # a full axis subset
+    # i.e. "weight", not "wght"
+    &lt;axisName&gt;
+
+    # example
+    weight
+    ...
+
+    # an axis subset at specific userspace value
+    # i.e. "weight", not "wght"
+    &lt;axisName&gt; &lt;value&gt;
+
+    # example
+    weight 400
+    ...
+
+    # an axis subset with a sub range
+    &lt;axisName&gt; &lt;minimumUserValue&gt; &lt;userDefault&gt; &lt;maximumUserValue&gt;
+
+    # example
+    weight 300 400 700
+    ...
+
+</code></pre></div>
+
+
+<h2 id="toc_9">Problems Tab <a href="#toc">↑</a></h3>
 
 <p>This tab shows some of the problems this designspace may have. From structural issues that block any further processing, to missing ufos, missing or duplicate values, and glyphs with incompatible constructions. 
 This uses <a
@@ -360,7 +413,7 @@ This uses <a
 
 <p><img src="../resources/toolbar_500_500_icon_notes.png" alt="DSE2 notes icon"></p>
 
-<h2 id="toc_7">Notes Tab</h3>
+<h2 id="toc_7">Notes Tab <a href="#toc">↑</a></h3>
 
 <p>This tab is for your notes that are stored in the Designspace. This can be any kind of note or remark. Notes are not processed.</p>
 
