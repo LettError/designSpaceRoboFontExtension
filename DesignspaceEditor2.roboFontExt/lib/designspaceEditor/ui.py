@@ -38,10 +38,10 @@ registeredAxisTags = [
 ]
 
 preferredAxes = [
-    ("weight", "wght", 0, 1000, 0),
-    ("width", "wdth", 0, 1000, 0),
-    ("optical", "opsz", 3, 1000, 16),
-    # ("italic", "ital", 0, 0, 1),  # must be a discrete axis
+    ("weight", "wght", 400, 700, 400),
+    ("width", "wdth", 50, 100, 100),
+    ("optical", "opsz", 10, 16, 10),
+    # ("italic", "ital", 0, 0, 0),  # must be a discrete axis
     # ("slant", "slnt", -90, 0, 90),
 ]
 
