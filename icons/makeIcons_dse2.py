@@ -78,8 +78,8 @@ print(f"clr4 = {clr4}\t#clr4")
 # tunes to make 
 clr1 = (1, .8, 0)	#clr1
 clr2 = (1, .2, 0)	#clr2
-clr3 = (1, .2, 0.9)	#clr4
-clr4 = (.1, .1, 1)	#clr4
+clr3 = (1, .2, 0.75)	#clr4
+clr4 = (.1, .1, .8)	#clr4
 
 
 for w, h, output, folder, forReals in destinations:
@@ -258,6 +258,7 @@ for w, h, output, folder, forReals in destinations:
     windows = {}
     with savedState():
         # gridlines
+        blendMode("multiply")
         under()
         strokeWidth(d)
         lineCap("round")
@@ -274,6 +275,7 @@ for w, h, output, folder, forReals in destinations:
         fill(1)
         stroke(None)
         rd = 0.4*d
+        blendMode("normal")
         for y in range(steps):
             fy = y / (steps-1)
             p1 = ip2((left, top), (right, top), fy)
@@ -296,6 +298,7 @@ for w, h, output, folder, forReals in destinations:
     if forReals:
         newDrawing()
     newPage(*iconSize)
+    blendMode("multiply")
     with savedState():
         under()
         steps = 3
@@ -324,8 +327,9 @@ for w, h, output, folder, forReals in destinations:
         line(stops[(1,0)], stops[(1,2)])
         stroke(*fills[(2,1)],ltp)
         line(stops[(2,1)], stops[(2,2)])
+    blendMode("normal")
     with savedState():
-        holes = [(0,0), (1,0), (2,1)]
+        holes = [(0,0), (2,1), (1,1), (0,2), (2,0)]
         fill(1)
         for p in holes:
             rect(*windows[p])
@@ -376,6 +380,7 @@ for w, h, output, folder, forReals in destinations:
     if forReals:
         newDrawing()
     newPage(*iconSize)
+    blendMode("multiply")
     stops = {}
     fills = {}
     with savedState():
@@ -489,6 +494,7 @@ if forReals:
         for sym, fontName, symbolName in names:
             newDrawing()
             newPage(dim,dim)
+            blendMode("multiply")
             margin = 85/325 * width()
             bp = BezierPath()
             fs = FormattedString()
