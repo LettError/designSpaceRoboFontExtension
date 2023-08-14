@@ -24,7 +24,7 @@ from fontTools import designspaceLib
 
 from .parserTools import getLines, getBlocks, stringToNumber, numberToString
 
-axisSubsetRE = re.compile(r"([a-zA-Z0-9\-]+)\s*([0-9\.]*)\s*([0-9\.]*)\s*([0-9\.]*)")
+axisSubsetRE = re.compile(r"([a-zA-Z0-9\-]+)\s*([\-0-9\.]*)\s*([\-0-9\.]*)\s*([\-0-9\.]*)")
 filenameRE = re.compile(r"\>\s+[\"|\'](.*)[\"|\']")
 
 
