@@ -39,15 +39,16 @@
     <li><a href="#toc_6">Location Labels Tab</a></li>
     <li><a href="#toc_8">Variable Fonts Tab</a></li>
     <li><a href="#toc_9">Problems Tab</a></li>
+    <li><a href="#toc_10">Notes Tab</a></li>
 </ul>
 
-<h2 id="toc_1">Designspace Editor Usage</h2>
+<h2 id="toc_1">Designspace Editor Usage <a href="#toc">↑</a></h2>
 
 <ol>
 <li>From the RF extensions menu, open an existing designspace file or create a new one.</li>
 <li>Define some axes. Give them useful names.</li>
 <li>Then add some source UFOs.</li>
-<li>Then save the document in the same folder as your sources, or one level up. The document will store a relative path to the sources and instances.</li>
+<li>Then save the document in the same folder as your sources, or one level up. The document will store a relative path to the sources and instances, so it makes sense to keep them close together.</li>
 <li>Define instances and whatever else you need to do.</li>
 <li>Save.</li>
 </ol>
@@ -60,9 +61,9 @@
 <h3>Buttons</h3>
 
 <ul>
-<li><strong>Add Weight Axis</strong>: a new continuous <code>wght</code> axis from 0 to 1000.</li>
-<li><strong>Add Width Axis</strong>: a new continuous <code>wdth</code> axis from 0 to 1000</li>
-<li><strong>Add Optical Axis</strong>: a new <code>opsz</code> axis.</li>
+<li><strong>Add Weight Axis</strong>: this adds a new continuous <code>wght</code> axis from 400 to 700. (obviously you can edit these values here)</li>
+<li><strong>Add Width Axis</strong>: this adds a new continuous <code>wdth</code> axis from 100 to 50</li>
+<li><strong>Add Optical Axis</strong>: this adds a new <code>opsz</code> axis, from 10 to 16.</li>
 <li><strong>+</strong> add a new axis: add a new axis with any name.</li>
 <li><strong>—</strong> delete the selected axis. <strong>Note: no undo!</strong></li>
 </ul>
@@ -80,7 +81,7 @@
     <tr>
         <td>Name
         </td>
-        <td>Nice human readable name for this axis.
+        <td>Nice human readable name for this axis. No spaces. This name will be for the default English language localisation.
         </td>
     </tr>
     <tr>
@@ -332,11 +333,13 @@ switching a&#39;s
 </code></pre></div>
 
 
-<p><img src="../resources/toolbar_500_500_icon_labels.png" alt="DSE2 labels icon"></p>
+<p><img src="../resources/toolbar_500_500_icon_location_labels.png" alt="DSE2 location labels icon"></p>
 
 <h2 id="toc_6">Location Labels Tab <a href="#toc">↑</a></h3>
 
-<p>XX Clarify. The labels tab is an editor for defining labels, ranges etc. that can be used to define parts of a STAT table.</p>
+<p>The location labels tab is an editor for defining labels for specific points in the designspace. This data can be used to define parts of a STAT table.</p>
+
+<a href="https://fonttools.readthedocs.io/en/latest/designspaceLib/xml.html#labels-element-top-level">See also fonttools documentation</a>
 
 <h3>Location Labels syntax</h3>
 
@@ -354,13 +357,13 @@ Neue Style Italic
     # location name if the axis and value
     weight 300
     width 40
-    Italic 1
+    italic 1
     boldness 30</code></pre></div>
 
-<p><img src="../resources/toolbar_500_500_icon_problems.png" alt="DSE2 problems icon"></p>
+<p><img src="../resources/toolbar_500_500_icon_variablefonts.png" alt="DSE2 problems icon"></p>
 
 <h2 id="toc_8">Variable Fonts Tab <a href="#toc">↑</a></h3>
-<p>Info about the variable fonts</p>
+<p>This describes different subset variable fonts that can be generated from the current designspace file. For instance this could mean a smaller number of axes, or a specific range of an axis. You can also specify different filenames for these variable fonts.</p>
 
 <a href="https://fonttools.readthedocs.io/en/latest/designspaceLib/xml.html#variable-fonts-element" target="_blank">See also fonttools documentation</a>
 
@@ -413,9 +416,9 @@ This uses <a
 
 <p><img src="../resources/toolbar_500_500_icon_notes.png" alt="DSE2 notes icon"></p>
 
-<h2 id="toc_7">Notes Tab <a href="#toc">↑</a></h3>
+<h2 id="toc_10">Notes Tab <a href="#toc">↑</a></h3>
 
-<p>This tab is for your notes that are stored in the Designspace. This can be any kind of note or remark. Notes are not processed.</p>
+<p>This tab is for your notes and are stored in the Designspace. This can be any kind of note or remark. Notes are not processed in any way.</p>
 
 </body>
 </html>

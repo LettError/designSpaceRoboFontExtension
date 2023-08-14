@@ -200,7 +200,6 @@ for w, h, output, folder, forReals in destinations:
 
 
     # variable fonts icon
-    print("xx", instanceColors)
     # axes icon
     if forReals:
         newDrawing()
@@ -225,24 +224,26 @@ for w, h, output, folder, forReals in destinations:
         for i in range(steps):
             f = i/steps
             #c1 = ip3(clr1, clr2, f)
-            c1 = ip3(instanceColors[(0,0)], instanceColors[(1,1)], f)
-            c2 = ip3(instanceColors[(0,1)], instanceColors[(1,0)], f)
+            c1 = ip3(instanceColors[(0,0)], instanceColors[(2,0)], f)
+            c2 = ip3(instanceColors[(0,2)], instanceColors[(2,2)], f)
             p1 = ip2((left, top), (centerx,  centery), f)
             p2 = ip2((centerx, top), (left, centery), f)
             fill(*c1)
-            oval(p1[0]-.5*d,p1[1]-.5*d, d, d)
+            d2 = 0.8 * d    # kruisje iets dunner
+            oval(p1[0]-.5*d2,p1[1]-.5*d2, d2, d2)
             fill(*c2)
-            oval(p2[0]-.5*d,p2[1]-.5*d, d, d)
+            oval(p2[0]-.5*d2,p2[1]-.5*d2, d2, d2)
     with savedState():
         for i in range(steps):
             f = i/steps
-            c1 = ip3(instanceColors[(2,0)], instanceColors[(2,2)], f)
-            c2 = ip3(instanceColors[(0,2)], instanceColors[(1,2)], f)
+            c1 = ip3(instanceColors[(0,0)], instanceColors[(2,0)], f)
+            #c2 = ip3(instanceColors[(0,2)], instanceColors[(1,2)], f)
+            gray = 0.79
             p1 = ip2((left, bottom), (right,  bottom), f)
             p2 = ip2((right, top), (right, centery), f)
             fill(*c1)
             oval(p1[0]-.5*d,p1[1]-.5*d, d, d)
-            fill(*c2)
+            fill(gray)
             oval(p2[0]-.5*d,p2[1]-.5*d, d, d)
     if forReals:
         name = f"{folder}toolbar_{w}_{h}_icon_variable_fonts{output}"
@@ -471,38 +472,39 @@ for w, h, output, folder, forReals in destinations:
         
 
 
-destinations = [
-    (30,30, ".pdf", "../DesignspaceEditor2.roboFontExt/resources/", True),
-    (25,25, ".png", "../DesignspaceEditor2.roboFontExt/resources/", True),
-    (25,25, ".svg", "../DesignspaceEditor2.roboFontExt/resources/", True),
-    ]
+if forReals:
+    destinations = [
+        (30,30, ".pdf", "../DesignspaceEditor2.roboFontExt/resources/", True),
+        (25,25, ".png", "../DesignspaceEditor2.roboFontExt/resources/", True),
+        (25,25, ".svg", "../DesignspaceEditor2.roboFontExt/resources/", True),
+        ]
 
-for w, h, output, folder, forReals in destinations:
+    for w, h, output, folder, forReals in destinations:
 
-    # items based on SFSymbols
-    # width and height of the square output document
-    dim = min(w, h)
+        # items based on SFSymbols
+        # width and height of the square output document
+        dim = min(w, h)
 
 
-    for sym, fontName, symbolName in names:
-        newDrawing()
-        newPage(dim,dim)
-        margin = 85/325 * width()
-        bp = BezierPath()
-        fs = FormattedString()
-        fs.font(fontName)
-        fs.fontSize(219/275 * width())
-        fs.append(sym)
-        bp.text(fs)
-        xMin, yMin, xMax, yMax = bp.bounds()
-        ws = xMax-xMin
-        hs = yMax-yMin
-        ss = w/(width()-2*margin)
-        with savedState():
-            fill(0)
-            translate(width()*.5, height()*.5)
-            translate(-xMin, -yMin)
-            translate(-.5*ws, -.5*hs)
-            drawPath(bp)
-        saveImage(f"{folder}toolbar_{w}_{h}_{symbolName}{output}")
+        for sym, fontName, symbolName in names:
+            newDrawing()
+            newPage(dim,dim)
+            margin = 85/325 * width()
+            bp = BezierPath()
+            fs = FormattedString()
+            fs.font(fontName)
+            fs.fontSize(219/275 * width())
+            fs.append(sym)
+            bp.text(fs)
+            xMin, yMin, xMax, yMax = bp.bounds()
+            ws = xMax-xMin
+            hs = yMax-yMin
+            ss = w/(width()-2*margin)
+            with savedState():
+                fill(0)
+                translate(width()*.5, height()*.5)
+                translate(-xMin, -yMin)
+                translate(-.5*ws, -.5*hs)
+                drawPath(bp)
+            saveImage(f"{folder}toolbar_{w}_{h}_{symbolName}{output}")
     
