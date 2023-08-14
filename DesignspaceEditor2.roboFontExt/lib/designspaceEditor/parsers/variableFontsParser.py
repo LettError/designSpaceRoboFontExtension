@@ -22,9 +22,9 @@ import re
 import math
 from fontTools import designspaceLib
 
-from .parserTools import getLines, getBlocks, stringToNumber, numberToString
+from parserTools import getLines, getBlocks, stringToNumber, numberToString
 
-axisSubsetRE = re.compile(r"([a-zA-Z0-9\- ]+)\s*([0-9\.]*)\s*([0-9\.]*)\s*([0-9\.]*)")
+axisSubsetRE = re.compile(r"([a-zA-Z0-9\-]+)\s*([0-9\.]*)\s*([0-9\.]*)\s*([0-9\.]*)")
 filenameRE = re.compile(r"\>\s+[\"|\'](.*)[\"|\']")
 
 
@@ -41,6 +41,7 @@ def parseVariableFonts(text, variableFontDescriptorClass=None):
             filenameFound = re.match(filenameRE, line)
             if filenameFound:
                 variableFont.filename = filenameFound.groups()[0]
+
             axisSubsetFound = re.match(axisSubsetRE, line)
             if axisSubsetFound:
                 axisName, minValue, value, maxValue = axisSubsetFound.groups()
@@ -72,7 +73,7 @@ def dumpVariableFonts(variableFonts, indent="   "):
             text.append(f"{indent}> '{variableFont.filename}'")
             text.append("")
         for axisSubset in variableFont.axisSubsets:
-            line = f"{indent}'{axisSubset.name}'"
+            line = f"{indent}{axisSubset.name}"
             if hasattr(axisSubset, "userValue"):
                 line += f" {numberToString(axisSubset.userValue)}"
             else:
@@ -90,6 +91,11 @@ def dumpVariableFonts(variableFonts, indent="   "):
 # t = """
 
 # # name of the var font
+
+# foo
+#     width 100
+#     weight 200
+
 # name
 #     # optional file name
 #     > "myFontFile.ttf"
