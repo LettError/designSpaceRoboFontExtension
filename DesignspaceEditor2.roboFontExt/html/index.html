@@ -8,10 +8,13 @@
 <body>
 
 
+<p><img src="../resources/toolbar_500_500_icon_location_labels.png" alt="DSE2 location labels icon"></p>
+
+
 <h1 id="toc_0">DesignSpaceEditor2</h1>
 
 
-<p>A RoboFont extension to create and edit designspaces format 4 and 5. Labels, variable fonts, mappings can be edited in a compact syntax, examples on this page. For the <strong>designspace</strong> 5 format go
+<p>An extension for RoboFont 4.4+ to create and edit designspaces format 4 and 5. Labels, variable fonts, mappings can be edited in a compact syntax, examples on this page. For the <strong>designspace</strong> 5 format go
     <a
         href="https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html"
         >
@@ -22,11 +25,11 @@
 <p>This extension can:</p>
 
 <ul>
-<li>DesignSpaceEditor2 is for RoboFont 4.4+</li>
+<li>DesignSpaceEditor2 is for very recent RoboFont 4.4+ only.</li>
 <li>Open, edit and save existing designspace format 4 and format 5 files.</li>
-<li>Start a new designspace.</li>
-<li>Edit all sorts of labels and localisations.</li>
-<li>Opening source UFOs.</li>
+<li>You can start a new designspace.</li>
+<li>You can edit all sorts of labels and localisations.</li>
+<li>You can open source UFOs.</li>
 <li>Validate designspaces and point out compatibility and structural issues.</li>
 </ul>
 
@@ -51,6 +54,7 @@
 <li>Add some source UFOs, edit their axis values. Make sure there is at least 1 source on the default value of all axes.</li>
 <li>Then save the document in the same folder as your sources, or one level up. The document will store a relative path to the sources and instances, so it makes sense to keep them close together.</li>
 <li>Define instances, rules, axis labels, location labels and whatever else you need to do.</li>
+<li>Preview selected instances in text. </li>
 <li>Save.</li>
 </ol>
 
@@ -59,7 +63,7 @@
 
 <h2 id="toc_2">Axes Tab <a href="#toc">↑</a></h3>
 
-<h3>Buttons</h3>
+<h3>Axes Tab Buttons</h3>
 
 <ul>
 <li><strong>Add Weight Axis</strong>: this adds a new continuous <code>wght</code> axis from 400 to 700. (obviously you can edit these values here)</li>
@@ -106,7 +110,7 @@
     <tr>
         <td>Default
         </td>
-        <td>The default value of this axis. The default needs to be between minimum and maximum.
+        <td>The default value of this axis. The default needs to be obetween minimum and maximum or equal to one of them.
         </td>
     </tr>
     <tr>
@@ -151,7 +155,6 @@
     <li>
     <a
         href="https://fonttools.readthedocs.io/en/latest/designspaceLib/scripting.html#option-add-a-map"
-        target="_blank"
         alt="link to documentation on the avar table">
             FontTools.designspaceLib documentation on how these values are stored in the designspace.
     </a>    
@@ -159,9 +162,8 @@
     <li>
     <a
         href="https://learn.microsoft.com/en-gb/typography/opentype/spec/avar"
-        target="_blank"
         alt="link to documentation on the avar table">
-            OpenType documentation on how these valus are used in a variable font.
+            OpenType documentation on how these values are used in a variable font.
     </a>
     </li>
 </ul>
@@ -192,7 +194,6 @@
     <li>
     <a
         href="https://learn.microsoft.com/en-us/typography/opentype/spec/languagetags"
-        target="_blank"
         alt="link to documentation on the avar table">
             OpenType documentation for language codes.
     </a>    
@@ -205,14 +206,14 @@
 
 <h2 id="toc_3">Sources Tab <a href="#toc">↑</a></h3>
 
-<p>This tab shows which UFOs are part of this designspace.</p>
+<p>This tab shows the source UFOs for this designspace.</p>
 
-<p><strong>Buttons</strong></p>
+<p><strong>Sources Tab Buttons</strong></p>
 
 <ul>
 <li><strong>Open UFO</strong> open a file dialog to pick a new UFO. It will be added to the default location. Edit the location!</li>
-<li><strong>Add Open UFO&#39;s</strong> adds all open UFOs as new sources. Edit the location!</li>
-<li><strong>Replace UFO</strong> Select one of the sources and replace it with a new ufo.</li>
+<li><strong>Add Open UFO&#39;s</strong> adds all UFOs that are open in RoboFont at the moment as new sources. Edit the location!</li>
+<li><strong>Replace UFO</strong> Select one of the sources and pick a new ufo to replace it.</li>
 </ul>
 
 <p>Double click in the <img src="../resources/toolbar_25_25_info.circle.fill.svg"> icon opens a popover editor for <strong>Localised Family Name</strong> and <strong>Muted Glyphs</strong>.</p>
@@ -303,13 +304,32 @@ a b c d</code></pre></div>
     </tr>
     <tr>
         <td>column for each axis</td>
-        <td>Axis values, <strong>in userspace coordinates</strong>. Accepts 2 values, separated by a space, for an anisotropic location.</td>
+        <td>Axis values, <strong>in userspace coordinates</strong>. Anisotropic values separated by space (see below)</td>
     </tr>
 </table>
 
-<h3>Anisotropic instances</h3>
-The axis columns accepts a second value after a space to indicate an anisotropic location. For instance: <code>900 800</code> means: <em>horizontal interpolation at value <code>900</code> and vertical interpolation at value <code>800</code></em>. Anisotropy is not supported in Variable Fonts. Tools that generate fonts from designspaces may ignore the second value, or ignore the instance. It is a useful tool during design and so designspaces can store them.
-<br/>Note: it is not clear what to expect of interactions between an axis map and an anisotropic location. The authors advise to experiment with anisotropy <strong>before</strong> defining axis maps.
+<h3>About anisotropic instances</h3>
+<ul>
+<li>
+The axis columns accepts two values separated by a space to indicate an anisotropic location. For instance: <code>900 800</code> means: <em>horizontal interpolation at value <code>900</code> and vertical interpolation at value <code>800</code></em>.</li>
+
+<li><b>Please note: anisotropic locations are not supported in Variable Fonts.</b> Tools that generate fonts from designspaces may ignore the second value, or ignore the instance. It is a useful tool during design and so designspaces can store them.</li>
+<li>MutatorMath will calculate anisotropic instances. See UFOOperator</li>
+<li>Note: it is not clear what to expect of interactions between an axis map and an anisotropic location. The authors advise to experiment with anisotropy <strong>before</strong> defining axis maps.</li>
+</ul>
+
+<h3>Instances Tab Buttons</h3>
+
+<ul>
+    <li><strong>+</strong> add a new instance</li>
+    <li><strong>—</strong> delete the selected instance. <strong>Note: no undo!</strong>
+    </li>
+    <li><strong>Duplicate:</strong> duplicates the selected instances</li>
+    <li><strong>Add Source as Instances:</strong> makes new instances at the designspace locations of the sources.</li>
+    <li><strong>Generate with MutatorMath:</strong> use the MutatorMath model to generate instances. For instance if you want to calculate instances at anisotropic locations, or if you want to extrapolate over axis extremes.</li>
+    <li><strong>Generate with VarLib:</strong> use the fontTools VarLib model to generate instances, if you want to stay close to how the instances will appear as part of a variable font.</li>
+    <li><strong>Instance Preview:</strong> opens a new window with a preview of the selected instances.</li>
+</ul>
 
 
 <p><img src="../resources/toolbar_500_500_icon_rules.png" alt="DSE2 rules icon"></p>
@@ -320,7 +340,9 @@ The axis columns accepts a second value after a space to indicate an anisotropic
 
 <h3>Rules syntax</h3>
 
-<div><pre><code class="language-none"># lines starting with an octothorpe are comments
+<div><pre><code class="language-none"># Please note: in these examples, lines starting with # are comments.
+# The comments are not saved in the designspace.
+
 
 # The name of the rule starts on a new line.
 # The contents of the rule is indented:
@@ -348,7 +370,9 @@ switching a&#39;s
 
 <h3>Location Labels syntax</h3>
 
-<div><pre><code class="language-none"># lines starting with an octothorpe are comments
+<div><pre><code class="language-none"># Please note: in these examples, lines starting with # are comments.
+# The comments are not saved in the designspace.
+
 
 # styleName
 Neue Style Italic
@@ -365,22 +389,23 @@ Neue Style Italic
     italic 1
     boldness 30</code></pre></div>
 
-<p><img src="../resources/toolbar_500_500_icon_variable_fonts.png" alt="DSE2 problems icon"></p>
+<p><img src="../resources/toolbar_500_500_icon_variable_fonts.png" alt="DSE2 variable fonts icon"></p>
 
 <h2 id="toc_8">Variable Fonts Tab <a href="#toc">↑</a></h3>
 <p>This describes different subset variable fonts that can be generated from the current designspace file. For instance this could mean a smaller number of axes, or a specific range of an axis. You can also specify different filenames for these variable fonts.</p>
 
-<a href="https://fonttools.readthedocs.io/en/latest/designspaceLib/xml.html#variable-fonts-element" target="_blank">See also fonttools documentation</a>
+<a href="https://fonttools.readthedocs.io/en/latest/designspaceLib/xml.html#variable-fonts-element">See also fonttools documentation</a>
 
 <h3>Variable Fonts syntax</h3>
 
-<div><pre><code class="language-none"># lines starting with an octothorpe are comments
+<div><pre><code class="language-none"># Please note: in these examples, lines starting with # are comments.
+# The comments are not saved in the designspace.
 
 # variable font text spec
 
 &lt;name of the variableFont&gt;
     # indent
-    &gt; '&lt;fileName of the variable font file&gt;'   # optional
+    &gt; "&lt;fileName of the variable font file&gt;"   # optional
 
     # a full axis subset
     # i.e. "weight", not "wght"
@@ -408,9 +433,11 @@ Neue Style Italic
 </code></pre></div>
 
 
+<p><img src="../resources/toolbar_500_500_icon_problems.png" alt="DSE2 problems icon"></p>
+
 <h2 id="toc_9">Problems Tab <a href="#toc">↑</a></h3>
 
-<p>This tab shows some of the problems this designspace may have. From structural issues that block any further processing, to missing ufos, missing or duplicate values, and glyphs with incompatible constructions. 
+<p>This tab lists some of the problems this designspace might have. From structural issues that block any further processing, to missing ufos, missing or duplicate values and glyphs with compatibility issues. 
 This uses <a
     href="https://github.com/LettError/DesignspaceProblems"
     >DesignspaceProblems.
