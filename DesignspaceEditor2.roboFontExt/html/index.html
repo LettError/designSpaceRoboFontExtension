@@ -11,17 +11,18 @@
 <h1 id="toc_0">DesignSpaceEditor2</h1>
 
 
-<p>A RoboFont extension to create and edit designspaces format 4 and 5. For a specification of the <strong>designspace</strong> 5 format go
+<p>A RoboFont extension to create and edit designspaces format 4 and 5. Labels, variable fonts, mappings can be edited in a compact syntax, examples on this page. For the <strong>designspace</strong> 5 format go
     <a
         href="https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html"
         >
-        to the designspace specification at the FontTools repository
+        to the specification at FontTools
     </a>.
 </p>
 
 <p>This extension can:</p>
 
 <ul>
+<li>DesignSpaceEditor2 is for RoboFont 4.4+</li>
 <li>Open, edit and save existing designspace format 4 and format 5 files.</li>
 <li>Start a new designspace.</li>
 <li>Edit all sorts of labels and localisations.</li>
@@ -47,9 +48,9 @@
 <ol>
 <li>From the RF extensions menu, open an existing designspace file or create a new one.</li>
 <li>Define some axes. Give them useful names.</li>
-<li>Then add some source UFOs.</li>
+<li>Add some source UFOs, edit their axis values. Make sure there is at least 1 source on the default value of all axes.</li>
 <li>Then save the document in the same folder as your sources, or one level up. The document will store a relative path to the sources and instances, so it makes sense to keep them close together.</li>
-<li>Define instances and whatever else you need to do.</li>
+<li>Define instances, rules, axis labels, location labels and whatever else you need to do.</li>
 <li>Save.</li>
 </ol>
 
@@ -75,7 +76,7 @@
         <td><img src="../resources/toolbar_25_25_info.circle.fill.svg">
         </td>
         <td>
-            Double click the icon to get the popover editor for <strong>axis labels</strong> and <strong>axis maps</strong>. The editor represents the labels and maps in a simple syntax for editing. When the panel is closed, the text is converted to designspace objects. (XX use the SF Symbols SVG here).
+            Double click the icon to get the popover editor for <strong>axis labels</strong> and <strong>axis maps</strong>. The editor represents the labels and maps in a simple syntax for editing. When the panel is closed, the text is converted to designspace objects.
         </td>
     </tr>
     <tr>
@@ -93,25 +94,25 @@
     <tr>
         <td>Minimum
         </td>
-        <td>The minimum value of the axis.
+        <td>The minimum value of this axis.
         </td>
     </tr>
     <tr>
         <td>Maximum
         </td>
-        <td>The maximum value of the axis.
+        <td>The maximum value of this axis.
         </td>
     </tr>
     <tr>
         <td>Default
         </td>
-        <td>The default value of the axis. The default needs to be between minimum and maximum.
+        <td>The default value of this axis. The default needs to be between minimum and maximum.
         </td>
     </tr>
     <tr>
         <td>Discrete Values
         </td>
-        <td>Space separated numbers: <code>30 60 100</code> if this is to be a discrete axis. You still need to add default, minimum and maximum values. Leave empy if this is to be a continuous, interpolating axis.
+        <td>Enter space separated numbers: for instance <code>30 60 100</code> if this is to be a discrete axis. You still need to add default, minimum and maximum values. Leave empy if this is to be a continuous, interpolating axis.
         </td>
     </tr>
     <tr>
@@ -134,9 +135,13 @@
 
 
 
-<h3>Map syntax</h3>
+<h3>Axis Map syntax</h3>
 
-<div><pre><code class="language-none"># user space value &gt; designspace value
+<div><pre><code class="language-none"># user space value
+#   (numbers exposed to the user in a UI) 
+# maps to
+# designspace value
+#   (the internal values used to position sources and instances in the designspace)
 50 &gt; 10
 100 &gt; 20
 125 &gt; 66
@@ -161,7 +166,7 @@
     </li>
 </ul>
 
-<h3>Labels syntax</h3>
+<h3>Axis Labels syntax</h3>
 
 <div><pre><code class="language-none"># if the line starts with a <b>?</b> it will be a localised axis name
 # starts with a ? &lt;language tag&gt; &lt;localised string&gt;
