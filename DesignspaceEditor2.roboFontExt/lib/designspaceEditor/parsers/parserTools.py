@@ -45,9 +45,9 @@ def getLines(text):
     return lines
 
 
-def stringToNumber(n):
+def stringToNumber(n, fallback=None):
     if not n and isinstance(n, str):
-        return None
+        return fallback
     n = float(n)
     if n.is_integer():
         return int(n)

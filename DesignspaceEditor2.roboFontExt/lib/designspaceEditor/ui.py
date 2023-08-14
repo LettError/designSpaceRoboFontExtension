@@ -20,7 +20,7 @@ from lib.cells.doubleClickCell import RFDoubleClickCell
 from designspaceProblems import DesignSpaceChecker
 
 from designspaceEditor.designspaceLexer import DesignspaceLexer, TextLexer
-from designspaceEditor.parsers import mapParser, rulesParser, labelsParser, glyphNameParser
+from designspaceEditor.parsers import mapParser, rulesParser, labelsParser, glyphNameParser, variableFontsParser
 from designspaceEditor.parsers.parserTools import numberToString
 from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges, symbolImage, NumberListFormatter, SendNotification
 
@@ -228,7 +228,7 @@ class AxisAttributesPopover(BaseAttributePopover):
         self.axisDescriptor = item.axisDescriptor
         self.isDiscreteAxis = item.axisIsDescrete()
 
-        self.popover.tabs = vanilla.Tabs((0, 15, -0, -0), ["Map", "Labels"])
+        self.popover.tabs = vanilla.Tabs((0, 15, -0, -0), ["Map", "Axis Labels"])
 
         self.axisMap = self.popover.tabs[0]
         self.axisLabels = self.popover.tabs[1]
@@ -333,7 +333,7 @@ class BaseButtonPopover:
         pass
 
 
-class LabelsPreview:
+class LocationLabelsPreview:
 
     def __init__(self, operator):
         self.w = vanilla.FloatingWindow((250, 300), "Labels Preview")
@@ -428,26 +428,27 @@ class DesignspaceEditorController(WindowController):
     def build(self):
         self.operator = ufoOperator.UFOOperator()
 
-        self.w = vanilla.Window((850, 500), "Designspace Editor", minSize=(720, 400))
+        self.w = vanilla.Window((900, 500), "Designspace Editor", minSize=(720, 400))
         self.w.vanillaWrapper = weakref.ref(self)
         self.w.bind("should close", self.windowShouldClose)
 
-        self.tabItems = ["Axes", "Sources", "Instances", "Rules", "Labels", "Problems", "Notes"]
+        self.tabItems = ["Axes", "Sources", "Instances", "Rules", "Location Labels", "Variable Fonts", "Problems", "Notes"]
         self.w.tabs = vanilla.Tabs((0, 0, 0, 0), self.tabItems, showTabs=False)
 
         self.axes = self.w.tabs[0]
         self.sources = self.w.tabs[1]
         self.instances = self.w.tabs[2]
         self.rules = self.w.tabs[3]
-        self.labels = self.w.tabs[4]
-        self.problems = self.w.tabs[5]
-        self.notes = self.w.tabs[6]
+        self.locationLabels = self.w.tabs[4]
+        self.variableFonts = self.w.tabs[5]
+        self.problems = self.w.tabs[6]
+        self.notes = self.w.tabs[7]
 
         toolbarItems = [dict(
             itemIdentifier=tabItem.lower(),
             label=tabItem,
             callback=self.toolbarSelectTab,
-            imageObject=designspaceBundle.getResourceImage(f"toolbar_30_30_icon_{tabItem.lower()}"),
+            imageObject=designspaceBundle.getResourceImage(f"toolbar_30_30_icon_{tabItem.lower().replace(' ', '_')}"),
             selectable=True,
         ) for tabItem in self.tabItems]
 
@@ -661,14 +662,16 @@ class DesignspaceEditorController(WindowController):
         self.rules.editor = CodeEditor((0, 0, 0, 0), lexer=DesignspaceLexer(), showLineNumbers=False, callback=self.rulesEditorCallback)
 
         # LABELS
-        self.labels.tools = vanilla.SegmentedButton(
+        self.locationLabels.tools = vanilla.SegmentedButton(
             (10, 5, 125, 22),
             selectionStyle="momentary",
-            callback=self.labelsToolsCallback,
+            callback=self.locationLabelsToolsCallback,
             segmentDescriptions=[dict(title="Labels Preview")]
         )
-        self.labels.editor = CodeEditor((0, 30, 0, 0), lexer=DesignspaceLexer(), showLineNumbers=False, callback=self.locationLabelsEditorCallback)
+        self.locationLabels.editor = CodeEditor((0, 30, 0, 0), lexer=DesignspaceLexer(), showLineNumbers=False, callback=self.locationLabelsEditorCallback)
 
+        # VARIABLE FONTS
+        self.variableFonts.editor = CodeEditor((0, 30, 0, 0), lexer=DesignspaceLexer(), showLineNumbers=False, callback=self.variableFontsEditorCallback)
 
         # PROBLEMS
         self.problems.tools = vanilla.SegmentedButton(
@@ -700,7 +703,7 @@ class DesignspaceEditorController(WindowController):
             self.w.open()
 
     def destroy(self):
-        for controller in [self.labelsPreview, self.instancesPreview]:
+        for controller in [self.locationLabelsPreview, self.instancesPreview]:
             try:
                 controller.w.close()
             except Exception:
@@ -733,7 +736,7 @@ class DesignspaceEditorController(WindowController):
             self.sources.list.set([self.wrapSourceDescriptor(sourceDescriptor) for sourceDescriptor in self.operator.sources])
             self.instances.list.set([self.wrapInstanceDescriptor(instanceDescriptor) for instanceDescriptor in self.operator.instances])
             self.rules.editor.set(rulesParser.dumpRules(self.operator.rules))
-            self.labels.editor.set(labelsParser.dumpLocationLabels(self.operator.locationLabels))
+            self.locationLabels.editor.set(labelsParser.dumpLocationLabels(self.operator.locationLabels))
             self.notes.editor.set(self.operator.lib.get(designspacenotesLibKey, ""))
             self.updateColumnHeadersFromAxes()
 
@@ -1094,16 +1097,16 @@ class DesignspaceEditorController(WindowController):
 
     # labels
 
-    labelsPreview = None
+    locationLabelsPreview = None
 
-    def labelsToolsCallback(self, sender):
+    def locationLabelsToolsCallback(self, sender):
         if self.operator.findDefault() is None:
             self.showMessage("No default is found.", "Place a source on the default location of all axes.")
         else:
             try:
-                self.labelsPreview.w.show()
+                self.locationLabelsPreview.w.show()
             except Exception:
-                self.labelsPreview = LabelsPreview(operator=self.operator)
+                self.locationLabelsPreview = LocationLabelsPreview(operator=self.operator)
 
     @coalescingDecorator(delay=0.2)
     def locationLabelsEditorCallback(self, sender):
@@ -1111,6 +1114,13 @@ class DesignspaceEditorController(WindowController):
         self.operator.locationLabels.clear()
         self.operator.locationLabels.extend(locationLabels)
         self.setDocumentNeedSave(True, who="Labels")
+
+    @coalescingDecorator(delay=0.2)
+    def variableFontsEditorCallback(self, sender):
+        variableFonts = variableFontsParser.parseVariableFonts(sender.get(), self.operator.writerClass.variableFontDescriptorClass)
+        self.operator.variableFonts.clear()
+        self.operator.variableFonts.extend(variableFonts)
+        self.setDocumentNeedSave(True, who="VariableFonts")
 
     # problems
 

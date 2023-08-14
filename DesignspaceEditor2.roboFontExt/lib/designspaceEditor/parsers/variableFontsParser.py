@@ -19,6 +19,7 @@
 
 """
 import re
+import math
 from fontTools import designspaceLib
 
 from .parserTools import getLines, getBlocks, stringToNumber, numberToString
@@ -27,10 +28,13 @@ axisSubsetRE = re.compile(r"([a-zA-Z0-9\- ]+)\s*([0-9\.]*)\s*([0-9\.]*)\s*([0-9\
 filenameRE = re.compile(r"\>\s+[\"|\'](.*)[\"|\']")
 
 
-def parseVariableFonts(text):
+def parseVariableFonts(text, variableFontDescriptorClass=None):
+    if variableFontDescriptorClass is None:
+        variableFontDescriptorClass = designspaceLib.VariableFontDescriptor
+
     variableFonts = list()
     for variableFontName, lines in getBlocks(text).items():
-        variableFont = designspaceLib.VariableFontDescriptor(name=variableFontName)
+        variableFont = variableFontDescriptorClass(name=variableFontName)
         variableFonts.append(variableFont)
 
         for line in getLines(lines):
@@ -51,9 +55,9 @@ def parseVariableFonts(text):
                     variableFont.axisSubsets.append(
                         designspaceLib.RangeAxisSubsetDescriptor(
                             name=axisName,
-                            userMinimum=stringToNumber(minValue),
+                            userMinimum=stringToNumber(minValue, -math.inf),
                             userDefault=stringToNumber(value),
-                            userMaximum=stringToNumber(maxValue)
+                            userMaximum=stringToNumber(maxValue, math.inf)
                         )
                     )
 
