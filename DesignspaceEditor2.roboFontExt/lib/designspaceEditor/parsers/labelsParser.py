@@ -112,7 +112,7 @@ def dumpAxisLabels(labelNames, axisLabels, indent="   "):
             labelText.append("(elidable)")
         if axisLabel.olderSibling:
             labelText.append("(olderSibling)")
-        if axisLabel.linkedUserValue:
+        if axisLabel.linkedUserValue is not None:
             labelText.append(f"[{numberToString(axisLabel.linkedUserValue)}]")
 
         text.append(" ".join(labelText))
