@@ -16,7 +16,7 @@ class InstancesPreview(Subscriber, WindowController):
         self.w = vanilla.FloatingWindow((700, 400), "Instances Preview", minSize=(500, 300))
         self.w.input = vanilla.EditText((10, 10, -10, 22), callback=self.inputCallback)
         self.w.hl = vanilla.HorizontalLine((0, 41, 0, 1))
-        self.w.preview = MultiLineView((0, 42, 0, 0), pointSize=40)
+        self.w.preview = MultiLineView((0, 42, 0, 0), pointSize=40, displayOptions=dict(Beam=False))
         self.w.preview.setFont(dummyFont)
 
     def started(self):
@@ -27,7 +27,7 @@ class InstancesPreview(Subscriber, WindowController):
         glyphs = []
         for instance in self.operator.instances:
             for glyphName in glyphNames:
-                glyph = self.operator.makeOneGlyph(glyphName, instance.location, decomposeComponents=True)
+                glyph = self.operator.makeOneGlyph(glyphName, instance.location, bend=True, decomposeComponents=True)
                 if glyph is not None:
                     dest = RGlyph()
                     dest.fromMathGlyph(glyph)
