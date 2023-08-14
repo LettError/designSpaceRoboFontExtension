@@ -188,7 +188,7 @@ class BaseAttributePopover:
         relativeRect = tableView.rectOfRow_(index)
         self.operator = operator
         self.closeCallback = closeCallback
-        self.popover = vanilla.Popover((400, 300))
+        self.popover = vanilla.Popover((500, 400))
         self.build(item)
         self.popover.bind("will close", self.popoverWillCloseCallback)
         self.popover.open(parentView=tableView, preferredEdge='bottom', relativeRect=relativeRect)

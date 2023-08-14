@@ -65,7 +65,7 @@ def dumpRules(rules, indent="    "):
 
 
 def test_parseRules():
-    text = """
+    expected = """
 ruleName
     a > a.alt agrave > agrave.alt
     b > b.alt
@@ -73,10 +73,7 @@ ruleName
     weight 800-1000 opsz 200-250
     width 100-300
 """
-    result = parseRules(text)
-
-    print(result)
-
+    result = parseRules(expected, designspaceLib.RuleDescriptor)
 
 
 # def test_dumpRules():

@@ -32,13 +32,14 @@
 """
 
 import re
+import pytest
 from fontTools import designspaceLib
 
 from .parserTools import getLines, getBlocks, stringToNumber, numberToString
 
 
 axisLabelRE = re.compile(r"[\"|\']([a-zA-Z0-9\- ]+)[\"|\']\s*([0-9\.]*)\s*([0-9\.]*)\s*([0-9\.]*)")
-axisLabelLinkedUserValueRE = re.compile(r"\[([0-9\.]+)\]")
+axisLabelLinkedUserValueRE = re.compile(r".*\[([0-9\.]+)\]")
 labelNameRE = re.compile(r"\?\s+([a-zA-Z\-]+)\s+[\"|\'](.*)[\"|\']")
 userLocationRE = re.compile(r"([a-zA-Z\-\s]+)\s+([0-9\.]+)")
 
@@ -156,6 +157,21 @@ def dumpLocationLabels(locationLabels, indent="   "):
         text.append("")
     return "\n".join(text)
 
+
+@pytest.mark.parametrize("text,expected", [
+    ('"Bold" 200 200 250', {'userMinimum': 200, 'userValue': 200, 'userMaximum': 250, 'name': 'Bold', 'elidable': False, 'olderSibling': False, 'linkedUserValue': None, 'labelNames': {}}),
+    ('"Extra Light" 200 200 250 (elidable) (olderSibling) [300]', {'userMinimum': 200, 'userValue': 200, 'userMaximum': 250, 'name': 'Extra Light', 'elidable': True, 'olderSibling': True, 'linkedUserValue': 300.0, 'labelNames': {}}),
+    ('"Extra Light" 200 200 250 (elidable) [300] (olderSibling)', {'userMinimum': 200, 'userValue': 200, 'userMaximum': 250, 'name': 'Extra Light', 'elidable': True, 'olderSibling': True, 'linkedUserValue': 300.0, 'labelNames': {}}),
+    ('"Extra Light" 200 200 250 [300] (elidable) (olderSibling)', {'userMinimum': 200, 'userValue': 200, 'userMaximum': 250, 'name': 'Extra Light', 'elidable': True, 'olderSibling': True, 'linkedUserValue': 300.0, 'labelNames': {}}),
+])
+def test_parseAxisLabels(text, expected):
+    labelNames, axisLabels = parseAxisLabels(text)
+    assert axisLabels[0].asdict() == expected
+
+
+if __name__ == '__main__':
+
+    pytest.main([__file__])
 
 # axisLabelText = """
 # "Weight"
