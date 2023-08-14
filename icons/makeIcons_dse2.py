@@ -430,31 +430,31 @@ for w, h, output, folder, forReals in destinations:
     textX = 0.05 * width()
     textY = 0.38 * width()
 
-    # save icon
-    if forReals:
-        newDrawing()
-    newPage(*iconSize)
-    with savedState():
-        font("ActionTextDark-Bold")
-        fontSize(fs)
-        fill(*clr3)
-        text("Save", (textX,textY))
-    if forReals:
-        name = f"{folder}toolbar_{w}_{h}_icon_save{output}"
-        saveImage(name)
+    # # save icon
+    # if forReals:
+    #     newDrawing()
+    # newPage(*iconSize)
+    # with savedState():
+    #     font("ActionTextDark-Bold")
+    #     fontSize(fs)
+    #     fill(*clr3)
+    #     text("Save", (textX,textY))
+    # if forReals:
+    #     name = f"{folder}toolbar_{w}_{h}_icon_save{output}"
+    #     saveImage(name)
 
-    # settings icon
-    if forReals:
-        newDrawing()
-    newPage(*iconSize)
-    with savedState():
-        font("ActionTextDark-Bold")
-        fontSize(fs)
-        fill(*clr1)
-        text("#", (textX,textY))
-    if forReals:
-        name = f"{folder}toolbar_{w}_{h}_icon_settings{output}"
-        saveImage(name)
+    # # settings icon
+    # if forReals:
+    #     newDrawing()
+    # newPage(*iconSize)
+    # with savedState():
+    #     font("ActionTextDark-Bold")
+    #     fontSize(fs)
+    #     fill(*clr1)
+    #     text("#", (textX,textY))
+    # if forReals:
+    #     name = f"{folder}toolbar_{w}_{h}_icon_settings{output}"
+    #     saveImage(name)
 
     if not forReals:
         saveImage(f"all_icons_{w}_{h}_dse2_preview.pdf")
