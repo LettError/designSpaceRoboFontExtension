@@ -251,6 +251,51 @@ for w, h, output, folder, forReals in destinations:
 
 
 
+    # notifications icon
+    # axes icon
+    if forReals:
+        newDrawing()
+    newPage(*iconSize)
+    # first time we have a canvas size
+    # we have to calculate the measurements
+    # so that the icons will look the same
+    # regardless of scale
+    tp = 0.8    # transparency for some things
+    m = 0.05 * width()
+    d = 0.272 * width()
+    fs = 0.44 * width()
+    docLineWidth = 0.05*width()
+
+    left, centerx, right = m+.5*d, .5*width(), width()-m-0.5*d
+    top, centery, bottom = height()-m-.5*d, .5*height(),    m+0.5*d
+    wdth = width()-2*m
+    hght = height()-2*m
+    steps = 50
+    items = {}
+    with savedState():
+        for i in range(steps):
+            f = i/steps
+            #c1 = ip3(clr1, clr2, f)
+            c1 = ip3(instanceColors[(0,0)], instanceColors[(2,0)], f)
+            c2 = ip3(instanceColors[(2,0)], instanceColors[(1,2)], f)
+            c3 = ip3(instanceColors[(1,0)], instanceColors[(0,2)], f)
+            p1 = ip2((left, top), (right,  top), f)
+            p2 = ip2((left, centery), (right, centery), f)
+            fill(*c1)
+            p3 = ip2((left, bottom), (right,  bottom), f)
+            oval(p1[0]-.5*d,p1[1]-.5*d, d, d)
+            fill(*c2)
+            oval(p2[0]-.5*d,p2[1]-.5*d, d, d)
+            fill(*c3)
+            oval(p3[0]-.5*d,p3[1]-.5*d, d, d)
+    if forReals:
+        name = f"{folder}toolbar_{w}_{h}_icon_notifications{output}"
+        saveImage(name)
+
+
+
+
+
     # problems icon
     if forReals:
         newDrawing()
@@ -263,11 +308,11 @@ for w, h, output, folder, forReals in destinations:
         strokeWidth(d)
         lineCap("round")
         stroke(*clr1, tp)
-        line((left, top), (right, top))
+        line((left, top), (centerx, top))
         stroke(*clr2, tp)
         line((left, top), (left, bottom))
         stroke(*clr4, tp)
-        line((right, top), (right, bottom))
+        line((right, top), (right, centery))
         stroke(*clr3, tp)
         line((left, bottom), (right, bottom))
         steps = 3
@@ -276,11 +321,14 @@ for w, h, output, folder, forReals in destinations:
         stroke(None)
         rd = 0.4*d
         blendMode("normal")
+        skip = [(0,0),]
         for y in range(steps):
             fy = y / (steps-1)
             p1 = ip2((left, top), (right, top), fy)
             p2 = ip2((left, bottom), (right, bottom), fy)
             for x in range(steps):
+                if (x,y) in skip:
+                    continue
                 fx = x / (steps-1)
                 p = ip2(p1, p2, fx)
                 if 0 < fx < 1 and 0 < fy < 1:
@@ -332,7 +380,8 @@ for w, h, output, folder, forReals in destinations:
         holes = [(0,0), (2,1), (1,1), (0,2), (2,0)]
         fill(1)
         for p in holes:
-            rect(*windows[p])
+            if p in windows:
+                rect(*windows[p])
     if forReals:
         name = f"{folder}toolbar_{w}_{h}_icon_location_labels{output}"
         saveImage(name)

@@ -31,6 +31,7 @@
 <li>You can edit all sorts of labels and localisations.</li>
 <li>You can open source UFOs.</li>
 <li>Validate designspaces and point out compatibility and structural issues.</li>
+<li>DesignspaceEditor2 sends designspace-related notifications.</li>
 </ul>
 
 <h2 id="toc">Contents</h2>
@@ -44,18 +45,19 @@
     <li><a href="#toc_8">Variable Fonts Tab</a></li>
     <li><a href="#toc_9">Problems Tab</a></li>
     <li><a href="#toc_10">Notes Tab</a></li>
+    <li><a href="#toc_11">Notifications</a></li>
 </ul>
 
 <h2 id="toc_1">Designspace Editor Usage <a href="#toc">↑</a></h2>
 
 <ol>
 <li>From the RF extensions menu, open an existing designspace file or create a new one.</li>
-<li>Define some axes. Give them useful names.</li>
-<li>Add some source UFOs, edit their axis values. Make sure there is at least 1 source on the default value of all axes.</li>
-<li>Then save the document in the same folder as your sources, or one level up. The document will store a relative path to the sources and instances, so it makes sense to keep them close together.</li>
+<li>You should start by defining at least one axis in the Axes tab. Give it a useful names make sure it has the appropriate tag, and make sure the minimum, default and maximum values make sense.</li>
+<li>Add source UFOs with the file dialog, or from the UFOs that are open in RF. Edit their axis values. Make sure there is at least 1 source on the default value of all axes.</li>
+<li>Then save the document in <b>the same folder as your sources, or one level up.</b> The document will store a relative path to the sources and instances, so it makes sense to keep them close together.</li>
 <li>Define instances, rules, axis labels, location labels and whatever else you need to do.</li>
 <li>Preview selected instances in text. </li>
-<li>Save.</li>
+<li>Save early and often.</li>
 </ol>
 
 
@@ -451,6 +453,318 @@ This uses <a
 <h2 id="toc_10">Notes Tab <a href="#toc">↑</a></h3>
 
 <p>This tab is for your notes and are stored in the Designspace. This can be any kind of note or remark. Notes are not processed in any way.</p>
+
+
+<p><img src="../resources/toolbar_500_500_icon_notifications.png" alt="DSE2 notes icon"></p>
+
+<h2 id="toc_11">Notifications<a href="#toc">↑</a></h3>
+
+<p>DesignspaceEditor2 sends notifications for designspace related events. Tools can subscribe to these and access to the designspace data.</p>
+
+
+
+<table>
+        <thead>
+            <td>
+                <b>Notification name</b>
+            </td>
+            <td>
+                <b>Description</b>
+            </td>
+            <td>
+                <b>Possble actions</b>
+            </td>
+        </thead>
+    <tr>
+        <td>
+            <b>Document related notifications</b>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorWillOpenDesignspace</code>
+        </td>
+        <td>DSE is about to open a designspace file.</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>
+            <code>designspaceEditorDidOpenDesignspace</code>
+        </td>
+        <td>DSE has opened a designspace file.</td>
+        <td>Load fonts, build mutators.</td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorDidCloseDesignspace</code>
+        </td>
+        <td>DSE has closed designspace file.</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>
+            <b>Axis related notifications</b>
+        </td>
+        <td>
+        </td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorAxisLabelsDidChange</code>
+        </td>
+        <td>DSE has changed one of the axis labels.</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorAxisMapDidChange</code>
+        </td>
+        <td>DSE has changed the map of one of the axes. </td>
+        <td>Geometry has changed.</td>
+</tr>
+    <tr>
+        <td>
+            <code>designspaceEditorAxesWillRemoveAxis</code>
+        </td>
+        <td>DSE is about to remove one of the axes.</td>
+        <td>Geometry will change.</td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorAxesDidRemoveAxis</code>
+        </td>
+        <td>DSE has removed one of the axes.</td>
+        <td>Geometry has changed.</td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorAxesWillAddAxis</code>
+        </td>
+        <td>DSE is about to add a new axis.</td>
+        <td>Rebuild</td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorAxesDidAddAxis</code>
+        </td>
+        <td>DSE has added a new axis.</td>
+        <td>Geometry has changed. Probably the new system will look the same, the geometry has changed and things need to rebuild anyway.</td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorAxesDidChangeSelection</code>
+        </td>
+        <td>DSE changed the selected axis. (clarify)</td>
+        <td>No rebuild needed.</td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorAxesDidChange</code>
+        </td>
+        <td>DSE made a change to the axes. (clarify)</td>
+        <td>Rebuild</td>
+    </tr>
+
+    <tr>
+        <td>
+            <b>Source related notifications</b>
+        </td>
+        <td>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorSourcesWillRemoveSource</code>
+        </td>
+        <td>DSE is about to remove a source.</td>
+        <td>Geometry will change.</td>
+    </tr>
+
+    <tr>
+        <td>
+            <code>designspaceEditorSourcesDidRemoveSource</code>
+        </td>
+        <td>DSE has removed a source.</td>
+        <td>Geometry has changed.</td>
+    </tr>
+
+    <tr>
+        <td>
+            <code>designspaceEditorSourcesWillAddSource</code>
+        </td>
+        <td>DSE is about to add a source.</td>
+        <td>Geometry will change.</td>
+    </tr>
+
+    <tr>
+        <td>
+            <code>designspaceEditorSourcesDidAddSource</code>
+        </td>
+        <td>DSE has added a source.</td>
+        <td>Rebuild</td>
+    </tr>
+
+
+    <tr>
+        <td>
+            <code>designspaceEditorSourcesDidChangeSelection</code>
+        </td>
+        <td>DSE changed the selected source. (clarify)</td>
+        <td></td>
+    </tr>
+
+
+    <tr>
+        <td>
+            <code>designspaceEditorSourcesDidCloseUFO</code>
+        </td>
+        <td>DSE closed a UFO: there will be no visible change, but the source was closed RF and the UFO will load from file.</td>
+        <td>Rebuild.</td>
+    </tr>
+
+    <tr>
+        <td>
+            <code>designspaceEditorSourcesDidOpenUFO</code>
+        </td>
+        <td>DSE opened a UFO.</td>
+        <td>Rebuild: there will be no visible change, but the source is now open in RF and the source will load from there.</td>
+    </tr>
+
+    <tr>
+        <td>
+            <code>designspaceEditorSourcesDidChanged</code>
+        </td>
+        <td>DSE noticed one or more of its sources changed.</td>
+        <td>Rebuild</td>
+    </tr>
+
+
+    <tr>
+        <td>
+            <b>Instance related notifications</b>
+        </td>
+        <td>
+        </td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorInstancesWillRemoveInstance</code>
+        </td>
+        <td>DSE is about to remove an instance.</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorInstancesDidRemoveInstance</code>
+        </td>
+        <td>DSE has removed an instance.</td>
+        <td>Rebuild instance lists</td>
+    </tr>
+
+    <tr>
+        <td>
+            <code>designspaceEditorInstancesWillAddInstance</code>
+        </td>
+        <td>DSE is about to add an instance.</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>
+            <code>designspaceEditorInstancesDidAddInstance</code>
+        </td>
+        <td>DSE had added an instance.</td>
+        <td>Rebuild instance lists</td>
+    </tr>
+
+    <tr>
+        <td>
+            <code>designspaceEditorInstancesDidChangeSelection</code>
+        </td>
+        <td>DSE changed the selected instance.</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>
+            <code>designspaceEditorInstancesDidOpen</code>
+        </td>
+        <td>DSE opened an instance. (Clarify)</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorInstancesDidChange</code>
+        </td>
+        <td>DSE noticed one or more of its instances changed. (Clarify)</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>
+            <b>Rule related notifications</b>
+        </td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorRulesDidChange</code>
+        </td>
+        <td>DSE reports one or more of the rules changed.</td>
+        <td></td>
+    </tr>
+
+
+    <tr>
+        <td>
+            <b>Label related notifications</b>
+        </td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorLabelsDidChange</code>
+        </td>
+        <td>DSE reports one or more of the location labels changed.</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>
+            <b>Note related notifications</b>
+        </td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorNotesDidChange</code>
+        </td>
+        <td>DSE reports a change in the notes.</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>
+            <b>Any change</b>
+        </td>
+        <td>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <code>designspaceEditorDidChange</code>
+        </td>
+        <td>DSE reports every change.</td>
+        <td></td>
+    </tr>
+
+</table>
 
 </body>
 </html>
