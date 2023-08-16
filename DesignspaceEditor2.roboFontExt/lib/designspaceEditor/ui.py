@@ -1074,6 +1074,8 @@ class DesignspaceEditorController(WindowController):
             self.instancesPreview.w.show()
         except Exception:
             self.instancesPreview = InstancesPreview(operator=self.operator)
+            self.instancesPreview.w.input.set("HELLO")
+            self.instancesPreview.inputCallback(self.instancesPreview.w.input)
 
     def instancesListEditCallback(self, sender):
         for wrappedInstanceDescriptor in sender:
