@@ -21,7 +21,7 @@ class InstancesPreview(Subscriber, WindowController):
         self.w.input = vanilla.EditText((10, 10, -120, 22), callback=self.inputCallback)
         self.w.singleLine = vanilla.CheckBox((-100, 10, 100, 22), "Single line", value=True, callback=self.singleLineCheckboxCallback)
         self.w.hl = vanilla.HorizontalLine((0, 41, 0, 1))
-        self.w.preview = MultiLineView((0, 42, 0, 0), pointSize=40, displayOptions=dict(Beam=False))
+        self.w.preview = MultiLineView((0, 42, 0, 0), pointSize=60, displayOptions=dict(Beam=False))
         self.w.preview.setFont(dummyFont)
 
     def started(self):
