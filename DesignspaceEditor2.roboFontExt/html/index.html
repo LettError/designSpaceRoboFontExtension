@@ -151,7 +151,11 @@
 50 &gt; 10
 100 &gt; 20
 125 &gt; 66
-150 &gt; 990</code></pre></div>
+150 &gt; 990
+
+# Please note: in these examples, lines starting with # are comments.
+# The comments are not saved in the designspace.
+</code></pre></div>
 
 <ul>
     <li>
@@ -172,8 +176,9 @@
 
 <h3>Axis Labels syntax</h3>
 
-<div><pre><code class="language-none"># if the line starts with a <b>?</b> it will be a localised axis name
-# starts with a ? &lt;language tag&gt; &lt;localised string&gt;
+<div><pre><code class="language-none"># Axis Labels syntax
+
+# if the line starts with a ? &lt;language tag&gt; &lt;localised string&gt;
 ? fr &#39;Chasse&#39;
 
 # &lt;label name&gt; &lt;value&gt;
@@ -182,15 +187,23 @@
 # optionally add (elidable) or (olderSibling)
 &#39;Normal&#39; 100 (elidable) (olderSibling)
 
-# set a range for a label name
-# &lt;label name&gt; &lt;min value&gt; &lt;default value&gt; &lt;max value&gt;
-&#39;Extra Wide&#39; 150 150 300
+# optionally add [linkeduservalue]
+# for instance: upright style links to italic, on discrete italic axis:
+&#39;Upright&#39; 0 (elidable) [1]
+&#39;Italic&#39; 1 [0]
 
 # set a range for a label name
+# &lt;label name&gt; &lt;min value&gt; &lt;default value&gt; &lt;max value&gt;
+&#39;Extra Wide&#39; 150 225 300
 &#39;Extra Light&#39; 200 200 250
+
 # add localisations for this &#39;Extra Light&#39; label
 ? de &#39;Extraleicht&#39;
-? fr &#39;Extra léger&#39;</code></pre></div>
+? fr &#39;Extra léger&#39;
+
+# Please note: in these examples, lines starting with # are comments.
+# The comments are not saved in the designspace.
+</code></pre></div>
 
 <ul>
     <li>
@@ -315,10 +328,15 @@ a b c d</code></pre></div>
 <li>
 The axis columns accepts two values separated by a space to indicate an anisotropic location. For instance: <code>900 800</code> means: <em>horizontal interpolation at value <code>900</code> and vertical interpolation at value <code>800</code></em>.</li>
 
-<li><b>Please note: anisotropic locations are not supported in Variable Fonts.</b> Tools that generate fonts from designspaces may ignore the second value, or ignore the instance. It is a useful tool during design and so designspaces can store them.</li>
+<li><b>Please note: anisotropic locations are not supported in Variable Fonts.</b> Tools that generate fonts from designspaces may ignore the second value, or ignore the instance. It is a useful tool during exploration and design and so designspaces can store them.</li>
 <li>MutatorMath will calculate anisotropic instances. See UFOOperator</li>
-<li>Note: it is not clear what to expect of interactions between an axis map and an anisotropic location. The authors advise to experiment with anisotropy <strong>before</strong> defining axis maps.</li>
+<li>Note: it is not clear what to expect of interactions between an axis map and an anisotropic location. The authors advise to experiment with anisotropy <strong>before</strong> defining axis maps for anisotropic instance locations.</li>
 </ul>
+
+<p>
+    <img src="../resources/anisotropic_instance.jpg" alt="DSE2 Instance Preview Window with anisotropic instance.">
+</p>
+
 
 <h3>Instances Tab Buttons</h3>
 
@@ -347,9 +365,7 @@ The axis columns accepts two values separated by a space to indicate an anisotro
 
 <h3>Rules syntax</h3>
 
-<div><pre><code class="language-none"># Please note: in these examples, lines starting with # are comments.
-# The comments are not saved in the designspace.
-
+<div><pre><code class="language-none"># Rules syntax
 
 # The name of the rule starts on a new line.
 # The contents of the rule is indented:
@@ -364,6 +380,9 @@ switching a&#39;s
 
     # a condition set with two conditions
     weight 800-1000 width 200-1000
+
+# Please note: in these examples, lines starting with # are comments.
+# The comments are not saved in the designspace.
 </code></pre></div>
 
 
@@ -377,11 +396,9 @@ switching a&#39;s
 
 <h3>Location Labels syntax</h3>
 
-<div><pre><code class="language-none"># Please note: in these examples, lines starting with # are comments.
-# The comments are not saved in the designspace.
+<div><pre><code class="language-none"># Location Labels
 
-
-# styleName
+# styleName:
 Neue Style Italic
 
     # optional localisations
@@ -394,7 +411,11 @@ Neue Style Italic
     weight 300
     width 40
     italic 1
-    boldness 30</code></pre></div>
+    boldness 30
+
+# Please note: in these examples, lines starting with # are comments.
+# The comments are not saved in the designspace.
+</code></pre></div>
 
 <p><img src="../resources/toolbar_500_500_icon_variable_fonts.png" alt="DSE2 variable fonts icon"></p>
 
@@ -405,20 +426,19 @@ Neue Style Italic
 
 <h3>Variable Fonts syntax</h3>
 
-<div><pre><code class="language-none"># Please note: in these examples, lines starting with # are comments.
-# The comments are not saved in the designspace.
-
-# variable font text spec
+<div><pre><code class="language-none"># Variable Font syntax
 
 &lt;name of the variableFont&gt;
     # indent
     &gt; "&lt;fileName of the variable font file&gt;"   # optional
 
+    &gt; "path/to/my/fontVF.ttf"
+
     # a full axis subset
     # i.e. "weight", not "wght"
     &lt;axisName&gt;
 
-    # example
+    # example: include the whole weight axis
     weight
     ...
 
@@ -437,6 +457,8 @@ Neue Style Italic
     weight 300 400 700
     ...
 
+# Please note: in these examples, lines starting with # are comments.
+# The comments are not saved in the designspace.
 </code></pre></div>
 
 
@@ -448,7 +470,7 @@ Neue Style Italic
 This uses <a
     href="https://github.com/LettError/DesignspaceProblems"
     >DesignspaceProblems.
-</a> to do the analysis.
+</a> to do the analysis. It aims to list all the problems that prevent the previews and test fonts from being generated. It does not go very deep into the more exotic issues that may occur.
 
 </p>
 
