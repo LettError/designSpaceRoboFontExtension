@@ -20,6 +20,7 @@ destinations = [
     (30,30, ".png", "../DesignspaceEditor2.roboFontExt/resources/", True),
     (500,500, ".png", "../DesignspaceEditor2.roboFontExt/resources/", True),
     (100,100, ".png", "../assets/", True),
+    (500,500, ".png", "../assets/", True),
     (1000,1000, ".png", "../icons/", True),
     (1000,1000, ".pdf", "../icons/", False),
     ]
