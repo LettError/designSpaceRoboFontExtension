@@ -12,6 +12,8 @@ class InstancesPreview(Subscriber, WindowController):
     def build(self, operator=None):
         self.operator = operator
         dummyFont = RFont(showInterface=False)
+        upm = self.getUnitsPerEm(self.operator.findDefault().path)
+        dummyFont.info.unitsPerEm = upm
 
         self.w = vanilla.FloatingWindow((700, 400), "Instances Preview", minSize=(500, 300))
         self.w.input = vanilla.EditText((10, 10, -120, 22), callback=self.inputCallback)
@@ -22,6 +24,13 @@ class InstancesPreview(Subscriber, WindowController):
 
     def started(self):
         self.w.open()
+        
+    def getUnitsPerEm(self,fontPath):
+        allFontsDict = {f.path:f for f in AllFonts()}
+        if fontPath in allFontsDict:
+            return allFontsDict[fontPath].info.unitsPerEm
+        else:
+            return OpenFont(fontPath,False).info.unitsPerEm
 
     def inputCallback(self, sender):
         glyphNames = splitText(sender.get(), self.operator.getCharacterMapping())
