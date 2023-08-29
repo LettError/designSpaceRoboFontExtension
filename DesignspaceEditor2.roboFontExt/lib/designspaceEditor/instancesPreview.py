@@ -12,7 +12,15 @@ class InstancesPreview(Subscriber, WindowController):
     def build(self, operator=None):
         self.operator = operator
         dummyFont = RFont(showInterface=False)
-        upm = self.getUnitsPerEm(self.operator.findDefault().path)
+        
+        upms = set()
+        for instance in self.operator.instances:
+            continuousLocation, discreteLocation = self.operator.splitLocation(instance.location)
+            infoMutator = self.operator.getInfoMutator(discreteLocation)
+            info = infoMutator.makeInstance(continuousLocation)
+            upms.add(info.unitsPerEm)
+
+        upm = max(upms) if upms else 1000
         dummyFont.info.unitsPerEm = upm
 
         self.w = vanilla.FloatingWindow((700, 400), "Instances Preview", minSize=(500, 300))
@@ -24,13 +32,6 @@ class InstancesPreview(Subscriber, WindowController):
 
     def started(self):
         self.w.open()
-        
-    def getUnitsPerEm(self,fontPath):
-        allFontsDict = {f.path:f for f in AllFonts()}
-        if fontPath in allFontsDict:
-            return allFontsDict[fontPath].info.unitsPerEm
-        else:
-            return OpenFont(fontPath,False).info.unitsPerEm
 
     def inputCallback(self, sender):
         glyphNames = splitText(sender.get(), self.operator.getCharacterMapping())
