@@ -1,5 +1,5 @@
 import vanilla
-from mojo.UI import MultiLineView, splitText
+from mojo.UI import MultiLineView, splitText, GlyphRecord
 from mojo.subscriber import WindowController, Subscriber, registerRoboFontSubscriber
 
 from mojo.roboFont import RFont, RGlyph
@@ -25,8 +25,13 @@ class InstancesPreview(Subscriber, WindowController):
 
     def inputCallback(self, sender):
         glyphNames = splitText(sender.get(), self.operator.getCharacterMapping())
-        glyphs = []
+        glyphRecords = []
+        possibleKerningPairs = ((side1, side2) for side1, side2 in zip(glyphNames[:-1], glyphNames[1:]))
         for instance in self.operator.instances:
+            previousGlyphName = None
+            continuousLocation, discreteLocation = self.operator.splitLocation(instance.location)
+            kerningMutator = self.operator.getKerningMutator(possibleKerningPairs, discreteLocation=discreteLocation)
+            kerningObject = kerningMutator.makeInstance(continuousLocation)
             for glyphName in glyphNames:
                 # do not bend, reasoning: the instance locations are in designspace values.
                 glyph = self.operator.makeOneGlyph(glyphName, instance.location, decomposeComponents=True)
@@ -34,9 +39,19 @@ class InstancesPreview(Subscriber, WindowController):
                     dest = RGlyph()
                     dest.fromMathGlyph(glyph)
                     dest.name = glyph.name
-                    glyphs.append(dest)
-            glyphs.append(self.w.preview.createNewLineGlyph())
-        self.w.preview.set(glyphs)
+
+                    glyphRecord = GlyphRecord(dest.asDefcon())
+
+                    if previousGlyphName:
+                        glyphRecords[-1].xAdvance = kerningObject.get((previousGlyphName, glyphName))
+
+                    glyphRecords.append(glyphRecord)
+
+                previousGlyphName = glyphName
+
+            glyphRecords.append(GlyphRecord(self.w.preview.createNewLineGlyph()))
+
+        self.w.preview.setGlyphRecords(glyphRecords)
 
     designspaceEditorInstancesDidChangeDelay = 0.1
 
@@ -63,5 +78,5 @@ class InstancesPreview(Subscriber, WindowController):
 
 if __name__ == '__main__':
     c = InstancesPreview(operator=CurrentDesignspace())
-    c.w.input.set("HELLO")
+    c.w.input.set("HELLOVAH")
     c.inputCallback(c.w.input)
