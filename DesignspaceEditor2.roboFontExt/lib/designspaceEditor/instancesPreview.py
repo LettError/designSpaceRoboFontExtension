@@ -12,6 +12,15 @@ class InstancesPreview(Subscriber, WindowController):
     def build(self, operator=None):
         self.operator = operator
         dummyFont = RFont(showInterface=False)
+        
+        upms = set()
+        for instance in self.operator.instances:
+            continuousLocation, discreteLocation = self.operator.splitLocation(instance.location)
+            infoMutator = self.operator.getInfoMutator(discreteLocation)
+            info = infoMutator.makeInstance(continuousLocation)
+            upms.add(info.unitsPerEm)
+
+        dummyFont.info.unitsPerEm = max(upms) if upms else 1000
 
         self.w = vanilla.FloatingWindow((700, 400), "Instances Preview", minSize=(500, 300))
         self.w.input = vanilla.EditText((10, 10, -120, 22), callback=self.inputCallback)
