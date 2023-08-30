@@ -22,7 +22,7 @@ class InstancesPreview(Subscriber, WindowController):
     def build(self, operator=None):
         self.operator = operator
         dummyFont = RFont(showInterface=False)
-        
+
         upms = set()
         for instance in self.operator.instances:
             continuousLocation, discreteLocation = self.operator.splitLocation(instance.location)
