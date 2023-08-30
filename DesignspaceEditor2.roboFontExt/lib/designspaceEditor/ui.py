@@ -11,7 +11,7 @@ from mojo.UI import CodeEditor, SliderEditStepper
 from mojo.events import addObserver, removeObserver
 from mojo.subscriber import WindowController
 from mojo.extensions import getExtensionDefault, ExtensionBundle
-from mojo.roboFont import AllFonts, OpenFont
+from mojo.roboFont import AllFonts, OpenFont, RFont, internalFontClasses
 
 from lib.tools.debugTools import ClassNameIncrementer
 from lib.tools.misc import coalescingDecorator
@@ -65,6 +65,12 @@ try:
 except Exception:
     # older systems
     infoImage = AppKit.NSImage.imageNamed_(AppKit.NSImageNameInfo)
+
+
+class DesingspaceEditorOperator(ufoOperator.UFOOperator):
+
+    def _instantiateFont(self, path):
+        return internalFontClasses.createFontObject(path)
 
 
 class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
@@ -426,7 +432,7 @@ class DesignspaceEditorController(WindowController):
             self.load(path)
 
     def build(self):
-        self.operator = ufoOperator.UFOOperator()
+        self.operator = DesingspaceEditorOperator()
 
         self.w = vanilla.Window((900, 500), "Designspace Editor", minSize=(720, 400))
         self.w.vanillaWrapper = weakref.ref(self)
@@ -828,7 +834,10 @@ class DesignspaceEditorController(WindowController):
                 for index in reversed(self.sources.list.getSelection()):
                     item = self.sources.list[index]
                     with SendNotification("Sources", action="RemoveSource", designspace=self.operator):
-                        self.operator.sources.remove(item["object"])
+                        sourceDescriptor = item["object"]
+                        self.operator.sources.remove(sourceDescriptor)
+                        if sourceDescriptor.name in self.operator.fonts:
+                            del self.operator.fonts[sourceDescriptor.name]
                     self.sources.list.remove(item)
         self.setDocumentNeedSave(True, who="Sources")
 
@@ -861,6 +870,7 @@ class DesignspaceEditorController(WindowController):
                             sourceDescriptor.filename = os.path.relpath(font.path, os.path.dirname(self.operator.path))
                         else:
                             sourceDescriptor.filename = font.path
+                        self.operator.fonts[sourceDescriptor.name] = font.asDefcon()
                         item.update(self.wrapSourceDescriptor(sourceDescriptor))
                         self.setDocumentNeedSave(True)
 
@@ -896,6 +906,7 @@ class DesignspaceEditorController(WindowController):
                 location=defaultLocation
             )
             notification["source"] = sourceDescriptor
+        self.operator.fonts[sourceDescriptor.name] = font.asDefcon()
         self.sources.list.append(self.wrapSourceDescriptor(sourceDescriptor))
         self.setDocumentNeedSave(True)
 
@@ -1261,11 +1272,14 @@ class DesignspaceEditorController(WindowController):
             for index in selection:
                 item = listObject[index]
                 descriptor = item["object"]
-                path = descriptor.path
-                if path is None:
+                if descriptor.path is None:
+                    continue
+                name = descriptor.name
+                internalFontObject = self.operator.fonts.get(name)
+                if internalFontObject is None:
                     continue
                 try:
-                    font = OpenFont(path, showInterface=True)
+                    font = RFont(internalFontObject, showInterface=True)
                     SendNotification.single("Sources", action="Open", font=font, designspace=self.operator)
                 except Exception as e:
                     print(f"Bad UFO: {path}, {e}")
