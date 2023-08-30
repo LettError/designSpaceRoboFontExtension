@@ -107,6 +107,9 @@ designspaceEvents = [
 
     # any change
     "designspaceEditorDidChange",
+
+    # external glyph changes
+    "designspaceEditorGlyphDidChange"
 ]
 
 
@@ -119,10 +122,16 @@ def designspaceSelectionEventExtractor(subscriber, info):
     info["selectedItems"] = info["lowLevelEvents"][-1]["selectedItems"]
 
 
+def designspaceGlyphDidChangeExtractor(subscriber, info):
+    designspaceEventExtractor(subscriber, info)
+    info["glyph"] = info["lowLevelEvents"][-1]["glyph"]
+
+
 eventInfoExtractionFunctionsMap = dict(
     designspaceEditorAxesDidChangeSelection=designspaceSelectionEventExtractor,
     designspaceEditorSourcesDidChangeSelection=designspaceSelectionEventExtractor,
-    designspaceEditorInstancesDidChangeSelection=designspaceSelectionEventExtractor
+    designspaceEditorInstancesDidChangeSelection=designspaceSelectionEventExtractor,
+    designspaceEditorGlyphDidChange=designspaceGlyphDidChangeExtractor
 )
 
 for event in designspaceEvents:
