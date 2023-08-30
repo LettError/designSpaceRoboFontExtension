@@ -20,8 +20,7 @@ class InstancesPreview(Subscriber, WindowController):
             info = infoMutator.makeInstance(continuousLocation)
             upms.add(info.unitsPerEm)
 
-        upm = max(upms) if upms else 1000
-        dummyFont.info.unitsPerEm = upm
+        dummyFont.info.unitsPerEm = max(upms) if upms else 1000
 
         self.w = vanilla.FloatingWindow((700, 400), "Instances Preview", minSize=(500, 300))
         self.w.input = vanilla.EditText((10, 10, -120, 22), callback=self.inputCallback)
