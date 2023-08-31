@@ -2,14 +2,14 @@ import vanilla
 from mojo.UI import MultiLineView, splitText, GlyphRecord
 from mojo.subscriber import WindowController, Subscriber
 
-from mojo.roboFont import RFont, RGlyph
+from mojo.roboFont import RFont, RGlyph, internalFontClasses
 
 
 class InstancesPreview(Subscriber, WindowController):
 
     debug = True
 
-    def build(self, operator=None):
+    def build(self, operator=None, selectedInstances=None, previewString=""):
         self.operator = operator
         dummyFont = RFont(showInterface=False)
 
@@ -28,31 +28,42 @@ class InstancesPreview(Subscriber, WindowController):
         self.w.hl = vanilla.HorizontalLine((0, 41, 0, 1))
         self.w.preview = MultiLineView((0, 42, 0, 0), pointSize=60, displayOptions=dict(Beam=False, displayMode="Multi Line", Stroke=False, Fill=True))
         self.w.preview.setFont(dummyFont)
+        self.selectedInstances = selectedInstances or []
+        self.setPreviewString(previewString)
 
     def started(self):
         self.w.open()
 
     def destroy(self):
-        pass
+        self.operator = None
+        self.selectedInstances = None
+
+    def setPreviewString(self, value):
+        self.w.input.set(value)
+        self.updatePreview()
+
+    def updatePreview(self):
+        self.inputCallback(self.w.input)
 
     def inputCallback(self, sender):
         glyphNames = splitText(sender.get(), self.operator.getCharacterMapping())
         glyphRecords = []
         possibleKerningPairs = ((side1, side2) for side1, side2 in zip(glyphNames[:-1], glyphNames[1:]))
-        for instance in self.operator.instances:
+        if not self.selectedInstances:
+            self.selectedInstances = self.operator.instances
+        for instance in self.selectedInstances:
             previousGlyphName = None
             continuousLocation, discreteLocation = self.operator.splitLocation(instance.location)
             kerningMutator = self.operator.getKerningMutator(possibleKerningPairs, discreteLocation=discreteLocation)
             kerningObject = kerningMutator.makeInstance(continuousLocation)
             for glyphName in glyphNames:
                 # do not bend, reasoning: the instance locations are in designspace values.
-                glyph = self.operator.makeOneGlyph(glyphName, instance.location, decomposeComponents=True)
-                if glyph is not None:
-                    dest = RGlyph()
-                    dest.fromMathGlyph(glyph)
-                    dest.name = glyph.name
+                mathGlyph = self.operator.makeOneGlyph(glyphName, instance.location, decomposeComponents=True)
+                if mathGlyph is not None:
+                    dest = internalFontClasses.createGlyphObject()
+                    mathGlyph.extractGlyph(dest)
 
-                    glyphRecord = GlyphRecord(dest.asDefcon())
+                    glyphRecord = GlyphRecord(dest)
 
                     if previousGlyphName:
                         glyphRecords[-1].xAdvance = kerningObject.get((previousGlyphName, glyphName))
@@ -74,32 +85,35 @@ class InstancesPreview(Subscriber, WindowController):
             self.w.preview.setDisplayStates(dict(displayMode="Single Line"))
 
     def designspaceEditorInstancesDidChange(self, notification):
-        self.inputCallback(self.w.input)
+        self.updatePreview()
 
     def designspaceEditorSourcesDidChanged(self, notification):
-        self.inputCallback(self.w.input)
+        self.updatePreview()
 
     def designspaceEditorAxesDidChange(self, notification):
-        self.inputCallback(self.w.input)
+        self.updatePreview()
 
     def designspaceEditorSourceGlyphDidChange(self, notification):
-        self.inputCallback(self.w.input)
+        self.updatePreview()
 
     def designspaceEditorInfoKerningDidChange(self, notification):
-        self.inputCallback(self.w.input)
+        self.updatePreview()
 
     def designspaceEditorSourceKerningDidChange(self, notification):
-        self.inputCallback(self.w.input)
+        self.updatePreview()
 
     def designspaceEditorGroupsKerningDidChange(self, notification):
-        self.inputCallback(self.w.input)
+        self.updatePreview()
 
     def designspaceEditorGroupsFontDidChangedExternally(self, notification):
-        self.inputCallback(self.w.input)
+        self.updatePreview()
 
+    def designspaceEditorInstancesDidChangeSelection(self, notification):
+        if self.operator == notification["designspace"]:
+            self.selectedInstances = notification["selectedItems"]
+            self.updatePreview()
 
 
 if __name__ == '__main__':
     c = InstancesPreview(operator=CurrentDesignspace())
-    c.w.input.set("HELLOVAH")
-    c.inputCallback(c.w.input)
+    c.setPreviewString("HELLOVAH")
