@@ -23,8 +23,8 @@ from designspaceEditor.designspaceLexer import DesignspaceLexer, TextLexer
 from designspaceEditor.parsers import mapParser, rulesParser, labelsParser, glyphNameParser, variableFontsParser
 from designspaceEditor.parsers.parserTools import numberToString
 from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges, symbolImage, NumberListFormatter, SendNotification
-
 from designspaceEditor.instancesPreview import InstancesPreview
+from designspaceEditor.designspaceSubscribers import registerOperator, unregisterOperator
 
 
 designspaceBundle = ExtensionBundle("DesignspaceEditor2")
@@ -339,7 +339,25 @@ class BaseButtonPopover:
         pass
 
 
-class LocationLabelsPreview:
+class BaseNotificationObserver:
+
+    notifications = []
+
+    def observeNotifications(self):
+        for notification, method in self.notifications:
+            addObserver(self, notification, method)
+
+    def removeObserverNotifications(self):
+        for notification, method in self.notifications:
+            removeObserver(self, notification)
+
+
+class LocationLabelsPreview(BaseNotificationObserver):
+
+    notifications = [
+        ("designspaceEditorDidChange", "designspaceEditorDidChange"),
+        ("designspaceEditorLabelsDidChange", "designspaceEditorLabelsDidChange")
+    ]
 
     def __init__(self, operator):
         self.w = vanilla.FloatingWindow((250, 300), "Labels Preview")
@@ -348,13 +366,11 @@ class LocationLabelsPreview:
         self.w.previewText = vanilla.TextBox((100, 10, -10, 22))
         self.build()
         self.w.bind("close", self.windowCloseCallback)
-        addObserver(self, "designspaceEditorDidChange", "designspaceEditorDidChange")
-        addObserver(self, "designspaceEditorLabelsDidChange", "designspaceEditorLabelsDidChange")
+        self.observeNotifications()
         self.w.open()
 
     def windowCloseCallback(self, sender):
-        removeObserver(self, "designspaceEditorDidChange")
-        removeObserver(self, "designspaceEditorLabelsDidChange")
+        self.removeObserverNotifications()
         self.operator = None
 
     def build(self):
@@ -423,7 +439,12 @@ class LocationLabelsPreview:
         self.controlEdited(setLanguages=self.w.languages.getItem())
 
 
-class DesignspaceEditorController(WindowController):
+class DesignspaceEditorController(WindowController, BaseNotificationObserver):
+
+    notifications = [
+        ("fontDidOpen", "roboFontFontDidOpen"),
+        ("fontWillClose", "roboFontFontWillClose"),
+    ]
 
     def __init__(self, path=None):
         self.holdChanges = HoldChanges()
@@ -557,10 +578,10 @@ class DesignspaceEditorController(WindowController):
             dict(title="Open UFO"),
             dict(title="Add Open UFOs"),
             # dict(title="Load Names"),
-            dict(title="Replace UFO")
+            dict(title="Replace UFO"),
         ]
         self.sources.editorTools = vanilla.SegmentedButton(
-            (72, 5, 300, 22),
+            (72, 5, 400, 22),
             selectionStyle="momentary",
             callback=self.sourcesEditorToolsCallback,
             segmentDescriptions=sourcesEditorToolsSsegmentDescriptions
@@ -700,13 +721,12 @@ class DesignspaceEditorController(WindowController):
 
         self.w.getNSWindow().toolbar().setSelectedItemIdentifier_("axes")
 
-        addObserver(self, "fontDidOpen", "roboFontFontDidOpen")
-        addObserver(self, "fontWillClose", "roboFontFontWillClose")
-        addObserver(self, "designspaceEditorExternalChange", "designspaceEditorExternalChange")
+        self.observeNotifications()
 
     def started(self):
         with SendNotification(action="OpenDesignspace", designspace=self.operator):
             self.w.open()
+        registerOperator(self.operator)
 
     def destroy(self):
         for controller in [self.locationLabelsPreview, self.instancesPreview]:
@@ -716,11 +736,9 @@ class DesignspaceEditorController(WindowController):
                 pass
 
         SendNotification.single(action="CloseDesignspace", designspace=self.operator)
+        unregisterOperator(self.operator)
         del self.operator
-
-        removeObserver(self, "fontDidOpen")
-        removeObserver(self, "fontWillClose")
-        removeObserver(self, "designspaceEditorExternalChange")
+        self.removeObserverNotifications()
 
     def load(self, path):
         if path is not None:
@@ -885,7 +903,6 @@ class DesignspaceEditorController(WindowController):
                     messageText="Cannot replace source UFOs",
                     informativeText="Selection only one source item to be replace"
                 )
-        SendNotification.single("Sources", designspace=self.operator)
 
     def addSourceFromPath(self, path):
         font = OpenFont(path, showInterface=False)
@@ -1197,6 +1214,10 @@ class DesignspaceEditorController(WindowController):
             workspace = AppKit.NSWorkspace.sharedWorkspace()
             workspace.selectFile_inFileViewerRootedAtPath_(item["object"].path, "")
 
+        def forceSourcesChangeCallback(menuItem):
+            self.operator.changed()
+            SendNotification.single("Sources", designspace=self.operator)
+
         def sliderCallback(slider):
             item[columnIdentifier] = slider.get()
 
@@ -1234,6 +1255,9 @@ class DesignspaceEditorController(WindowController):
                 menu.append("----")
                 menu.append(dict(title="Reveal in Finder", callback=revealInFinderCallback))
 
+            menu.append("----")
+            menu.append(dict(title="Force Sources Change", callback=forceSourcesChangeCallback))
+
         return menu
 
     def convertAxisTo(self, axisDescriptor, destinationClass, **kwargs):
@@ -1267,6 +1291,9 @@ class DesignspaceEditorController(WindowController):
 
     def openSelectedItem(self, listObject):
         selection = listObject.getSelection()
+        # todo:
+        # find font if its already open and replace it internally in the operator?
+        # fontPathMap = {font.path: font for font in AllFonts() if font.path is not None}
         if selection:
             progress = self.startProgress("Opening UFO...", len(selection))
             for index in selection:
@@ -1472,27 +1499,15 @@ class DesignspaceEditorController(WindowController):
         font = notification["font"]
         for sourceDescriptor in self.operator.sources:
             if sourceDescriptor.path == font.path:
-                SendNotification.single("Sources", action="OpenUFO", designspace=self.operator)
+                SendNotification.single("Sources", action="OpenUFO", designspace=self.operator, font=font)
+                break
 
     def roboFontFontWillClose(self, notification):
         font = notification["font"]
         for sourceDescriptor in self.operator.sources:
             if sourceDescriptor.path == font.path:
-                SendNotification.single("Sources", action="CloseUFO", designspace=self.operator)
-
-    def roboFontFontDidChange(self, notification):
-        print(notification)
-
-    def roboFontFontDocumentDidChangeExternally(self, notification):
-        print("roboFontFontDocumentDidChangeExternally")
-        font = notification["font"]
-        for sourceDescriptor in self.operator.sources:
-            if sourceDescriptor.path == font.path:
-                SendNotification.single("Sources", action="DidChangeExternally", designspace=self.operator)
-
-    def designspaceEditorExternalChange(self, notification):
-        # external change happend, update everything!
-        self.loadObjects()
+                SendNotification.single("Sources", action="CloseUFO", designspace=self.operator, font=font)
+                break
 
 
 if __name__ == '__main__':

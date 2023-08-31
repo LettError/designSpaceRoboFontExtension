@@ -1,18 +1,8 @@
 import vanilla
 from mojo.UI import MultiLineView, splitText, GlyphRecord
-from mojo.subscriber import WindowController, Subscriber, registerGlyphEditorSubscriber
+from mojo.subscriber import WindowController, Subscriber
 
 from mojo.roboFont import RFont, RGlyph
-
-from designspaceEditor.tools import SendNotification
-
-
-class PreviewGlyphSubscriber(Subscriber):
-
-    debug = True
-
-    def glyphDidChange(self, info):
-        SendNotification.single("Glyph", glyph=info["glyph"])
 
 
 class InstancesPreview(Subscriber, WindowController):
@@ -83,17 +73,8 @@ class InstancesPreview(Subscriber, WindowController):
         else:
             self.w.preview.setDisplayStates(dict(displayMode="Single Line"))
 
-    def designspaceEditorGlyphDidChange(self, info):
-        glyph = info["glyph"]
-        self.operator.glyphChanged(glyph.name)
-        self.inputCallback(self.w.input)
-
     def designspaceEditorInstancesDidChange(self, notification):
         self.inputCallback(self.w.input)
-
-    #def designspaceEditorInstancesDidChangeSelection(self, notification):
-    #    print("designspaceEditorInstancesDidChangeSelection")
-    #    print(notification)
 
     def designspaceEditorSourcesDidChanged(self, notification):
         self.inputCallback(self.w.input)
@@ -101,11 +82,24 @@ class InstancesPreview(Subscriber, WindowController):
     def designspaceEditorAxesDidChange(self, notification):
         self.inputCallback(self.w.input)
 
+    def designspaceEditorSourceGlyphDidChange(self, notification):
+        self.inputCallback(self.w.input)
+
+    def designspaceEditorInfoKerningDidChange(self, notification):
+        self.inputCallback(self.w.input)
+
+    def designspaceEditorSourceKerningDidChange(self, notification):
+        self.inputCallback(self.w.input)
+
+    def designspaceEditorGroupsKerningDidChange(self, notification):
+        self.inputCallback(self.w.input)
+
+    def designspaceEditorGroupsFontDidChangedExternally(self, notification):
+        self.inputCallback(self.w.input)
+
 
 
 if __name__ == '__main__':
-    registerGlyphEditorSubscriber(PreviewGlyphSubscriber)
-
     c = InstancesPreview(operator=CurrentDesignspace())
     c.w.input.set("HELLOVAH")
     c.inputCallback(c.w.input)

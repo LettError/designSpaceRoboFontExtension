@@ -84,6 +84,9 @@ designspaceEvents = [
     "designspaceEditorSourcesDidOpenUFO",
     "designspaceEditorSourcesDidChanged",
 
+
+    "designspaceEditorSourcesDidChangeExternally",
+
     # instances
     "designspaceEditorInstancesWillRemoveInstance",
     "designspaceEditorInstancesDidRemoveInstance",
@@ -108,8 +111,27 @@ designspaceEvents = [
     # any change
     "designspaceEditorDidChange",
 
-    # external glyph changes
-    "designspaceEditorGlyphDidChange"
+    # =====================
+    # = font data changes =
+    # =====================
+
+    # any font data change
+    # "designspaceEditorSourceDataDidChange",
+
+    # glyph
+    "designspaceEditorSourceGlyphDidChange",
+
+    # font info
+    "designspaceEditorSourceInfoDidChange",
+
+    # font kerning
+    "designspaceEditorSourceKerningDidChange",
+
+    # font groups
+    "designspaceEditorSourceGroupsDidChange",
+
+    # external change, outside of RoboFont
+    "designspaceEditorSourceFontDidChangedExternally",
 ]
 
 
