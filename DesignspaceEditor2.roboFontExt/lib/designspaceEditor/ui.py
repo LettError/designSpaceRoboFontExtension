@@ -823,7 +823,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
     def axesListSelectionCallback(self, sender):
         if self.holdChanges:
             return
-        selectedItems = [sender[index] for index in sender.getSelection()]
+        selectedItems = [sender[index]["object"] for index in sender.getSelection()]
         SendNotification.single("Axes", action="ChangeSelection", selectedItems=selectedItems, designspace=self.operator)
 
     # SOURCES
@@ -962,7 +962,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
     def sourceListSelectionCallback(self, sender):
         if self.holdChanges:
             return
-        selectedItems = [sender[index] for index in sender.getSelection()]
+        selectedItems = [sender[index]["object"] for index in sender.getSelection()]
         SendNotification.single("Sources", action="ChangeSelection", selectedItems=selectedItems, designspace=self.operator)
 
     def sourcesListDropCallback(self, sender, dropInfo):
@@ -1101,9 +1101,11 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         try:
             self.instancesPreview.w.show()
         except Exception:
-            self.instancesPreview = InstancesPreview(operator=self.operator)
-            self.instancesPreview.w.input.set("HELLO")
-            self.instancesPreview.inputCallback(self.instancesPreview.w.input)
+            self.instancesPreview = InstancesPreview(
+                operator=self.operator,
+                selectedInstances=[self.instances.list[index]["object"] for index in self.instances.list.getSelection()],
+                previewString="HELLO"
+            )
 
     def instancesListEditCallback(self, sender):
         for wrappedInstanceDescriptor in sender:
@@ -1113,7 +1115,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
     def instancesListSelectionCallback(self, sender):
         if self.holdChanges:
             return
-        selectedItems = [sender[index] for index in sender.getSelection()]
+        selectedItems = [sender[index]["object"] for index in sender.getSelection()]
         SendNotification.single("Instances", action="ChangeSelection", selectedItems=selectedItems, designspace=self.operator)
 
     # rules
