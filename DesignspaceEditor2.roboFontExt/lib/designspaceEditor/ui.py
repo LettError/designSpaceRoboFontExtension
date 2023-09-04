@@ -1517,6 +1517,7 @@ if __name__ == '__main__':
     designspaceBundle = ExtensionBundle(path=pathForBundle)
 
     path = "/Users/frederik/Documents/dev/JustVanRossum/fontgoggles/Tests/data/MutatorSans/MutatorSans.designspace"
+    path = "/Users/frederik/Desktop/anisotropicIssue/test.designspace"
     #path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v4_original.designspace'
     #path = "/Users/frederik/Desktop/designSpaceEditorText/testFiles/Untitled.designspace"
     #path = None

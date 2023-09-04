@@ -65,7 +65,7 @@ class InstancesPreview(Subscriber, WindowController):
 
                     glyphRecord = GlyphRecord(dest)
 
-                    if previousGlyphName:
+                    if previousGlyphName and glyphRecords:
                         glyphRecords[-1].xAdvance = kerningObject.get((previousGlyphName, glyphName))
 
                     glyphRecords.append(glyphRecord)
