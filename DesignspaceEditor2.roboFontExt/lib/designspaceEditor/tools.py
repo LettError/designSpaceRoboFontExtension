@@ -98,6 +98,20 @@ class SendNotification:
         postEvent(f"{self.notificationPrefix}{who}{prefix}{action}", **kwargs)
 
 
+class UseVarLib:
+
+    def __init__(self, operator, useVarLib=True):
+        self.operator = operator
+        self.useVarLib = useVarLib
+
+    def __enter__(self):
+        self.previousModel = self.operator.useVarlib
+        self.operator.useVarlib = self.useVarLib
+
+    def __exit__(self, type, value, traceback):
+        self.operator.useVarlib = self.previousModel
+
+
 def symbolImage(symbolName, color):
     image = AppKit.NSImage.imageWithSystemSymbolName_accessibilityDescription_(symbolName, "")
     configuration = AppKit.NSImageSymbolConfiguration.configurationWithHierarchicalColor_(

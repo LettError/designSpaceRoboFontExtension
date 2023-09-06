@@ -4,6 +4,8 @@ from mojo.subscriber import WindowController, Subscriber
 
 from mojo.roboFont import RFont, RGlyph, internalFontClasses
 
+from designspaceEditor.tools import UseVarLib
+
 
 class InstancesPreview(Subscriber, WindowController):
 
@@ -11,14 +13,16 @@ class InstancesPreview(Subscriber, WindowController):
 
     def build(self, operator=None, selectedInstances=None, previewString=""):
         self.operator = operator
+
         dummyFont = RFont(showInterface=False)
 
         upms = set()
-        for instance in self.operator.instances:
-            continuousLocation, discreteLocation = self.operator.splitLocation(instance.location)
-            infoMutator = self.operator.getInfoMutator(discreteLocation)
-            info = infoMutator.makeInstance(continuousLocation)
-            upms.add(info.unitsPerEm)
+        with UseVarLib(self.operator, useVarLib=False):
+            for instance in self.operator.instances:
+                continuousLocation, discreteLocation = self.operator.splitLocation(instance.location)
+                infoMutator = self.operator.getInfoMutator(discreteLocation)
+                info = infoMutator.makeInstance(continuousLocation)
+                upms.add(info.unitsPerEm)
 
         dummyFont.info.unitsPerEm = max(upms) if upms else 1000
 
@@ -51,28 +55,30 @@ class InstancesPreview(Subscriber, WindowController):
         possibleKerningPairs = ((side1, side2) for side1, side2 in zip(glyphNames[:-1], glyphNames[1:]))
         if not self.selectedInstances:
             self.selectedInstances = self.operator.instances
-        for instance in self.selectedInstances:
-            previousGlyphName = None
-            continuousLocation, discreteLocation = self.operator.splitLocation(instance.location)
-            kerningMutator = self.operator.getKerningMutator(possibleKerningPairs, discreteLocation=discreteLocation)
-            kerningObject = kerningMutator.makeInstance(continuousLocation)
-            for glyphName in glyphNames:
-                # do not bend, reasoning: the instance locations are in designspace values.
-                mathGlyph = self.operator.makeOneGlyph(glyphName, instance.location, decomposeComponents=True)
-                if mathGlyph is not None:
-                    dest = internalFontClasses.createGlyphObject()
-                    mathGlyph.extractGlyph(dest)
 
-                    glyphRecord = GlyphRecord(dest)
+        with UseVarLib(self.operator, useVarLib=False):
+            for instance in self.selectedInstances:
+                previousGlyphName = None
+                continuousLocation, discreteLocation = self.operator.splitLocation(instance.location)
+                kerningMutator = self.operator.getKerningMutator(possibleKerningPairs, discreteLocation=discreteLocation)
+                kerningObject = kerningMutator.makeInstance(continuousLocation)
+                for glyphName in glyphNames:
+                    # do not bend, reasoning: the instance locations are in designspace values.
+                    mathGlyph = self.operator.makeOneGlyph(glyphName, instance.location, decomposeComponents=True)
+                    if mathGlyph is not None:
+                        dest = internalFontClasses.createGlyphObject()
+                        mathGlyph.extractGlyph(dest)
 
-                    if previousGlyphName and glyphRecords:
-                        glyphRecords[-1].xAdvance = kerningObject.get((previousGlyphName, glyphName))
+                        glyphRecord = GlyphRecord(dest)
 
-                    glyphRecords.append(glyphRecord)
+                        if previousGlyphName and glyphRecords:
+                            glyphRecords[-1].xAdvance = kerningObject.get((previousGlyphName, glyphName))
 
-                previousGlyphName = glyphName
+                        glyphRecords.append(glyphRecord)
 
-            glyphRecords.append(GlyphRecord(self.w.preview.createNewLineGlyph()))
+                    previousGlyphName = glyphName
+
+                glyphRecords.append(GlyphRecord(self.w.preview.createNewLineGlyph()))
 
         self.w.preview.setGlyphRecords(glyphRecords)
 
