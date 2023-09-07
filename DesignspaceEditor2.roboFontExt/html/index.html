@@ -488,6 +488,8 @@ This uses <a
 
 <p>DesignspaceEditor2 sends notifications for designspace related events. Tools can subscribe to these and access to the designspace data.</p>
 
+<p>The source for these notifications at <a href="https://github.com/LettError/designSpaceRoboFontExtension/blob/5e0d700daedcac683bf00a5685e9cddef5b3aab1/DesignspaceEditor2.roboFontExt/lib/main.py#L55"> github.com/LettError/designSpaceRoboFontExtension</a>
+
 
 
 <table>
@@ -717,13 +719,6 @@ This uses <a
 
     <tr>
         <td>
-            <code>designspaceEditorInstancesDidOpen</code>
-        </td>
-        <td>DSE opened an instance. (Clarify)</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td>
             <code>designspaceEditorInstancesDidChange</code>
         </td>
         <td>DSE noticed one or more of its instances changed. (Clarify)</td>
@@ -768,6 +763,8 @@ This uses <a
         <td></td>
         <td></td>
     </tr>
+
+
     <tr>
         <td>
             <code>designspaceEditorNotesDidChange</code>
@@ -776,20 +773,122 @@ This uses <a
         <td></td>
     </tr>
 
+
+
     <tr>
         <td>
-            <b>Any change</b>
+            <b>Notifications related to editing source data in RoboFont</b>
+        </td>
+        <td></td>
+        <td></td>
+    </tr>
+
+
+    <tr>
+        <td>
+            <code>designspaceEditorSourceGlyphDidChange</code>
+        </td>
+        <td>DSE reports changes to a glyph of one of the open sources.</td>
+        <td>Rebuild glyph mutators</td>
+    </tr>
+
+    <tr>
+        <td>
+            <code>designspaceEditorSourceInfoDidChange</code>
+        </td>
+        <td>DSE reports changes to font info of one of the open sources.</td>
+        <td>Rebuild info mutators</td>
+    </tr>
+
+
+    <tr>
+        <td>
+            <code>designspaceEditorSourceKerningDidChange</code>
+        </td>
+        <td>DSE reports changes to font kerning of one of the open sources.</td>
+        <td>Rebuild kerning mutators</td>
+    </tr>
+
+
+    <tr>
+        <td>
+            <code>designspaceEditorSourceGroupsDidChange</code>
+        </td>
+        <td>DSE reports changes to font groups of one of the open sources.</td>
+        <td>Rebuild kerning mutators</td>
+    </tr>
+
+
+    <tr>
+        <td>
+            <code>designspaceEditorSourceGroupsDidChange</code>
+        </td>
+        <td>DSE reports changes to font groups by a RF editor.</td>
+        <td></td>
+    </tr>
+
+
+
+    <tr>
+        <td>
+            <b>Experimental / unsupported</b>
         </td>
         <td>
         </td>
     </tr>
+
     <tr>
         <td>
             <code>designspaceEditorDidChange</code>
         </td>
         <td>DSE reports every change.</td>
-        <td></td>
+        <td>Be careful, this will call a lot and might cause performance issues.</td>
     </tr>
+
+    <tr>
+        <td>
+            <code>designspaceEditorSourceDataDidChange</code>
+        </td>
+        <td>DSE reports every change to the source data.</td>
+        <td>Be careful, this will call a lot and might cause performance issues.</td>
+    </tr>
+
+    <tr>
+        <td>
+            <code>designspaceEditorSourceFontDidChangedExternally</code>
+        </td>
+        <td>DSE reports every change noticed external changes to source data that is not open in RF.</td>
+        <td>Be careful, this will call a lot and might cause performance issues.</td>
+    </tr>
+
+
+
+<!--     
+    ADD
+    https://github.com/LettError/designSpaceRoboFontExtension/blob/dse2.0/DesignspaceEditor2.roboFontExt/lib/main.py#L114-L134
+
+# =====================
+    # = font data changes =
+    # =====================
+
+    # any font data change
+    # "designspaceEditorSourceDataDidChange",
+
+    # glyph
+    "designspaceEditorSourceGlyphDidChange",
+
+    # font info
+    "designspaceEditorSourceInfoDidChange",
+
+    # font kerning
+    "designspaceEditorSourceKerningDidChange",
+
+    # font groups
+    "designspaceEditorSourceGroupsDidChange",
+
+    # external change, outside of RoboFont
+    "designspaceEditorSourceFontDidChangedExternally",
+ -->
 
 </table>
 
