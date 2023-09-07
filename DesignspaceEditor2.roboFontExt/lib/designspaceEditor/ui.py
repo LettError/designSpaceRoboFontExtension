@@ -1509,6 +1509,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         font = notification["font"]
         for sourceDescriptor in self.operator.sources:
             if sourceDescriptor.path == font.path:
+                self.operator.fonts[sourceDescriptor.name] = font.asDefcon()
                 SendNotification.single("Sources", action="OpenUFO", designspace=self.operator, font=font)
                 break
 
