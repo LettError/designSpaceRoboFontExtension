@@ -84,9 +84,6 @@ designspaceEvents = [
     "designspaceEditorSourcesDidOpenUFO",
     "designspaceEditorSourcesDidChanged",
 
-
-    "designspaceEditorSourcesDidChangeExternally",
-
     # instances
     "designspaceEditorInstancesWillRemoveInstance",
     "designspaceEditorInstancesDidRemoveInstance",
@@ -96,14 +93,16 @@ designspaceEvents = [
 
     "designspaceEditorInstancesDidChangeSelection",
 
-    "designspaceEditorInstancesDidOpen",
     "designspaceEditorInstancesDidChange",
 
     # rules
     "designspaceEditorRulesDidChange",
 
-    # labels
-    "designspaceEditorLabelsDidChange",
+    # location labels
+    "designspaceEditorLocationLabelsDidChange",
+
+    # variable fonts
+    "designspaceEditorVariableFontsDidChange",
 
     # notes
     "designspaceEditorNotesDidChange",

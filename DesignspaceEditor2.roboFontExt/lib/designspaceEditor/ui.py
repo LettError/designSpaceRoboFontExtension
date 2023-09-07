@@ -9,7 +9,7 @@ from ufoProcessor import ufoOperator
 
 from mojo.UI import CodeEditor, SliderEditStepper
 from mojo.events import addObserver, removeObserver
-from mojo.subscriber import WindowController
+from mojo.subscriber import WindowController, Subscriber
 from mojo.extensions import getExtensionDefault, ExtensionBundle
 from mojo.roboFont import AllFonts, OpenFont, RFont, internalFontClasses
 
@@ -71,6 +71,11 @@ class DesingspaceEditorOperator(ufoOperator.UFOOperator):
 
     def _instantiateFont(self, path):
         return internalFontClasses.createFontObject(path)
+
+    def updateFont(self, fonts=None):
+        if fonts is None:
+            fonts = AllFonts()
+        super().udpateFonts([font.asDefcon() for font in fonts])
 
 
 class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
@@ -352,28 +357,26 @@ class BaseNotificationObserver:
             removeObserver(self, notification)
 
 
-class LocationLabelsPreview(BaseNotificationObserver):
+class LocationLabelsPreview(Subscriber, WindowController):
 
-    notifications = [
-        ("designspaceEditorDidChange", "designspaceEditorDidChange"),
-        ("designspaceEditorLabelsDidChange", "designspaceEditorLabelsDidChange")
-    ]
-
-    def __init__(self, operator):
-        self.w = vanilla.FloatingWindow((250, 300), "Labels Preview")
+    def build(self, operator):
         self.operator = operator
+
+        self.w = vanilla.FloatingWindow((250, 300), "Labels Preview")
         self.w.languages = vanilla.PopUpButton((10, 10, 80, 22), [], self.controlEdited)
         self.w.previewText = vanilla.TextBox((100, 10, -10, 22))
-        self.build()
-        self.w.bind("close", self.windowCloseCallback)
-        self.observeNotifications()
+        self.buildLocationLabels()
+
+    def started(self):
         self.w.open()
 
-    def windowCloseCallback(self, sender):
-        self.removeObserverNotifications()
+    def destroy(self):
         self.operator = None
 
-    def build(self):
+    def update(self):
+        self.controlEdited(setLanguages=self.w.languages.getItem())
+
+    def buildLocationLabels(self):
         location = dict()
         if hasattr(self.w, "controls"):
             location = self.getControlLocation()
@@ -432,11 +435,16 @@ class LocationLabelsPreview(BaseNotificationObserver):
         language = self.w.languages.getItem()
         self.w.previewText.set(f"{self.names.familyNames.get(language, '-')} {self.names.styleNames.get(language, '-')}")
 
+    # notifications
+
     def designspaceEditorDidChange(self, info):
-        self.build()
+        self.buildLocationLabels()
 
     def designspaceEditorLabelsDidChange(self, info):
-        self.controlEdited(setLanguages=self.w.languages.getItem())
+        self.update()
+
+    def designspaceEditorAxisLabelsDidChange(self, info):
+        self.update()
 
 
 class DesignspaceEditorController(WindowController, BaseNotificationObserver):
@@ -1145,7 +1153,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         locationLabels = labelsParser.parseLocationLabels(sender.get(), self.operator.writerClass.locationLabelDescriptorClass)
         self.operator.locationLabels.clear()
         self.operator.locationLabels.extend(locationLabels)
-        self.setDocumentNeedSave(True, who="Labels")
+        self.setDocumentNeedSave(True, who="LocationLabels")
 
     @coalescingDecorator(delay=0.2)
     def variableFontsEditorCallback(self, sender):
@@ -1517,7 +1525,7 @@ if __name__ == '__main__':
     designspaceBundle = ExtensionBundle(path=pathForBundle)
 
     path = "/Users/frederik/Documents/dev/JustVanRossum/fontgoggles/Tests/data/MutatorSans/MutatorSans.designspace"
-    path = "/Users/frederik/Desktop/anisotropicIssue/test.designspace"
+    #path = "/Users/frederik/Desktop/anisotropicIssue/test.designspace"
     #path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v4_original.designspace'
     #path = "/Users/frederik/Desktop/designSpaceEditorText/testFiles/Untitled.designspace"
     #path = None
