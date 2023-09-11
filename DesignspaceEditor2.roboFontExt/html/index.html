@@ -28,10 +28,13 @@
 <li>DesignSpaceEditor2 is for very recent RoboFont 4.4+ only.</li>
 <li>Open, edit and save existing designspace format 4 and format 5 files.</li>
 <li>You can start a new designspace.</li>
-<li>You can edit all sorts of labels and localisations.</li>
-<li>You can open source UFOs.</li>
+<li>You can edit all sorts of location labels and localisations.</li>
+<li>You can quickly open the UFOs listed as sources.</li>
+<li>You can generate UFOs for defined instances.</li>
+<li>You can preview and add instances.</li>
 <li>Validate designspaces and point out compatibility and structural issues.</li>
-<li>DesignspaceEditor2 sends designspace-related notifications.</li>
+<li>It collects and sends designspace-related notifications about changes to the designspace, and also changes in the source font data. Other extensions can then ask for interpolated glyphs, kerning and font info at specific locations, using MutatorMath as well as Varlib interpolation models. </li>
+<li>Experiment with extrapolations and anisotropic interpolations and see previews for such exotic things as well as generate UFOs for them. Even if these can not be expressed as Variable fonts.</li>
 </ul>
 
 <h2 id="toc">Contents</h2>
@@ -100,19 +103,19 @@
     <tr>
         <td>Minimum
         </td>
-        <td>The minimum value of this axis.
+        <td>The minimum value of this axis, required.
         </td>
     </tr>
     <tr>
         <td>Maximum
         </td>
-        <td>The maximum value of this axis.
+        <td>The maximum value of this axis, required.
         </td>
     </tr>
     <tr>
         <td>Default
         </td>
-        <td>The default value of this axis. The default needs to be obetween minimum and maximum or equal to one of them.
+        <td>The default value of this axis, required. The default needs to be between minimum and maximum or equal to one of them.
         </td>
     </tr>
     <tr>
@@ -486,9 +489,10 @@ This uses <a
 
 <h2 id="toc_11">Notifications<a href="#toc">↑</a></h3>
 
-<p>DesignspaceEditor2 sends notifications for designspace related events. Tools can subscribe to these and access to the designspace data.</p>
+<p>DesignspaceEditor2 sends notifications for designspace related events. Tools can subscribe to these and access to the designspace data. With these notifications it will be easier to build tools, visualiations, previews etc. that work with your designspaces.</p>
 
-<p>The source for these notifications at <a href="https://github.com/LettError/designSpaceRoboFontExtension/blob/5e0d700daedcac683bf00a5685e9cddef5b3aab1/DesignspaceEditor2.roboFontExt/lib/main.py#L55"> github.com/LettError/designSpaceRoboFontExtension</a>
+<p>The source for these notifications at <a href="https://github.com/LettError/designSpaceRoboFontExtension/blob/5e0d700daedcac683bf00a5685e9cddef5b3aab1/DesignspaceEditor2.roboFontExt/lib/main.py#L55"> github.com/LettError/designSpaceRoboFontExtension</a>.
+</p>
 
 
 
