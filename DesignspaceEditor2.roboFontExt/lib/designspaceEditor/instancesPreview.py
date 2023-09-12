@@ -29,7 +29,7 @@ class InstancesPreview(Subscriber, WindowController):
 
         self.w = vanilla.FloatingWindow((700, 400), "Instances Preview", minSize=(500, 300))
         self.w.input = vanilla.EditText((10, 10, -120, 22), callback=self.inputCallback)
-        self.w.singleLine = vanilla.CheckBox((-100, 10, 100, 22), "Single line", value=0, callback=self.singleLineCheckboxCallback)
+        self.w.singleLine = vanilla.CheckBox((-100, 10, 100, 22), "Single line", value=False, callback=self.singleLineCheckboxCallback)
         self.w.hl = vanilla.HorizontalLine((0, 41, 0, 1))
         self.w.preview = MultiLineView((0, 42, 0, 0), pointSize=60, displayOptions=dict(Beam=False, displayMode="Multi Line", Stroke=False, Fill=True))
         self.w.preview.setFont(dummyFont)
@@ -86,7 +86,7 @@ class InstancesPreview(Subscriber, WindowController):
     designspaceEditorInstancesDidChangeDelay = 0.1
 
     def singleLineCheckboxCallback(self, sender):
-        if sender.get()==0:
+        if not sender.get():
             self.w.preview.setDisplayStates(dict(displayMode="Multi Line"))
         else:
             self.w.preview.setDisplayStates(dict(displayMode="Single Line"))
