@@ -584,7 +584,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
 
         sourcesEditorToolsSsegmentDescriptions = [
             dict(title="Open UFO"),
-            dict(title="Add Open UFOs"),
+            dict(title="Add Open UFOs to Designspace"),
             # dict(title="Load Names"),
             dict(title="Replace UFO"),
         ]

@@ -19,9 +19,10 @@ class InstancesPreview(Subscriber, WindowController):
         upms = set()
         with UseVarLib(self.operator, useVarLib=False):
             for instance in self.operator.instances:
-                continuousLocation, discreteLocation = self.operator.splitLocation(instance.location)
-                infoMutator = self.operator.getInfoMutator(discreteLocation)
-                info = infoMutator.makeInstance(continuousLocation)
+                #continuousLocation, discreteLocation = self.operator.splitLocation(instance.location)
+                #infoMutator = self.operator.getInfoMutator(discreteLocation)
+                #info = infoMutator.makeInstance(continuousLocation)
+                info = self.operator.makeOneInfo(instance.location)
                 upms.add(info.unitsPerEm)
 
         dummyFont.info.unitsPerEm = max(upms) if upms else 1000
@@ -53,15 +54,14 @@ class InstancesPreview(Subscriber, WindowController):
         glyphNames = splitText(sender.get(), self.operator.getCharacterMapping())
         glyphRecords = []
         possibleKerningPairs = ((side1, side2) for side1, side2 in zip(glyphNames[:-1], glyphNames[1:]))
+        possibleKerningPairs = list(possibleKerningPairs)
         if not self.selectedInstances:
             self.selectedInstances = self.operator.instances
 
         with UseVarLib(self.operator, useVarLib=False):
             for instance in self.selectedInstances:
                 previousGlyphName = None
-                continuousLocation, discreteLocation = self.operator.splitLocation(instance.location)
-                kerningMutator = self.operator.getKerningMutator(possibleKerningPairs, discreteLocation=discreteLocation)
-                kerningObject = kerningMutator.makeInstance(continuousLocation)
+                kerningObject = self.operator.makeOneKerning(instance.location, pairs=possibleKerningPairs)
                 for glyphName in glyphNames:
                     # do not bend, reasoning: the instance locations are in designspace values.
                     mathGlyph = self.operator.makeOneGlyph(glyphName, instance.location, decomposeComponents=True)
@@ -73,6 +73,7 @@ class InstancesPreview(Subscriber, WindowController):
 
                         if previousGlyphName and glyphRecords:
                             glyphRecords[-1].xAdvance = kerningObject.get((previousGlyphName, glyphName))
+                            #print("\t\tkerningObject.get((previousGlyphName, glyphName))", (previousGlyphName, glyphName), kerningObject.get((previousGlyphName, glyphName)))
 
                         glyphRecords.append(glyphRecord)
 
