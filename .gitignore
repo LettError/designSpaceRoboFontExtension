@@ -5,3 +5,4 @@ __pycache__
 DesignSpaceEditor.roboFontExt/lib/.pytest_cache
 issues
 .DS_Store
+.pytest_cache
