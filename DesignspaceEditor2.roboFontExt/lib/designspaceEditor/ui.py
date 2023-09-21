@@ -769,6 +769,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             self.instances.list.set([self.wrapInstanceDescriptor(instanceDescriptor) for instanceDescriptor in self.operator.instances])
             self.rules.editor.set(rulesParser.dumpRules(self.operator.rules))
             self.locationLabels.editor.set(labelsParser.dumpLocationLabels(self.operator.locationLabels))
+            self.variableFonts.editor.set(variableFontsParser.dumpVariableFonts(self.operator.variableFonts))
             self.notes.editor.set(self.operator.lib.get(designspacenotesLibKey, ""))
             self.updateColumnHeadersFromAxes()
 
@@ -1525,7 +1526,7 @@ if __name__ == '__main__':
     pathForBundle = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     designspaceBundle = ExtensionBundle(path=pathForBundle)
 
-    path = "/Users/frederik/Documents/dev/JustVanRossum/fontgoggles/Tests/data/MutatorSans/MutatorSans.designspace"
+    path = "/Users/frederik/Downloads/mutatorSans-master/MutatorSans.designspace"
     #path = "/Users/frederik/Desktop/anisotropicIssue/test.designspace"
     #path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v4_original.designspace'
     #path = "/Users/frederik/Desktop/designSpaceEditorText/testFiles/Untitled.designspace"
