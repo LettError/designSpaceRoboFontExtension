@@ -148,11 +148,22 @@ def designspaceGlyphDidChangeExtractor(subscriber, info):
     info["glyph"] = info["lowLevelEvents"][-1]["glyph"]
 
 
+def designspaceAttrbuteExtractor(attribute):
+    def wrapper(subscriber, info):
+        designspaceEventExtractor(subscriber, info)
+        info[attribute] = info["lowLevelEvents"][-1][attribute]
+    return wrapper
+
+
 eventInfoExtractionFunctionsMap = dict(
     designspaceEditorAxesDidChangeSelection=designspaceSelectionEventExtractor,
     designspaceEditorSourcesDidChangeSelection=designspaceSelectionEventExtractor,
     designspaceEditorInstancesDidChangeSelection=designspaceSelectionEventExtractor,
-    designspaceEditorGlyphDidChange=designspaceGlyphDidChangeExtractor
+    designspaceEditorGlyphDidChange=designspaceGlyphDidChangeExtractor,
+
+    designspaceEditorAxesDidAddAxis=designspaceAttrbuteExtractor("axis"),
+    designspaceEditorSourcesDidAddSource=designspaceAttrbuteExtractor("source"),
+    designspaceEditorInstancesDidAddInstance=designspaceAttrbuteExtractor("instance"),
 )
 
 for event in designspaceEvents:
