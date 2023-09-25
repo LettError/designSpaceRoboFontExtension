@@ -679,6 +679,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             dict(title="UFO", key="instanceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False),
             dict(title="Famiy Name", key="instanceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="Style Name", key="instanceStyleName", editable=True, width=130, minWidth=130, maxWidth=250),
+            dict(title="📍", key="instanceLocation", editable=False, width=20)
         ]
 
         self.instances.list = vanilla.List(
@@ -691,6 +692,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             dragSettings=dict(type="sourcesListDragAndDropType", callback=self.dragCallback),
             selfDropSettings=dict(type="sourcesListDragAndDropType", operation=AppKit.NSDragOperationMove, callback=self.dropCallback),
         )
+        addToolTipForColumn(self.instances.list, "instanceLocation", "Indicate if the location of the instance is a user location or a design location.")
         self.instances.list.designspaceContent = "instances"
 
         # RULES
@@ -1035,9 +1037,11 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             instanceUFOFileName=instanceDescriptor.filename if instanceDescriptor.filename is not None else os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}.ufo"),
             instanceFamilyName=instanceDescriptor.familyName or "",
             instanceStyleName=instanceDescriptor.styleName or "",
+            instanceLocation="✏️" if instanceDescriptor.designLocation else "👥",
             object=instanceDescriptor
         )
-        for axis, value in instanceDescriptor.designLocation.items():
+        location = instanceDescriptor.designLocation or instanceDescriptor.userLocation
+        for axis, value in location.items():
             wrapped[f"axis_{axis}"] = value
         return wrapped
 
@@ -1045,8 +1049,9 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         instanceDescriptor = wrappedInstanceDescriptor["object"]
         instanceDescriptor.familyName = wrappedInstanceDescriptor["instanceFamilyName"]
         instanceDescriptor.styleName = wrappedInstanceDescriptor["instanceStyleName"]
+        location = instanceDescriptor.designLocation or instanceDescriptor.userLocation
         for axis in self.operator.axes:
-            instanceDescriptor.designLocation[axis.name] = wrappedInstanceDescriptor.get(f"axis_{axis.name}", axis.default)
+            location[axis.name] = wrappedInstanceDescriptor.get(f"axis_{axis.name}", axis.default)
         return instanceDescriptor
 
     def instancesListDoubleClickCallback(self, sender):
@@ -1201,6 +1206,8 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
 
     def listMenuCallack(self, sender):
         tableView = sender.getNSTableView()
+        if not tableView.dataSource().arrangedObjects():
+            return
         point = AppKit.NSEvent.mouseLocation()
         point = tableView.window().convertPointFromScreen_(point)
         point = tableView.convertPoint_fromView_(point, None)
@@ -1211,6 +1218,10 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         columnIdentifier = column.identifier()
         axisName = column.title()
         item = tableView.dataSource().arrangedObjects()[rowIndex]
+
+        selectedItems = [sender[i] for i in sender.getSelection()]
+
+        tableView.selectedRowIndexes()
 
         defaultLocation = self.operator.newDefaultLocation(bend=True)
 
@@ -1231,6 +1242,20 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
 
         def sliderCallback(slider):
             item[columnIdentifier] = slider.get()
+
+        def convertInstanceToUserLocation(menuItem):
+            for item in selectedItems:
+                instanceDescriptor = item["object"]
+                instanceDescriptor.userLocation = instanceDescriptor.getFullUserLocation(self.operator)
+                instanceDescriptor.designLocation.clear()
+                item.update(self.wrapInstanceDescriptor(instanceDescriptor))
+
+        def convertInstanceToDesignLocation(menuItem):
+            for item in selectedItems:
+                instanceDescriptor = item["object"]
+                instanceDescriptor.designLocation = instanceDescriptor.getFullDesignLocation(self.operator)
+                instanceDescriptor.userLocation.clear()
+                item.update(self.wrapInstanceDescriptor(instanceDescriptor))
 
         menu = []
         for axisDescriptor in self.operator.axes:
@@ -1268,6 +1293,11 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
 
             menu.append("----")
             menu.append(dict(title="Force Sources Change", callback=forceSourcesChangeCallback))
+
+        if selectedItems and sender.designspaceContent == "instances":
+            menu.append("----")
+            menu.append(dict(title="Convert to User Location", callback=convertInstanceToUserLocation))
+            menu.append(dict(title="Convert to Design Location", callback=convertInstanceToDesignLocation))
 
         return menu
 
