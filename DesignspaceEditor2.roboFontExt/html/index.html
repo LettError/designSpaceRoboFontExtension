@@ -49,6 +49,7 @@
     <li><a href="#toc_9">Problems Tab</a></li>
     <li><a href="#toc_10">Notes Tab</a></li>
     <li><a href="#toc_11">Notifications</a></li>
+    <li><a href="#toc_12">Receiving and responding to notifications</a></li>
 </ul>
 
 <h2 id="toc_1">Designspace Editor Usage <a href="#toc">↑</a></h2>
@@ -867,6 +868,7 @@ This uses <a
 
 
 
+
 <!--     
     ADD
     https://github.com/LettError/designSpaceRoboFontExtension/blob/dse2.0/DesignspaceEditor2.roboFontExt/lib/main.py#L114-L134
@@ -895,6 +897,42 @@ This uses <a
  -->
 
 </table>
+
+<h3 id="toc_12">Receiving and responding to notifications<a href="#toc">↑</a></h3>
+
+This is a demo of Subscriber receiving designspace notifications.
+
+<code><pre>
+from mojo.subscriber import Subscriber, registerRoboFontSubscriber
+
+class DesignspaceEditorSubscriber(Subscriber):
+    
+    debug = True
+    
+    def designspaceEditorDidOpenDesignspace(self, info):
+        print("opened a designspace:", info["designspace"])
+    
+    def designspaceEditorDidCloseDesignspace(self, info):
+        print("closed a designspace:", info["designspace"])
+    
+    def designspaceEditorAxesDidAddAxis(self, info):
+        print("created a new axis:", info["axis"], "for", info["designspace"])
+    
+    def designspaceEditorRulesDidChange(self, info):
+        print("rules did chagne for:", info["designspace"])
+
+registerRoboFontSubscriber(DesignspaceEditorSubscriber)
+</pre>
+</code>
+
+<ul>
+    <li>
+        <a href="https://robofont.com/documentation/topics/subscriber/?highlight=subscriber">
+            Additional Subscriber documentation at RoboFont.com
+        </a>
+    </li>
+</ul>
+
 
 </body>
 </html>
