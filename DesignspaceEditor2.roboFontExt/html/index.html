@@ -50,6 +50,7 @@
     <li><a href="#toc_10">Notes Tab</a></li>
     <li><a href="#toc_11">Notifications</a></li>
     <li><a href="#toc_12">Receiving and responding to notifications</a></li>
+    <li><a href="#toc_13">Scripting with the current designspace</a></li>
 </ul>
 
 <h2 id="toc_1">Designspace Editor Usage <a href="#toc">↑</a></h2>
@@ -932,6 +933,40 @@ registerRoboFontSubscriber(DesignspaceEditorSubscriber)
         </a>
     </li>
 </ul>
+
+
+<h2 id="toc_13">Scripting with the current designspace<a href="#toc">↑</a></h2>
+
+With a document open in DesignspaceEditor you can call <code>CurrentDesignspace()</code>, similar to <code>CurrentFont()</code> and <code>CurrentGlyph()</code>. This returns the designspace wrapped in a <code>UFOOperator</code> object that can calculate single glyphs, kerning and font info. 
+
+<h3>Calculating a glyph</h3>
+The example below calculates a single glyph at the default location. It returns a mathGlyph.
+
+<code>
+    <pre>d = CurrentDesignspace()
+d.loadFonts()
+loc = d.newDefaultLocation()
+g = d.makeOneGlyph("A", location=loc)
+    </pre>
+</code>
+
+
+<h3>Calculating kerning and info</h3>
+The example below calculates a single kerning pair and an info object. <code>makeOneKerning</code> accepts a list of pairs to calculate. If no pairs are given, all pairs will be calculated.
+
+<code>
+    <pre>d = CurrentDesignspace()
+d.loadFonts()
+loc = d.newDefaultLocation()
+
+pairs = [('public.kern1.i', 'public.kern2.b')]
+kern = d.makeOneKerning(loc, pairs)
+print(kern.items())
+
+info = d.makeOneInfo(loc)
+print(info)
+    </pre>
+</code>
 
 
 </body>
