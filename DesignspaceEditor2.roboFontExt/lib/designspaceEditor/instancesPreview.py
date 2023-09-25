@@ -22,7 +22,7 @@ class InstancesPreview(Subscriber, WindowController):
                 #continuousLocation, discreteLocation = self.operator.splitLocation(instance.location)
                 #infoMutator = self.operator.getInfoMutator(discreteLocation)
                 #info = infoMutator.makeInstance(continuousLocation)
-                info = self.operator.makeOneInfo(instance.getFullDesignLocation())
+                info = self.operator.makeOneInfo(instance.getFullDesignLocation(self.operator))
                 upms.add(info.unitsPerEm)
 
         dummyFont.info.unitsPerEm = max(upms) if upms else 1000
@@ -61,10 +61,10 @@ class InstancesPreview(Subscriber, WindowController):
         with UseVarLib(self.operator, useVarLib=False):
             for instance in self.selectedInstances:
                 previousGlyphName = None
-                kerningObject = self.operator.makeOneKerning(instance.getFullDesignLocation(), pairs=possibleKerningPairs)
+                kerningObject = self.operator.makeOneKerning(instance.getFullDesignLocation(self.operator), pairs=possibleKerningPairs)
                 for glyphName in glyphNames:
                     # do not bend, reasoning: the instance locations are in designspace values.
-                    mathGlyph = self.operator.makeOneGlyph(glyphName, instance.getFullDesignLocation(), decomposeComponents=True)
+                    mathGlyph = self.operator.makeOneGlyph(glyphName, instance.getFullDesignLocation(self.operator), decomposeComponents=True)
                     if mathGlyph is not None:
                         dest = internalFontClasses.createGlyphObject()
                         mathGlyph.extractGlyph(dest)
