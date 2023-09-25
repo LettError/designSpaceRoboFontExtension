@@ -299,7 +299,7 @@ a b c d</code></pre></div>
 
 <h2 id="toc_4">Instances Tab <a href="#toc">↑</a></h3>
 
-<p>This tab shows the instances defined for this designspace. These instances can be different things in different contexts. Each instance can be compiled to separate UFO files. But it can also be interpreted as an instance item in a variable font.</p>
+<p>This tab shows the instances defined for this designspace. These instances can be different things in different contexts. Each instance can be compiled to separate UFO files. But it can also be interpreted as an named location in a variable font.</p>
 
 <h3>Instances Columns</h3>
 
@@ -323,10 +323,38 @@ a b c d</code></pre></div>
         </td>
     </tr>
     <tr>
+        <td><strong>📍</strong>
+        </td>
+        <td>The icons in this column indicate if the location values are specified as 👤userspace, or ✏️designspace.
+        </td>
+    </tr>
+    <tr>
         <td>column for each axis</td>
         <td>Axis values, <strong>in userspace coordinates</strong>. Anisotropic values separated by space (see below)</td>
     </tr>
 </table>
+
+<p>
+    <img src="../resources/instancestab_preview_popup.jpg" alt="DSE2 Instance Preview Window with anisotropic instance.">
+</p>
+
+
+<h3>About userspace and designspace locations</h3>
+
+<ul>
+    <li>
+        From DesignSpace 5 on instances can be placed with userspace values.
+    </li>
+    <li>
+        Control-click on an instance to get the pop up menu with some options.
+    </li>
+    <li>
+        The conversion between userspace and designspace values will be according to the axis mapping.
+    </li>
+    <li>
+        When converting an anisotropic location only the xvalue will be used
+    </li>
+</ul>
 
 <h3>About anisotropic instances</h3>
 <ul>
@@ -334,13 +362,10 @@ a b c d</code></pre></div>
 The axis columns accepts two values separated by a space to indicate an anisotropic location. For instance: <code>900 800</code> means: <em>horizontal interpolation at value <code>900</code> and vertical interpolation at value <code>800</code></em>.</li>
 
 <li><b>Please note: anisotropic locations are not supported in Variable Fonts.</b> Tools that generate fonts from designspaces may ignore the second value, or ignore the instance. It is a useful tool during exploration and design and so designspaces can store them.</li>
-<li>MutatorMath will calculate anisotropic instances. See UFOOperator</li>
+<li>MutatorMath can calculate anisotropic instances. See UFOOperator</li>
 <li>Note: it is not clear what to expect of interactions between an axis map and an anisotropic location. The authors advise to experiment with anisotropy <strong>before</strong> defining axis maps for anisotropic instance locations.</li>
 </ul>
 
-<p>
-    <img src="../resources/anisotropic_instance.jpg" alt="DSE2 Instance Preview Window with anisotropic instance.">
-</p>
 
 
 <h3>Instances Tab Buttons</h3>
@@ -351,9 +376,9 @@ The axis columns accepts two values separated by a space to indicate an anisotro
     </li>
     <li><strong>Duplicate:</strong> duplicates the selected instances</li>
     <li><strong>Add Source as Instances:</strong> makes new instances at the designspace locations of the sources.</li>
-    <li><strong>Generate with MutatorMath:</strong> use the MutatorMath model to generate instances. For instance if you want to calculate instances at anisotropic locations, or if you want to extrapolate over axis extremes.</li>
-    <li><strong>Generate with VarLib:</strong> use the fontTools VarLib model to generate instances, if you want to stay close to how the instances will appear as part of a variable font.</li>
-    <li><strong>Instance Preview:</strong> opens a new window with a preview of the instances.
+    <li><strong>Generate with MutatorMath:</strong> use the MutatorMath model to generate instances. For instance if you want to calculate instances at anisotropic locations, or if you want to extrapolate over axis extremes. MutatorMath is a bit more forgiving when it comes to the number of off-curves and missing sources.</li>
+    <li><strong>Generate with VarLib:</strong> use the fontTools VarLib model to generate instances, if you want to stay close to how the instances will appear as part of a variable font. This model wants all data to be present and correct.</li>
+    <li><strong>Instance Preview:</strong> opens a new window with a preview of the selected instances. Check the "Single Line" to get everything on the same line.
     </li>
 </ul>
 
