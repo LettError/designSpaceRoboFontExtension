@@ -1071,7 +1071,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
                     self.instances.list.append(self.wrapInstanceDescriptor(newInstanceDescriptor))
         elif value == 1:
             # Add Sources as Instances
-            existingLocations = [instanceDescriptor.designLocation for instanceDescriptor in self.operator.instances]
+            existingLocations = [instanceDescriptor.getFullDesignLocation() for instanceDescriptor in self.operator.instances]
             for sourceDescriptor in self.operator.sources:
                 if sourceDescriptor.location not in existingLocations:
                     with SendNotification("Instances", action="AddInstance", designspace=self.operator) as notification:
@@ -1560,7 +1560,7 @@ if __name__ == '__main__':
     #path = "/Users/frederik/Desktop/anisotropicIssue/test.designspace"
     #path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v4_original.designspace'
     #path = "/Users/frederik/Desktop/designSpaceEditorText/testFiles/Untitled.designspace"
-    #path = None
+    path = None
     #path = '/Users/frederik/Documents/dev/letterror/ufoProcessor/Tests/202206 discrete spaces/test.ds5.designspace'
     #path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v5.designspace'
     DesignspaceEditorController(path)
