@@ -23,7 +23,7 @@ def notifyOperator(font, who, action="Change", operatorMethod="changed", operato
                 if operatorMethod:
                     callback = getattr(operator, operatorMethod)
                     callback(**operatorKwargs)
-                SendNotification.single(who=who, action=action, **notificationKwargs)
+                SendNotification.single(who=who, action=action, designspace=operator, **notificationKwargs)
                 return
 
 
