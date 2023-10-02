@@ -67,7 +67,7 @@ except Exception:
     infoImage = AppKit.NSImage.imageNamed_(AppKit.NSImageNameInfo)
 
 
-class DesingspaceEditorOperator(ufoOperator.UFOOperator):
+class DesignspaceEditorOperator(ufoOperator.UFOOperator):
 
     def _instantiateFont(self, path):
         return internalFontClasses.createFontObject(path)
@@ -461,7 +461,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             self.load(path)
 
     def build(self):
-        self.operator = DesingspaceEditorOperator(extrapolate=True)
+        self.operator = DesignspaceEditorOperator(extrapolate=True)
 
         self.w = vanilla.Window((900, 500), "Designspace Editor", minSize=(720, 400))
         self.w.vanillaWrapper = weakref.ref(self)
