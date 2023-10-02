@@ -461,7 +461,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             self.load(path)
 
     def build(self):
-        self.operator = DesingspaceEditorOperator()
+        self.operator = DesingspaceEditorOperator(extrapolate=True)
 
         self.w = vanilla.Window((900, 500), "Designspace Editor", minSize=(720, 400))
         self.w.vanillaWrapper = weakref.ref(self)
@@ -1257,6 +1257,15 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
                 instanceDescriptor.userLocation.clear()
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
 
+        def updateUFOFilenameFromFontNames(menuItem):
+            for item in selectedItems:
+                instanceDescriptor = item["object"]
+                proposedName = os.path.join(os.path.dirname(instanceDescriptor.path), f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}.ufo")
+                #print('updateUFOFilenameFromFontNames menu', instanceDescriptor.path, proposedName)
+                instanceDescriptor.path = proposedName
+                item.update(self.wrapInstanceDescriptor(instanceDescriptor))
+                self.setDocumentNeedSave(True, who="Instances")
+
         menu = []
         for axisDescriptor in self.operator.axes:
             if axisDescriptor.name == axisName:
@@ -1295,6 +1304,8 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             menu.append(dict(title="Force Sources Change", callback=forceSourcesChangeCallback))
 
         if selectedItems and sender.designspaceContent == "instances":
+            menu.append("----")
+            menu.append(dict(title="UFO filename from instance names", callback=updateUFOFilenameFromFontNames))
             menu.append("----")
             menu.append(dict(title="Convert to User Location", callback=convertInstanceToUserLocation))
             menu.append(dict(title="Convert to Design Location", callback=convertInstanceToDesignLocation))
@@ -1487,6 +1498,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             for wrappedInstanceDescriptor in self.instances.list:
                 instanceDescriptor = self.unwrapInstanceDescriptor(wrappedInstanceDescriptor)
                 if instanceDescriptor.filename is None:
+                    # maybe DSE should always update the ufo name?
                     instanceDescriptor.filename = os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}.ufo")
                 instanceDescriptor.path = os.path.abspath(os.path.join(root, instanceDescriptor.filename))
 
