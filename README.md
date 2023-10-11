@@ -19,3 +19,61 @@ This extension can:
 
 Please refer to the documentation in the DSE extension. Click the (?) button
 ![](DesignspaceEditor2.roboFontExt/resources/anisotropic_instance_marked.jpg).
+
+```python
+# example of CurrentDesignspace()
+```
+
+## Scripting with the current designspace
+
+With a document open in DesignspaceEditor you can call `CurrentDesignspace()`, similar to `CurrentFont()` and `CurrentGlyph()``. This returns the designspace wrapped in a `UFOOperator` object that can handle all the glyph interpolations, font info, kerning etc.
+
+### Calculating a glyph
+
+The example below calculates a single glyph at the default location. It returns a mathGlyph.
+
+```python
+d = CurrentDesignspace()
+d.loadFonts()
+loc = d.newDefaultLocation()
+g = d.makeOneGlyph("A", location=loc)
+```
+
+### Calculating kerning and info
+
+The example below calculates a single kerning pair and an info object. The `makeOneKerning` method accepts a list of pairs to calculate. If no pairs are given, all pairs will be calculated.
+
+```python
+d = CurrentDesignspace()
+d.loadFonts()
+loc = d.newDefaultLocation()
+
+pairs = [('public.kern1.i', 'public.kern2.b')]
+kern = d.makeOneKerning(loc, pairs)
+print(kern.items())
+
+info = d.makeOneInfo(loc)
+print(info)
+```
+### Calculating an instance and drawing in Drawbot
+
+With the Drawbot extension in RoboFont, you can call `CurrentDesignspace()` and draw interpolated glyphs. 
+
+```python
+size(1000, 500)
+d = CurrentDesignspace()
+fill(None)
+stroke(0)
+strokeWidth(.5)
+with savedState():
+    translate(100, 100)
+    scale(0.5)
+    for i in range(20):
+        loc = d.randomLocation()
+        g = d.makeOneGlyph("A", location=loc)
+        bp = BezierPath()
+        g.draw(bp)
+        drawPath(bp)
+```
+
+[more examples to follow]
