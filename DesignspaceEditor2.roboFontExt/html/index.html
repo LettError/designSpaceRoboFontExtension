@@ -969,7 +969,6 @@ The example below calculates a single glyph at the default location. It returns 
 
 <code>
     <pre>d = CurrentDesignspace()
-d.loadFonts()
 loc = d.newDefaultLocation()
 g = d.makeOneGlyph("A", location=loc)
     </pre>
@@ -981,7 +980,6 @@ The example below calculates a single kerning pair and an info object. <code>mak
 
 <code>
     <pre>d = CurrentDesignspace()
-d.loadFonts()
 loc = d.newDefaultLocation()
 
 pairs = [('public.kern1.i', 'public.kern2.b')]
