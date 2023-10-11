@@ -4,7 +4,7 @@
 DesignSpaceEditor2
 ==================
 
-An extension for RoboFont 4.4+ to create and edit designspaces format 4 and 5. Labels, variable fonts, mappings can be edited in a compact syntax, examples on this page. For the **designspace** 5 format go [to the specification at FontTools](https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html).
+An extension for RoboFont 4.4+ to create and edit designspaces format 4 and 5. Labels, variable fonts, mappings can be edited in a compact syntax, examples on this page. For the designspace 5 format go [to the specification at FontTools](https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html).
 
 This extension can:
 
@@ -92,32 +92,32 @@ Also, UFOOperator will assume locations are in designspace locations. You can us
 
 There are some useful methods that split locations into their continuous and discrete values. Make sure that each value you enter for a discrete axis actually has sources, because each value is expected to represent a whole interpolating system!
 
-* `**makeOneGlyph**(glyphName, location, decomposeComponents=True, useVarlib=False, roundGeometry=False, clip=False)` make a glyph for this location.
-* `**makeOneInfo**(location, roundGeometry=False, clip=False)`: make an info object for this location.
-* `**makeOneKerning**(location, pairs=None)` make a kerning object for this location. `pairs` optional list of pairs to include.
+* `makeOneGlyph(glyphName, location, decomposeComponents=True, useVarlib=False, roundGeometry=False, clip=False)` make a glyph for this location.
+* `makeOneInfo(location, roundGeometry=False, clip=False)`: make an info object for this location.
+* `makeOneKerning(location, pairs=None)` make a kerning object for this location. `pairs` optional list of pairs to include.
 
 
-* `**loadFonts**()`: the designspace you get from CurrentDesignspace already has the fonts loaded. But remember there is a method to do so.\
-* `**updateFonts**(fontObjects)`: fontObjects is a list of RF font objects that are to be used in the designspace. If you want to explicitly want to put new fonts in the machine.
-* `**getFonts**()` returns a list of (font object, location) tuples.
-* `**getCharacterMapping**(discreteLocation=None)` returns a unicode -> glyphname map for the default of the whole system or discreteLocation. As the defaults at discrete locations can be quite different, UFOOperator makes no assumptions about what is available.
+* `loadFonts()`: the designspace you get from CurrentDesignspace already has the fonts loaded. But remember there is a method to do so.\
+* `updateFonts(fontObjects)`: fontObjects is a list of RF font objects that are to be used in the designspace. If you want to explicitly want to put new fonts in the machine.
+* `getFonts()` returns a list of (font object, location) tuples.
+* `getCharacterMapping(discreteLocation=None)` returns a unicode -> glyphname map for the default of the whole system or discreteLocation. As the defaults at discrete locations can be quite different, UFOOperator makes no assumptions about what is available.
 
 
-* `**findDefault**(discreteLocation=None)` returns the default location for the system or the discrete location.
-* `**findDefaultFont**(discreteLocation=None)`:  returns the default fontObject for the system or the discrete location.
-* `**splitLocation**(location)`: returns the location split into a continouous and a discrete part
-* `**getFullDesignLocation**(location)`: returns the given location converted to designspace coordinates.
-* `**getDiscreteLocations**()`: return a list of all possible discrete locations for this system.
-* `**newDefaultLocation**(bend=False, discreteLocation=None)`: returns a new location that is on the default of all axes. Use `bend=True` to get a default in user space coordinates. Use `bend=False` to get the default in designspace coordinates. Pass a discreteLocation dict to get the default at that discrete location.
-* `**isAnisotropic**(location)` returns True if this location is anisotropic.
-* `**splitAnisotropic**(location)` returns the x and y components of this location as two separate location dicts.
-* `**generateUFOs**(useVarlib=None)`: generate all the available instances as UFOs. This will calculate all glyphs, kerning, and font info for each instance. While pretty fast, this will take a bit of time. At whichever path is stored in the instanceDescriptors. If no instances are defined, nothing will generate.
-* `**getLocationType**(location)` returns `anisotropic, continuousLocation, discreteLocation, locHorizontal, locVertical`.
-* `**makeInstance**(instanceDescriptor, glyphNames=None, decomposeComponents=False, pairs=None, bend=False)` this makes a single UFO instance. `glyphNames` is an optional list of glyph names to exclusively generate. `decomposeComponents` can be True to decompose all glyphs. This is useful when generating small sets of outlines for a preview. `pairs` is an optional list of kern pairs to make. If none are give, all kerning will be calculated.
-* `**randomLocation**()` returns a good random location, for quick testing and entertainment.
-  * `**extrapolate`: is a factor of the (max-min) distance. 0 = nothing, 0.1 = 0.1 * (max - min).
-  * `**anisotropic= True`: *all* continuous axes get separate x, y values
-  * for **discrete** axes: random selection from the defined values.
-  * for **continuous** axes: interpolated value between axis.minimum and axis.maximum
+* `findDefault(discreteLocation=None)` returns the default location for the system or the discrete location.
+* `findDefaultFont(discreteLocation=None)`:  returns the default fontObject for the system or the discrete location.
+* `splitLocation(location)`: returns the location split into a continouous and a discrete part
+* `getFullDesignLocation(location)`: returns the given location converted to designspace coordinates.
+* `getDiscreteLocations()`: return a list of all possible discrete locations for this system.
+* `newDefaultLocation(bend=False, discreteLocation=None)`: returns a new location that is on the default of all axes. Use `bend=True` to get a default in user space coordinates. Use `bend=False` to get the default in designspace coordinates. Pass a discreteLocation dict to get the default at that discrete location.
+* `isAnisotropic(location)` returns True if this location is anisotropic.
+* `splitAnisotropic(location)` returns the x and y components of this location as two separate location dicts.
+* `generateUFOs(useVarlib=None)`: generate all the available instances as UFOs. This will calculate all glyphs, kerning, and font info for each instance. While pretty fast, this will take a bit of time. At whichever path is stored in the instanceDescriptors. If no instances are defined, nothing will generate.
+* `getLocationType(location)` returns `anisotropic, continuousLocation, discreteLocation, locHorizontal, locVertical`.
+* `makeInstance(instanceDescriptor, glyphNames=None, decomposeComponents=False, pairs=None, bend=False)` this makes a single UFO instance. `glyphNames` is an optional list of glyph names to exclusively generate. `decomposeComponents` can be True to decompose all glyphs. This is useful when generating small sets of outlines for a preview. `pairs` is an optional list of kern pairs to make. If none are give, all kerning will be calculated.
+* `randomLocation()` returns a good random location, for quick testing and entertainment.
+  * `extrapolate`: is a factor of the (max-min) distance. 0 = nothing, 0.1 = 0.1 * (max - min).
+  * `anisotropic= True`: *all* continuous axes get separate x, y values
+  * for discrete axes: random selection from the defined values.
+  * for continuous axes: interpolated value between axis.minimum and axis.maximum
   * Note: this returns a designspace location, not a userspace location.
-* `**makeFontProportions**(location, bend=False, roundGeometry=True)`: Calculate the basic font proportions for this location, to map out expectations for drawing.
+* `makeFontProportions(location, bend=False, roundGeometry=True)`: Calculate the basic font proportions for this location, to map out expectations for drawing.
