@@ -1,8 +1,6 @@
 
 size(1000, 500)
 d = CurrentDesignspace()
-d.loadFonts()
-
 fill(None)
 stroke(0)
 strokeWidth(.5)
