@@ -1260,11 +1260,18 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         def updateUFOFilenameFromFontNames(menuItem):
             for item in selectedItems:
                 instanceDescriptor = item["object"]
-                proposedName = os.path.join(os.path.dirname(instanceDescriptor.path), f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}.ufo")
-                #print('updateUFOFilenameFromFontNames menu', instanceDescriptor.path, proposedName)
-                instanceDescriptor.path = proposedName
+                # wrapInstanceDescriptor will create a new default filename
+                instanceDescriptor.filename = None
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
-                self.setDocumentNeedSave(True, who="Instances")
+            self.setDocumentNeedSave(True, who="Instances")
+
+        def openInstanceUFO(menuItem):
+            for item in selectedItems:
+                instanceDescriptor = item["object"]
+                path = item["object"].path
+                if path is not None:
+                    if os.path.exists(path):
+                        OpenFont(path)
 
         menu = []
         for axisDescriptor in self.operator.axes:
@@ -1305,7 +1312,10 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
 
         if selectedItems and sender.designspaceContent == "instances":
             menu.append("----")
-            menu.append(dict(title="UFO filename from instance names", callback=updateUFOFilenameFromFontNames))
+            menu.append(dict(title="Open Instance UFO", callback=openInstanceUFO))
+            menu.append(dict(title="Reveal Instance in Finder", callback=revealInFinderCallback))
+            menu.append("----")
+            menu.append(dict(title="Update UFO Filename", callback=updateUFOFilenameFromFontNames))
             menu.append("----")
             menu.append(dict(title="Convert to User Location", callback=convertInstanceToUserLocation))
             menu.append(dict(title="Convert to Design Location", callback=convertInstanceToDesignLocation))
