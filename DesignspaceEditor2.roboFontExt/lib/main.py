@@ -47,7 +47,19 @@ def CurrentDesignspace():
     return None
 
 
+def AllDesignspaces():
+    operators = []
+    for window in AppKit.NSApp().orderedWindows():
+        delegate = window.delegate()
+        if hasattr(delegate, "vanillaWrapper"):
+            controller = delegate.vanillaWrapper()
+            if controller.__class__.__name__ == "DesignspaceEditorController":
+                operators.append(controller.operator)
+    return operators
+
+
 builtins.CurrentDesignspace = CurrentDesignspace
+builtins.AllDesignspaces = AllDesignspaces
 
 
 # register subscriber events
