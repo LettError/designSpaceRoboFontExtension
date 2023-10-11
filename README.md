@@ -113,9 +113,12 @@ There are some useful methods that split locations into their continuous and dis
 * `splitAnisotropic(location)` returns the x and y components of this location as two separate location dicts.
 * `generateUFOs(useVarlib=None)`: generate all the available instances as UFOs. This will calculate all glyphs, kerning, and font info for each instance. While pretty fast, this will take a bit of time. At whichever path is stored in the instanceDescriptors. If no instances are defined, nothing will generate.
 * `getLocationType(location)` returns `anisotropic, continuousLocation, discreteLocation, locHorizontal, locVertical`.
-* `makeInstance(instanceDescriptor, glyphNames=None, decomposeComponents=False, pairs=None, bend=False)` this makes a single UFO instance. `glyphNames` is an optional list of glyph names to exclusively generate. `decomposeComponents` can be True to decompose all glyphs. This is useful when generating small sets of outlines for a preview. `pairs` is an optional list of kern pairs to make. If none are give, all kerning will be calculated.
+* `makeInstance(instanceDescriptor, glyphNames=None, decomposeComponents=False, pairs=None, bend=False)` this makes a single UFO instance. 
+	* `glyphNames` is an optional list of glyph names to exclusively generate.
+	* `decomposeComponents` can be True to decompose all glyphs. This is useful when generating small sets of outlines for a preview. 
+	* `pairs` is an optional list of kern pairs to make. If no pairs given, all kerning will be calculated.
 * `randomLocation()` returns a good random location, for quick testing and entertainment.
-  * `extrapolate`: is a factor of the (max-min) distance. 0 = nothing, 0.1 = 0.1 * (max - min).
+  * `extrapolate`: is a factor of the `(max-min)` distance. `0 = no extrapolation, 0.1 = 0.1 * (max - min)`.
   * `anisotropic= True`: *all* continuous axes get separate x, y values
   * for discrete axes: random selection from the defined values.
   * for continuous axes: interpolated value between axis.minimum and axis.maximum
