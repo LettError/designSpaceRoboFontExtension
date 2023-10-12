@@ -70,6 +70,9 @@ designspaceEvents = [
     "designspaceEditorDidOpenDesignspace",
     "designspaceEditorDidCloseDesignspace",
 
+    "designspaceEditorDidBecomeCurrent",
+    "designspaceEditorDidResignCurrent",
+
     # axis
     "designspaceEditorAxisLabelsDidChange",
     "designspaceEditorAxisMapDidChange",

@@ -1397,6 +1397,12 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             )
         return not self.w.getNSWindow().isDocumentEdited()
 
+    def windowDidSelect(self, window):
+        SendNotification.single(action="BecomeCurrent", designspace=self.operator)
+
+    def windowDidDeselect(self, window):
+        SendNotification.single(action="ResignCurrent", designspace=self.operator)
+
     def setDocumentNeedSave(self, state=True, **notificationsKwargs):
         if self.holdChanges:
             return
