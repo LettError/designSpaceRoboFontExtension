@@ -70,6 +70,9 @@ except Exception:
 class DesignspaceEditorOperator(ufoOperator.UFOOperator):
 
     def _instantiateFont(self, path):
+        for font in AllFonts():
+            if font.path == path:
+                return font.asDefcon()
         return internalFontClasses.createFontObject(path)
 
     def updateFonts(self, fonts=None):
