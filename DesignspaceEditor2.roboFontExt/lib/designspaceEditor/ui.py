@@ -72,7 +72,7 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
     def _instantiateFont(self, path):
         return internalFontClasses.createFontObject(path)
 
-    def updateFont(self, fonts=None):
+    def updateFonts(self, fonts=None):
         if fonts is None:
             fonts = AllFonts()
         super().udpateFonts([font.asDefcon() for font in fonts])
