@@ -1,19 +1,75 @@
+import AppKit
+from objc import python_method
+
+from lib.tools.debugTools import ClassNameIncrementer
+
 from mojo.subscriber import Subscriber, registerGlyphEditorSubscriber, registerCurrentFontSubscriber, registerRoboFontSubscriber
 
 from designspaceEditor.tools import SendNotification
 
 
-_operatorRegistry = []
+class OperatorRegistry(AppKit.NSObject, metaclass=ClassNameIncrementer):
+
+    def init(self):
+        self = super().init()
+        self.operators = []
+        self.currentOperator = None
+
+        center = AppKit.NSNotificationCenter.defaultCenter()
+        center.addObserver_selector_name_object_(self, "windowBecomeMain:", AppKit.NSWindowDidBecomeMainNotification, None)
+        center.addObserver_selector_name_object_(self, "windowResignMain:", AppKit.NSWindowDidResignMainNotification, None)
+        return self
+
+    @python_method
+    def append(self, operator):
+        if operator not in self.operators:
+            self.operators.append(operator)
+
+    @python_method
+    def remove(self, operator):
+        if operator in self.operators:
+            self.operators.remove(operator)
+
+    def __len__(self):
+        return len(self.operators)
+
+    def __iter__(self):
+        return self.operator.__iter__
+
+    def windowBecomeMain_(self, notification):
+        window = notification.object()
+        delegate = window.delegate()
+        if hasattr(delegate, "vanillaWrapper"):
+            controller = delegate.vanillaWrapper()
+            if controller.__class__.__name__ == "DesignspaceEditorController":
+                self.updateCurrentDesignspace_(controller.operator)
+
+    def windowResignMain_(self, notification):
+        window = notification.object()
+        delegate = window.delegate()
+        if hasattr(delegate, "vanillaWrapper"):
+            controller = delegate.vanillaWrapper()
+            if controller.__class__.__name__ == "DesignspaceEditorController":
+                self.updateCurrentDesignspace_(controller.operator)
+
+    def updateCurrentDesignspace_(self, operator):
+        if operator != self.currentOperator:
+            if self.currentOperator is not None:
+                SendNotification.single(action="ResignCurrent", designspace=self.currentOperator)
+            if operator is not None:
+                SendNotification.single(action="BecomeCurrent", designspace=operator)
+            self.currentOperator = operator
+
+
+_operatorRegistry = OperatorRegistry.alloc().init()
 
 
 def registerOperator(operator):
-    if operator not in _operatorRegistry:
-        _operatorRegistry.append(operator)
+    _operatorRegistry.append(operator)
 
 
 def unregisterOperator(operator):
-    if operator in _operatorRegistry:
-        _operatorRegistry.remove(operator)
+    _operatorRegistry.remove(operator)
 
 
 def notifyOperator(font, who, action="Change", operatorMethod="changed", operatorKwargs=dict(), notificationKwargs=dict()):
