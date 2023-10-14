@@ -4,26 +4,6 @@
 <dict>
 	<key>addToMenu</key>
 	<array>
-		<dict>
-			<key>nestInSubmenus</key>
-			<true/>
-			<key>path</key>
-			<string>newDesignspaceEditor.py</string>
-			<key>preferredName</key>
-			<string>New Designspace</string>
-			<key>shortKey</key>
-			<string></string>
-		</dict>
-		<dict>
-			<key>nestInSubmenus</key>
-			<true/>
-			<key>path</key>
-			<string>openDesignspaceEditor.py</string>
-			<key>preferredName</key>
-			<string>Open Designspace</string>
-			<key>shortKey</key>
-			<string></string>
-		</dict>
 	</array>
 	<key>developer</key>
 	<string>Letterror</string>

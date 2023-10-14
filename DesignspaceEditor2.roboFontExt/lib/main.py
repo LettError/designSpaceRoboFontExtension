@@ -3,12 +3,14 @@ import os
 
 import AppKit
 
+from mojo.tools import CallbackWrapper
 from mojo.events import addObserver
 from mojo.extensions import ExtensionBundle
 from mojo.subscriber import registerSubscriberEvent
 from designspaceEditor.ui import DesignspaceEditorController
 
 
+# checking older version of the Designspace Editor and warn
 oldBundle = ExtensionBundle("DesignSpaceEdit")
 
 if oldBundle.bundleExists():
@@ -18,6 +20,8 @@ if oldBundle.bundleExists():
         "An old version of Designspace edit is still installed. This can cause issues while opening designspace files."
     )
 
+
+# opening a design space file by dropping on RF
 
 class DesignspaceOpener(object):
 
@@ -36,6 +40,8 @@ class DesignspaceOpener(object):
 
 DesignspaceOpener()
 
+
+# api callback
 
 def CurrentDesignspace():
     for window in AppKit.NSApp().orderedWindows():
@@ -60,6 +66,59 @@ def AllDesignspaces():
 
 builtins.CurrentDesignspace = CurrentDesignspace
 builtins.AllDesignspaces = AllDesignspaces
+
+
+# menu
+
+class DesignspaceMenu:
+
+    def __init__(self):
+
+        mainMenu = AppKit.NSApp().mainMenu()
+        fileMenu = mainMenu.itemWithTitle_("File")
+        if not fileMenu:
+            return
+        fileMenu = fileMenu.submenu()
+
+        titles = [
+            ("New Designspace", self.newDesignspaceMenuCallback),
+            ("Open Designspace...", self.openDesignspaceMenuCallback),
+        ]
+        index = fileMenu.indexOfItemWithTitle_("Open Recent")
+
+        self.targets = []
+        for title, callback in reversed(titles):
+            if fileMenu.itemWithTitle_(title):
+                continue
+
+            target = CallbackWrapper(callback)
+            self.targets.append(target)
+
+            newItem = AppKit.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(title, "action:", "")
+            newItem.setTarget_(target)
+
+            fileMenu.insertItem_atIndex_(newItem, index + 1)
+
+        fileMenu.insertItem_atIndex_(AppKit.NSMenuItem.separatorItem(), index + 1)
+
+    def newDesignspaceMenuCallback(self, sender):
+        DesignspaceEditorController()
+
+    def openDesignspaceMenuCallback(self, sender):
+        from mojo.UI import GetFile
+
+        paths = GetFile(
+            message="Open a designspace document:",
+            allowsMultipleSelection=True,
+            fileTypes=['designspace'],
+        )
+
+        if paths:
+            for path in paths:
+                DesignspaceEditorController(path)
+
+
+DesignspaceMenu()
 
 
 # register subscriber events
