@@ -1073,7 +1073,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
                     self.instances.list.append(self.wrapInstanceDescriptor(newInstanceDescriptor))
         elif value == 1:
             # Add Sources as Instances
-            existingLocations = [instanceDescriptor.getFullDesignLocation() for instanceDescriptor in self.operator.instances]
+            existingLocations = [instanceDescriptor.getFullDesignLocation(self.operator) for instanceDescriptor in self.operator.instances]
             for sourceDescriptor in self.operator.sources:
                 if sourceDescriptor.location not in existingLocations:
                     with SendNotification("Instances", action="AddInstance", designspace=self.operator) as notification:
