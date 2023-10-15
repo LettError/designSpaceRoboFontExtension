@@ -103,7 +103,6 @@ class InstancesPreview(Subscriber, WindowController):
 
                         if previousGlyphName and glyphRecords:
                             glyphRecords[-1].xAdvance = kerningObject.get((previousGlyphName, glyphName))
-                            #print("\t\tkerningObject.get((previousGlyphName, glyphName))", (previousGlyphName, glyphName), kerningObject.get((previousGlyphName, glyphName)))
 
                         glyphRecords.append(glyphRecord)
 
@@ -119,7 +118,12 @@ class InstancesPreview(Subscriber, WindowController):
         selection = self.w.preview.getSelectedGlyph()
         if selection:
             selection.removeOverlap()
-            self.w.infoText.set([f"loc: {selection.lib['designLocation']}\tglyph: {selection.name}\twidth: {selection.width:3.1f}\tarea: {selection.area:3.1f}"])
+            self.w.infoText.set([
+                f"location: {selection.lib['designLocation']}",
+                f"glyph: {selection.name}",
+                f"width: {selection.width:3.1f}",
+                f"area: {selection.area:3.1f}"
+            ])
         else:
             self.w.infoText.set([])
 
@@ -173,4 +177,4 @@ if __name__ == '__main__':
         print("Open a design space!")
     else:
         c = InstancesPreview(operator=designspace)
-        c.setPreviewString("HELLOVAH")
+        # c.setPreviewString("HELLOVAH")
