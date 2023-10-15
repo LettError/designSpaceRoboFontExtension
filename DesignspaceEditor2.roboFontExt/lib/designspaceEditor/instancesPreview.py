@@ -5,7 +5,7 @@ from mojo.subscriber import WindowController, Subscriber
 from mojo.roboFont import RFont, RGlyph, internalFontClasses
 
 from designspaceEditor.tools import UseVarLib
-
+from mutatorMath import Location
 
 skateboardPreviewTextLibKey = "com.letterror.skateboard.previewText"
 previewTextLibKey = "com.letterror.designspaceEditor.previewText"
@@ -31,11 +31,24 @@ class InstancesPreview(Subscriber, WindowController):
 
         dummyFont.info.unitsPerEm = max(upms) if upms else 1000
 
+        self.displayPrefs = {}
+        self.displayPrefs['Inverse'] = True
+        self.displayPrefs['Beam'] = False
+        self.displayPrefs['displayMode'] = "Multi Line"
+        self.displayPrefs['Stroke'] = False
+        self.displayPrefs['Fill'] = True
+
         self.w = vanilla.FloatingWindow((700, 400), "Instances Preview", minSize=(500, 300))
-        self.w.input = vanilla.EditText((10, 10, -120, 22), callback=self.inputCallback)
+        self.w.input = vanilla.EditText((10, 10, -170, 22), callback=self.inputCallback)
         self.w.singleLine = vanilla.CheckBox((-100, 10, 100, 22), "Single line", value=False, callback=self.singleLineCheckboxCallback)
+        self.w.invert = vanilla.CheckBox((-160, 10, 60, 22), "Invert", value=self.displayPrefs['Inverse'], callback=self.colorModeCallback)
         self.w.hl = vanilla.HorizontalLine((0, 41, 0, 1))
-        self.w.preview = MultiLineView((0, 42, 0, 0), pointSize=60, displayOptions=dict(Beam=False, displayMode="Multi Line", Stroke=False, Fill=True))
+        self.w.preview = MultiLineView((0, 42, 0, -22), 
+            pointSize=60, 
+            displayOptions=self.displayPrefs,
+            selectionCallback=self.previewSelectionCallback
+            )
+        self.w.infoText = vanilla.TextBox((10,-21,-10,22), "DSE2")
         self.w.preview.setFont(dummyFont)
         self.selectedInstances = selectedInstances or []
 
@@ -75,14 +88,16 @@ class InstancesPreview(Subscriber, WindowController):
         with UseVarLib(self.operator, useVarLib=False):
             for instance in self.selectedInstances:
                 previousGlyphName = None
-                kerningObject = self.operator.makeOneKerning(instance.getFullDesignLocation(self.operator), pairs=possibleKerningPairs)
+                fullDesignLocation = instance.getFullDesignLocation(self.operator)
+                kerningObject = self.operator.makeOneKerning(fullDesignLocation, pairs=possibleKerningPairs)
                 for glyphName in glyphNames:
                     # do not bend, reasoning: the instance locations are in designspace values.
-                    mathGlyph = self.operator.makeOneGlyph(glyphName, instance.getFullDesignLocation(self.operator), decomposeComponents=True)
+                    mathGlyph = self.operator.makeOneGlyph(glyphName, fullDesignLocation, decomposeComponents=True)
                     if mathGlyph is not None:
                         dest = internalFontClasses.createGlyphObject()
                         mathGlyph.extractGlyph(dest)
-
+                        dest.lib['designLocation'] = Location(fullDesignLocation).asString()
+                        
                         glyphRecord = GlyphRecord(dest)
 
                         if previousGlyphName and glyphRecords:
@@ -98,6 +113,22 @@ class InstancesPreview(Subscriber, WindowController):
         self.w.preview.setGlyphRecords(glyphRecords)
 
     designspaceEditorInstancesDidChangeDelay = 0.1
+
+    def previewSelectionCallback(self, sender):
+        selection = self.w.preview.getSelectedGlyph()
+        if selection:
+            selection.removeOverlap()
+            self.w.infoText.set(f"loc: {selection.lib['designLocation']}\tglyph: {selection.name}\twidth: {selection.width:3.1f}\tarea: {selection.area:3.1f}")
+        else:
+            self.w.infoText.set("DSE2")
+
+    def colorModeCallback(self, sender):
+        choice = sender.get()
+        if choice == 0:
+            self.displayPrefs['Inverse'] = False
+        elif choice == 1:
+            self.displayPrefs['Inverse'] = True
+        self.w.preview.setDisplayStates(self.displayPrefs)
 
     def singleLineCheckboxCallback(self, sender):
         if not sender.get():
