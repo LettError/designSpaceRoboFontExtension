@@ -564,6 +564,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             editCallback=self.axesListEditCallback,
             columnDescriptions=axesColumnDescriptions,
             selectionCallback=self.axesListSelectionCallback,
+            allowsSorting=False,
             dragSettings=dict(type="sourcesListDragAndDropType", callback=self.dragCallback),
             selfDropSettings=dict(type="sourcesListDragAndDropType", operation=AppKit.NSDragOperationMove, callback=self.dropCallback),
         )
@@ -621,6 +622,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             editCallback=self.sourcesListEditCallback,
             menuCallback=self.listMenuCallack,
             selectionCallback=self.sourceListSelectionCallback,
+            allowsSorting=False,
             dragSettings=dict(type="sourcesListDragAndDropType", callback=self.dragCallback),
             selfDropSettings=dict(type="sourcesListDragAndDropType", operation=AppKit.NSDragOperationMove, callback=self.dropCallback),
             otherApplicationDropSettings=dict(type=AppKit.NSFilenamesPboardType, operation=AppKit.NSDragOperationCopy, callback=self.sourcesListDropCallback),
@@ -692,6 +694,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             columnDescriptions=instancesColumnDescriptions,
             menuCallback=self.listMenuCallack,
             selectionCallback=self.instancesListSelectionCallback,
+            allowsSorting=False,
             dragSettings=dict(type="sourcesListDragAndDropType", callback=self.dragCallback),
             selfDropSettings=dict(type="sourcesListDragAndDropType", operation=AppKit.NSDragOperationMove, callback=self.dropCallback),
         )
