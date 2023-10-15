@@ -7,11 +7,15 @@ from mojo.roboFont import RFont, RGlyph, internalFontClasses
 from designspaceEditor.tools import UseVarLib
 
 
+skateboardPreviewTextLibKey = "com.letterror.skateboard.previewText"
+previewTextLibKey = "com.letterror.designspaceEditor.previewText"
+
+
 class InstancesPreview(Subscriber, WindowController):
 
     debug = True
 
-    def build(self, operator=None, selectedInstances=None, previewString=""):
+    def build(self, operator=None, selectedInstances=None, previewString=None):
         self.operator = operator
 
         dummyFont = RFont(showInterface=False)
@@ -34,6 +38,14 @@ class InstancesPreview(Subscriber, WindowController):
         self.w.preview = MultiLineView((0, 42, 0, 0), pointSize=60, displayOptions=dict(Beam=False, displayMode="Multi Line", Stroke=False, Fill=True))
         self.w.preview.setFont(dummyFont)
         self.selectedInstances = selectedInstances or []
+
+        if previewString is None:
+            # check if there is an old skateboard previewtext
+            if skateboardPreviewTextLibKey in self.operator.lib:
+                previewString = self.operator.lib[previewTextLibKey] = self.operator.lib[skateboardPreviewTextLibKey]
+                del self.operator.lib[skateboardPreviewTextLibKey]
+            else:
+                previewString = self.operator.lib.get(previewTextLibKey, "Abc")
         self.setPreviewString(previewString)
 
     def started(self):
@@ -51,7 +63,9 @@ class InstancesPreview(Subscriber, WindowController):
         self.inputCallback(self.w.input)
 
     def inputCallback(self, sender):
-        glyphNames = splitText(sender.get(), self.operator.getCharacterMapping())
+        previewString = sender.get()
+        self.operator.lib[previewTextLibKey] = previewString
+        glyphNames = splitText(previewString, self.operator.getCharacterMapping())
         glyphRecords = []
         possibleKerningPairs = ((side1, side2) for side1, side2 in zip(glyphNames[:-1], glyphNames[1:]))
         possibleKerningPairs = list(possibleKerningPairs)

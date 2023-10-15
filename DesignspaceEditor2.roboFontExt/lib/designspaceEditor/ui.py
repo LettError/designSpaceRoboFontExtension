@@ -1120,7 +1120,6 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             self.instancesPreview = InstancesPreview(
                 operator=self.operator,
                 selectedInstances=[self.instances.list[index]["object"] for index in self.instances.list.getSelection()],
-                previewString="HELLO"
             )
 
     def instancesListEditCallback(self, sender):
