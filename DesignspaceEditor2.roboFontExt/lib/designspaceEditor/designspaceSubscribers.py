@@ -30,12 +30,6 @@ class OperatorRegistry(AppKit.NSObject, metaclass=ClassNameIncrementer):
         if operator in self.operators:
             self.operators.remove(operator)
 
-    def __len__(self):
-        return len(self.operators)
-
-    def __iter__(self):
-        return self.operators.__iter__()
-
     def windowBecomeMain_(self, notification):
         window = notification.object()
         delegate = window.delegate()
@@ -73,7 +67,7 @@ def unregisterOperator(operator):
 
 
 def notifyOperator(font, who, action="Change", operatorMethod="changed", operatorKwargs=dict(), notificationKwargs=dict()):
-    for operator in _operatorRegistry:
+    for operator in _operatorRegistry.operators:
         for sourceDescriptor in operator.sources:
             if sourceDescriptor.path == font.path:
                 if operatorMethod:
