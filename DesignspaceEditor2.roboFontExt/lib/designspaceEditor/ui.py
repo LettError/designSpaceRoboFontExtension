@@ -1579,11 +1579,5 @@ if __name__ == '__main__':
     pathForBundle = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     designspaceBundle = ExtensionBundle(path=pathForBundle)
 
-    path = "/Users/frederik/Downloads/mutatorSans-master/MutatorSans.designspace"
-    #path = "/Users/frederik/Desktop/anisotropicIssue/test.designspace"
-    #path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v4_original.designspace'
-    #path = "/Users/frederik/Desktop/designSpaceEditorText/testFiles/Untitled.designspace"
-    path = None
-    #path = '/Users/frederik/Documents/dev/letterror/ufoProcessor/Tests/202206 discrete spaces/test.ds5.designspace'
-    #path = '/Users/frederik/Documents/dev/fonttools/Tests/designspaceLib/data/test_v5.designspace'
+    path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
     DesignspaceEditorController(path)
