@@ -1,5 +1,5 @@
 import vanilla
-from mojo.UI import MultiLineView, splitText, GlyphRecord
+from mojo.UI import MultiLineView, splitText, GlyphRecord, StatusBar
 from mojo.subscriber import WindowController, Subscriber
 
 from mojo.roboFont import RFont, RGlyph, internalFontClasses
@@ -32,7 +32,7 @@ class InstancesPreview(Subscriber, WindowController):
         dummyFont.info.unitsPerEm = max(upms) if upms else 1000
 
         self.displayPrefs = {}
-        self.displayPrefs['Inverse'] = True
+        self.displayPrefs['Inverse'] = False
         self.displayPrefs['Beam'] = False
         self.displayPrefs['displayMode'] = "Multi Line"
         self.displayPrefs['Stroke'] = False
@@ -43,12 +43,13 @@ class InstancesPreview(Subscriber, WindowController):
         self.w.singleLine = vanilla.CheckBox((-100, 10, 100, 22), "Single line", value=False, callback=self.singleLineCheckboxCallback)
         self.w.invert = vanilla.CheckBox((-160, 10, 60, 22), "Invert", value=self.displayPrefs['Inverse'], callback=self.colorModeCallback)
         self.w.hl = vanilla.HorizontalLine((0, 41, 0, 1))
-        self.w.preview = MultiLineView((0, 42, 0, -22), 
-            pointSize=60, 
+        self.w.preview = MultiLineView(
+            (0, 42, 0, -20),
+            pointSize=60,
             displayOptions=self.displayPrefs,
             selectionCallback=self.previewSelectionCallback
-            )
-        self.w.infoText = vanilla.TextBox((10,-21,-10,22), "DSE2")
+        )
+        self.w.infoText = StatusBar((0, -20, -0, 20))
         self.w.preview.setFont(dummyFont)
         self.selectedInstances = selectedInstances or []
 
@@ -97,7 +98,7 @@ class InstancesPreview(Subscriber, WindowController):
                         dest = internalFontClasses.createGlyphObject()
                         mathGlyph.extractGlyph(dest)
                         dest.lib['designLocation'] = Location(fullDesignLocation).asString()
-                        
+
                         glyphRecord = GlyphRecord(dest)
 
                         if previousGlyphName and glyphRecords:
@@ -118,9 +119,9 @@ class InstancesPreview(Subscriber, WindowController):
         selection = self.w.preview.getSelectedGlyph()
         if selection:
             selection.removeOverlap()
-            self.w.infoText.set(f"loc: {selection.lib['designLocation']}\tglyph: {selection.name}\twidth: {selection.width:3.1f}\tarea: {selection.area:3.1f}")
+            self.w.infoText.set([f"loc: {selection.lib['designLocation']}\tglyph: {selection.name}\twidth: {selection.width:3.1f}\tarea: {selection.area:3.1f}"])
         else:
-            self.w.infoText.set("DSE2")
+            self.w.infoText.set([])
 
     def colorModeCallback(self, sender):
         choice = sender.get()
@@ -167,5 +168,9 @@ class InstancesPreview(Subscriber, WindowController):
 
 
 if __name__ == '__main__':
-    c = InstancesPreview(operator=CurrentDesignspace())
-    c.setPreviewString("HELLOVAH")
+    designspace = CurrentDesignspace()
+    if designspace is None:
+        print("Open a design space!")
+    else:
+        c = InstancesPreview(operator=designspace)
+        c.setPreviewString("HELLOVAH")
