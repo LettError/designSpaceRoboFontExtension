@@ -34,7 +34,7 @@ class OperatorRegistry(AppKit.NSObject, metaclass=ClassNameIncrementer):
         return len(self.operators)
 
     def __iter__(self):
-        return self.operators.__iter__
+        return self.operators.__iter__()
 
     def windowBecomeMain_(self, notification):
         window = notification.object()
