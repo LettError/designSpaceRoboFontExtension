@@ -23,7 +23,7 @@ from designspaceEditor.designspaceLexer import DesignspaceLexer, TextLexer
 from designspaceEditor.parsers import mapParser, rulesParser, labelsParser, glyphNameParser, variableFontsParser
 from designspaceEditor.parsers.parserTools import numberToString
 from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges, symbolImage, NumberListFormatter, SendNotification
-from designspaceEditor.instancesPreview import InstancesPreview
+from designspaceEditor.locationPreview import LocationPreview
 from designspaceEditor.designspaceSubscribers import registerOperator, unregisterOperator
 
 
@@ -488,10 +488,18 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             callback=self.toolbarSelectTab,
             imageObject=designspaceBundle.getResourceImage(f"toolbar_30_30_icon_{tabItem.lower().replace(' ', '_')}"),
             selectable=True,
+            visibleByDefault=tabItem not in ["Notes"],
         ) for tabItem in self.tabItems]
 
         toolbarItems.extend([
             dict(itemIdentifier=AppKit.NSToolbarSpaceItemIdentifier),
+
+            dict(
+                itemIdentifier="preview",
+                label="Preview",
+                callback=self.toolbarPreview,
+                imageObject=symbolImage("chart.bar.doc.horizontal", (1, 0, 1, 1))  # doc.plaintext
+            ),
             dict(
                 itemIdentifier="save",
                 label="Save",
@@ -667,14 +675,6 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             segmentDescriptions=instancesEditorGenerateToolsSsegmentDescriptions
         )
 
-        self.instances.previewTools = vanilla.SegmentedButton(
-            (660, 5, 130, 22),
-            selectionStyle="momentary",
-            callback=self.instancesEditorPreviewToolsCallback,
-            segmentDescriptions=[dict(title="Instances Preview")]
-        )
-
-
         # instancesDoubleClickCell = RFDoubleClickCell.alloc().init()
         # instancesDoubleClickCell.setDoubleClickCallback_(self.instancesListDoubleClickCallback)
         # instancesDoubleClickCell.setImage_(infoImage)
@@ -745,7 +745,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         registerOperator(self.operator)
 
     def destroy(self):
-        for controller in [self.locationLabelsPreview, self.instancesPreview]:
+        for controller in [self.locationLabelsPreview, self.locationPreview]:
             try:
                 controller.w.close()
             except Exception:
@@ -1113,17 +1113,6 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
                 if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
                     os.makedirs(os.path.dirname(instanceDescriptor.path))
                 font.save(path=instanceDescriptor.path)
-
-    instancesPreview = None
-
-    def instancesEditorPreviewToolsCallback(self, sender):
-        try:
-            self.instancesPreview.w.show()
-        except Exception:
-            self.instancesPreview = InstancesPreview(
-                operator=self.operator,
-                selectedInstances=[self.instances.list[index]["object"] for index in self.instances.list.getSelection()],
-            )
 
     def instancesListEditCallback(self, sender):
         for wrappedInstanceDescriptor in sender:
@@ -1499,6 +1488,18 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         if selectedTab == "Sources":
             self.updateSources()
         self.w.tabs.set(self.tabItems.index(selectedTab))
+
+    locationPreview = None
+
+    def toolbarPreview(self, sender):
+        try:
+            self.locationPreview.w.show()
+        except Exception:
+            self.locationPreview = LocationPreview(
+                operator=self.operator,
+                selectedSources=[self.sources.list[index]["object"] for index in self.sources.list.getSelection()],
+                selectedInstances=[self.instances.list[index]["object"] for index in self.instances.list.getSelection()],
+            )
 
     def toolbarSave(self, sender):
 

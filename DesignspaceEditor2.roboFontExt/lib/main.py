@@ -5,8 +5,10 @@ import AppKit
 
 from mojo.tools import CallbackWrapper
 from mojo.events import addObserver
-from mojo.extensions import ExtensionBundle
-from mojo.subscriber import registerSubscriberEvent
+from mojo.extensions import ExtensionBundle, getExtensionDefault, setExtensionDefault
+from mojo.subscriber import registerSubscriberEvent, Subscriber, registerRoboFontSubscriber
+from mojo.UI import GetFile
+
 from designspaceEditor.ui import DesignspaceEditorController
 
 
@@ -70,43 +72,65 @@ builtins.AllDesignspaces = AllDesignspaces
 
 # menu
 
-class DesignspaceMenu:
+recentDocumentPathsKey = "com.letterror.designspaceEditor.recentDocumentPaths"
+maxRecentDocuments = 10
 
-    def __init__(self):
 
+class DesignspaceMenuSubscriber(Subscriber):
+
+    debug = True
+
+    def build(self):
         mainMenu = AppKit.NSApp().mainMenu()
         fileMenu = mainMenu.itemWithTitle_("File")
         if not fileMenu:
             return
-        fileMenu = fileMenu.submenu()
+        self.fileMenu = fileMenu.submenu()
 
         titles = [
             ("New Designspace", self.newDesignspaceMenuCallback),
             ("Open Designspace...", self.openDesignspaceMenuCallback),
+            ("Open Recent Designspace", None),
         ]
-        index = fileMenu.indexOfItemWithTitle_("Open Recent")
 
+        # remove the existing items
+        # XXX this may not be needed in real usage
+        for title, callback in titles:
+            existing = self.fileMenu.itemWithTitle_(title)
+            if existing:
+                self.fileMenu.removeItem_(existing)
+
+        # build the new items
+        index = self.fileMenu.indexOfItemWithTitle_("Open Recent")
         self.targets = []
         for title, callback in reversed(titles):
-            if fileMenu.itemWithTitle_(title):
-                continue
+            action = None
+            target = None
+            if callback is not None:
+                target = CallbackWrapper(callback)
+                self.targets.append(target)
+                action = "action:"
+            newItem = AppKit.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(title, action, "")
+            if target is not None:
+                newItem.setTarget_(target)
+            else:
+                self.openRecentSubmenu = AppKit.NSMenu.alloc().init()
+                newItem.setSubmenu_(self.openRecentSubmenu)
+            self.fileMenu.insertItem_atIndex_(newItem, index + 1)
+        self.fileMenu.insertItem_atIndex_(AppKit.NSMenuItem.separatorItem(), index + 1)
+        self.recentDocumentPaths = getExtensionDefault(recentDocumentPathsKey, [])
+        self.openRecentDesignspaceTarget = CallbackWrapper(self.openRecentDesignspageMenuCallback)
+        self.clearRecentDesignspaceTarget = CallbackWrapper(self.clearRecentDesignspaceMenuCallback)
+        self.populateOpenRecentDesignspaceSubmenu()
 
-            target = CallbackWrapper(callback)
-            self.targets.append(target)
-
-            newItem = AppKit.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(title, "action:", "")
-            newItem.setTarget_(target)
-
-            fileMenu.insertItem_atIndex_(newItem, index + 1)
-
-        fileMenu.insertItem_atIndex_(AppKit.NSMenuItem.separatorItem(), index + 1)
+    # New
 
     def newDesignspaceMenuCallback(self, sender):
         DesignspaceEditorController()
 
-    def openDesignspaceMenuCallback(self, sender):
-        from mojo.UI import GetFile
+    # Open
 
+    def openDesignspaceMenuCallback(self, sender):
         paths = GetFile(
             message="Open a designspace document:",
             allowsMultipleSelection=True,
@@ -117,8 +141,55 @@ class DesignspaceMenu:
             for path in paths:
                 DesignspaceEditorController(path)
 
+    # Recent
 
-DesignspaceMenu()
+    def populateOpenRecentDesignspaceSubmenu(self):
+        self.openRecentSubmenu.removeAllItems()
+        for path in self.recentDocumentPaths:
+            if not os.path.exists(path):
+                continue
+            item = AppKit.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(os.path.basename(path), "action:", "")
+            item.setRepresentedObject_(path)
+            item.setTarget_(self.openRecentDesignspaceTarget)
+            self.openRecentSubmenu.addItem_(item)
+        self.openRecentSubmenu.addItem_(AppKit.NSMenuItem.separatorItem())
+        clearItem = AppKit.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("Clear Menu", "action:", "")
+        clearItem.setTarget_(self.clearRecentDesignspaceTarget)
+        self.openRecentSubmenu.addItem_(clearItem)
+
+    def openRecentDesignspageMenuCallback(self, sender):
+        path = sender.representedObject()
+        DesignspaceEditorController(path)
+
+    def clearRecentDesignspaceMenuCallback(self, sender):
+        self.recentDocumentPaths = []
+        self.storeRecentDesignspacePaths()
+        self.populateOpenRecentDesignspaceSubmenu()
+
+    def storeRecentDesignspacePaths(self):
+        setExtensionDefault(recentDocumentPathsKey, self.recentDocumentPaths)
+
+    def designspaceEditorDidOpenDesignspace(self, info):
+        designspace = info["designspace"]
+        path = designspace.path
+        if path is not None:
+            self.addPathToRecentDocuments(path)
+            self.populateOpenRecentDesignspaceSubmenu()
+
+    def designspaceEditorDidCloseDesignspace(self, info):
+        designspace = info["designspace"]
+        path = designspace.path
+        if path is not None:
+            self.addPathToRecentDocuments(path)
+            self.populateOpenRecentDesignspaceSubmenu()
+
+    def addPathToRecentDocuments(self, path):
+        if path in self.recentDocumentPaths:
+            self.recentDocumentPaths.remove(path)
+        self.recentDocumentPaths.insert(0, path)
+
+
+registerRoboFontSubscriber(DesignspaceMenuSubscriber)
 
 
 # register subscriber events
@@ -181,6 +252,9 @@ designspaceEvents = [
     # notes
     "designspaceEditorNotesDidChange",
 
+    # preview location
+    "designspaceEditorPreviewLocationDidChange",
+
     # any change
     "designspaceEditorDidChange",
 
@@ -238,6 +312,8 @@ eventInfoExtractionFunctionsMap = dict(
     designspaceEditorAxesDidAddAxis=designspaceAttrbuteExtractor("axis"),
     designspaceEditorSourcesDidAddSource=designspaceAttrbuteExtractor("source"),
     designspaceEditorInstancesDidAddInstance=designspaceAttrbuteExtractor("instance"),
+
+    designspaceEditorPreviewLocationDidChange=designspaceAttrbuteExtractor("location")
 )
 
 for event in designspaceEvents:
