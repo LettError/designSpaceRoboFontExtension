@@ -81,6 +81,12 @@ class DesignspaceMenuSubscriber(Subscriber):
     debug = True
 
     def build(self):
+        self.buildDesignspaceMenuItems()
+
+    def roboFontDidFinishLaunching(self, notification):
+        self.buildDesignspaceMenuItems()
+
+    def buildDesignspaceMenuItems(self):
         mainMenu = AppKit.NSApp().mainMenu()
         fileMenu = mainMenu.itemWithTitle_("File")
         if not fileMenu:
@@ -187,6 +193,7 @@ class DesignspaceMenuSubscriber(Subscriber):
         if path in self.recentDocumentPaths:
             self.recentDocumentPaths.remove(path)
         self.recentDocumentPaths.insert(0, path)
+        self.storeRecentDesignspacePaths()
 
 
 registerRoboFontSubscriber(DesignspaceMenuSubscriber)
