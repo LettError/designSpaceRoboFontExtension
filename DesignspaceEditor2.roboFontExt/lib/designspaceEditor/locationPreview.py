@@ -19,9 +19,9 @@ skateboardPreviewTextLibKey = "com.letterror.skateboard.previewText"
 previewTextLibKey = "com.letterror.designspaceEditor.previewText"
 
 
-sourceIndicator = symbolImage("smallcircle.filled.circle.fill", (1, 0, 1, 1))
-instanceIndicator = symbolImage("smallcircle.filled.circle.fill", (0, 1, 0, 1))
-previewLocationIndicator = symbolImage("smallcircle.filled.circle.fill", (0, 0, 1, 1))
+sourceIndicator = symbolImage("smallcircle.filled.circle.fill", (1, .5, 0, 1))
+instanceIndicator = symbolImage("smallcircle.filled.circle", (0, 0, 1, 1))
+previewLocationIndicator = symbolImage("mappin.and.ellipse", (1, 0, 0, 1), flipped=True)
 
 
 class PreviewLocationFinder(ezui.WindowController):

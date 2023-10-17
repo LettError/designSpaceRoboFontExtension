@@ -112,12 +112,15 @@ class UseVarLib:
         self.operator.useVarlib = self.previousModel
 
 
-def symbolImage(symbolName, color):
+def symbolImage(symbolName, color, flipped=False):
     image = AppKit.NSImage.imageWithSystemSymbolName_accessibilityDescription_(symbolName, "")
     configuration = AppKit.NSImageSymbolConfiguration.configurationWithHierarchicalColor_(
         AppKit.NSColor.colorWithCalibratedRed_green_blue_alpha_(*color)
     )
-    return image.imageWithSymbolConfiguration_(configuration)
+    image = image.imageWithSymbolConfiguration_(configuration)
+    if flipped:
+        image.setFlipped_(True)
+    return image
 
 
 class NumberListFormatter(AppKit.NSFormatter):
