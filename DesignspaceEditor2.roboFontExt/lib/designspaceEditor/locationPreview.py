@@ -22,6 +22,7 @@ previewTextLibKey = "com.letterror.designspaceEditor.previewText"
 sourceIndicator = symbolImage("smallcircle.filled.circle.fill", (1, .5, 0, 1))
 instanceIndicator = symbolImage("smallcircle.filled.circle", (0, 0, 1, 1))
 previewLocationIndicator = symbolImage("mappin.and.ellipse", (1, 0, 0, 1), flipped=True)
+previewLocationButtonImage = symbolImage("mappin.and.ellipse", (0, 0, 0, 1))
 
 
 class PreviewLocationFinder(ezui.WindowController):
@@ -176,7 +177,8 @@ class LocationPreview(Subscriber, WindowController):
             ],
             bordered=False
         )
-        self.w.currentLocation = vanilla.Button((-40, 10, 30, 22), "📍", callback=self.currentLocationCallback)
+        self.w.currentLocation = vanilla.Button((-40, 10, 30, 22), "", callback=self.currentLocationCallback)
+        self.w.currentLocation.getNSButton().setImage_(previewLocationButtonImage)
         self.w.hl = vanilla.HorizontalLine((0, 41, 0, 1))
         self.w.preview = MultiLineView(
             (0, 42, 0, -20),
