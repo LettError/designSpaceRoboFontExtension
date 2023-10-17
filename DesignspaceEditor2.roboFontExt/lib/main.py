@@ -196,9 +196,6 @@ class DesignspaceMenuSubscriber(Subscriber):
         self.storeRecentDesignspacePaths()
 
 
-registerRoboFontSubscriber(DesignspaceMenuSubscriber)
-
-
 # register subscriber events
 
 designspaceEvents = [
@@ -338,3 +335,5 @@ for event in designspaceEvents:
         delay=.2,
         debug=True
     )
+
+registerRoboFontSubscriber(DesignspaceMenuSubscriber)
