@@ -1522,6 +1522,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             self.updateSources()
             self.setWindowTitleFromPath(path)
             self.setDocumentNeedSave(False)
+            SendNotification.single(action="SaveDesignspace", designspace=self.operator)
 
         if len(self.operator.axes) == 0:
             self.showMessage(

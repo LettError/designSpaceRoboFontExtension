@@ -262,6 +262,9 @@ designspaceEvents = [
     # preview location
     "designspaceEditorPreviewLocationDidChange",
 
+    # save designspace
+    "designspaceEditorDidSaveDesignspace",
+
     # any change
     "designspaceEditorDidChange",
 
