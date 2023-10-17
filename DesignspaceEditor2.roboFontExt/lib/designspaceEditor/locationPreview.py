@@ -3,18 +3,25 @@ from operator import itemgetter
 import vanilla
 import ezui
 
+import mojo.drawingTools as ctx
+
 from mojo.UI import MultiLineView, splitText, GlyphRecord, StatusBar
 from mojo.subscriber import WindowController, Subscriber
-
+from mojo.events import addObserver, removeObserver
 from mojo.roboFont import RFont, RGlyph, internalFontClasses
 
-from designspaceEditor.tools import UseVarLib, SendNotification
+from designspaceEditor.tools import UseVarLib, SendNotification, symbolImage
 from designspaceEditor.parsers.parserTools import numberToString
 
 from mutatorMath import Location
 
 skateboardPreviewTextLibKey = "com.letterror.skateboard.previewText"
 previewTextLibKey = "com.letterror.designspaceEditor.previewText"
+
+
+sourceIndicator = symbolImage("smallcircle.filled.circle.fill", (1, 0, 1, 1))
+instanceIndicator = symbolImage("smallcircle.filled.circle.fill", (0, 1, 0, 1))
+previewLocationIndicator = symbolImage("smallcircle.filled.circle.fill", (0, 0, 1, 1))
 
 
 class PreviewLocationFinder(ezui.WindowController):
@@ -105,6 +112,8 @@ class PreviewLocationFinder(ezui.WindowController):
 
 class PreviewInstance:
 
+    flavor = "previewLocation"
+
     def __init__(self, designLocation):
         self.designLocation = designLocation
 
@@ -117,9 +126,10 @@ class LocationPreview(Subscriber, WindowController):
     debug = True
 
     def build(self, operator=None, selectedSources=None, selectedInstances=None, previewString=None):
+        addObserver(self, "locationPreviewLineViewDidDrawGlyph", "spaceCenterDraw")
         self.operator = operator
 
-        dummyFont = RFont(showInterface=False)
+        self.dummyFont = RFont(showInterface=False)
 
         upms = set()
         for font in self.operator.fonts.values():
@@ -134,7 +144,7 @@ class LocationPreview(Subscriber, WindowController):
                 info = self.operator.makeOneInfo(instance.getFullDesignLocation(self.operator))
                 upms.add(info.unitsPerEm)
 
-        dummyFont.info.unitsPerEm = max(upms) if upms else 1000
+        self.dummyFont.info.unitsPerEm = max(upms) if upms else 1000
 
         self.displayPrefs = {}
         self.displayPrefs['Inverse'] = False
@@ -175,7 +185,7 @@ class LocationPreview(Subscriber, WindowController):
             selectionCallback=self.previewSelectionCallback
         )
         self.w.infoText = StatusBar((0, -20, -0, 20))
-        self.w.preview.setFont(dummyFont)
+        self.w.preview.setFont(self.dummyFont)
 
         self.selectedSources = selectedSources or []
         self.selectedInstances = selectedInstances or []
@@ -194,6 +204,7 @@ class LocationPreview(Subscriber, WindowController):
         self.w.open()
 
     def destroy(self):
+        removeObserver(self, "spaceCenterDraw")
         self.operator = None
         self.selectedInstances = None
         self.selectedSources = None
@@ -248,13 +259,21 @@ class LocationPreview(Subscriber, WindowController):
                     if mathGlyph is not None:
                         dest = internalFontClasses.createGlyphObject()
                         mathGlyph.extractGlyph(dest)
-                        dest.tempLib['designLocation'] = Location(fullDesignLocation).asString()
-                        dest.tempLib['descriptor'] = descriptor
+                        dest.lib['designLocation'] = Location(fullDesignLocation).asString()
+                        dest.lib['descriptor'] = descriptor
 
                         glyphRecord = GlyphRecord(dest)
 
                         if previousGlyphName and lineItem["glyphRecords"]:
                             lineItem["glyphRecords"][-1].xAdvance = kerningObject.get((previousGlyphName, glyphName))
+                        else:
+                            # mark the first glyph
+                            if descriptor.flavor == "source":
+                                dest.lib["indicator"] = sourceIndicator
+                            elif descriptor.flavor == "instance":
+                                dest.lib["indicator"] = instanceIndicator
+                            elif descriptor.flavor == "previewLocation":
+                                dest.lib["indicator"] = previewLocationIndicator
 
                         lineItem["glyphRecords"].append(glyphRecord)
 
@@ -276,15 +295,15 @@ class LocationPreview(Subscriber, WindowController):
             glyphRecords.append(GlyphRecord(self.w.preview.createNewLineGlyph()))
 
         self.w.preview.setGlyphRecords(glyphRecords)
-
-    designspaceEditorInstancesDidChangeDelay = 0.1
+        # hacking into the multiline view
+        self.w.preview._glyphLineView._shouldSendEvents = True
 
     def previewSelectionCallback(self, sender):
         selection = self.w.preview.getSelectedGlyph()
         if selection:
             # selection.removeOverlap()
             self.w.infoText.set([
-                f"location: {selection.tempLib['designLocation']}",
+                f"location: {selection.lib['designLocation']}",
                 f"glyph: {selection.name}",
                 f"width: {selection.width:3.1f}",
                 f"area: {selection.area:3.1f}"
@@ -294,6 +313,8 @@ class LocationPreview(Subscriber, WindowController):
 
     def currentLocationCallback(self, sender):
         PreviewLocationFinder(sender, self.operator, self.shouldShowPreviewLocation)
+
+    # menu callbacks
 
     def invertMenuItemCallback(self, sender):
         choice = not sender.state()
@@ -340,6 +361,23 @@ class LocationPreview(Subscriber, WindowController):
     def sortByLineDensityMenuItemCallback(self, sender):
         self._resolveSortBy(sender, "density")
 
+    # robofont notifications
+
+    def locationPreviewLineViewDidDrawGlyph(self, notification):
+        # old style drawing!
+        glyph = notification["glyph"]
+        if "indicator" in glyph.lib:
+            indicator = glyph.lib["indicator"]
+            ctx.save()
+            ctx.translate(0, self.dummyFont.info.unitsPerEm * .4)
+            ctx.scale(-notification["scale"])
+            ctx.image(indicator, (0, 0))
+            ctx.restore()
+
+    # subscriber notifications
+
+    designspaceEditorInstancesDidChangeDelay = 0.1
+
     def designspaceEditorInstancesDidChange(self, notification):
         self.updatePreview()
 
@@ -363,6 +401,8 @@ class LocationPreview(Subscriber, WindowController):
 
     def designspaceEditorGroupsFontDidChangedExternally(self, notification):
         self.updatePreview()
+
+    designspaceEditorPreviewLocationDidChangeDelay = 0.01
 
     def designspaceEditorPreviewLocationDidChange(self, notification):
         if self.operator == notification["designspace"]:
