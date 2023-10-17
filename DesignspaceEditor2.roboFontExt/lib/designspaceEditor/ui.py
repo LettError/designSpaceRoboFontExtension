@@ -595,13 +595,12 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         )
 
         sourcesEditorToolsSsegmentDescriptions = [
-            dict(title="Open UFO"),
             dict(title="Add Open UFOs to Designspace"),
             # dict(title="Load Names"),
             dict(title="Replace UFO"),
         ]
         self.sources.editorTools = vanilla.SegmentedButton(
-            (72, 5, 400, 22),
+            (72, 5, 300, 22),
             selectionStyle="momentary",
             callback=self.sourcesEditorToolsCallback,
             segmentDescriptions=sourcesEditorToolsSsegmentDescriptions
@@ -878,15 +877,12 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
     def sourcesEditorToolsCallback(self, sender):
         value = sender.get()
         if value == 0:
-            # Open UFO
-            self.openSelectedItem(self.sources.list)
-        elif value == 1:
             # Add Open UFOs
             existingSourcePaths = [sourceDescriptor.path for sourceDescriptor in self.operator.sources]
             for font in AllFonts():
                 if font.path not in existingSourcePaths:
                     self.addSourceFromFont(font)
-        elif value == 2:
+        elif value == 1:
             # Replace UFO
             selection = self.sources.list.getSelection()
             if len(selection) == 1:
@@ -1259,13 +1255,8 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
             self.setDocumentNeedSave(True, who="Instances")
 
-        def openInstanceUFO(menuItem):
-            for item in selectedItems:
-                instanceDescriptor = item["object"]
-                path = item["object"].path
-                if path is not None:
-                    if os.path.exists(path):
-                        OpenFont(path)
+        def openUFO(menuItem):
+            self.openSelectedItem(sender)
 
         menu = []
         for axisDescriptor in self.operator.axes:
@@ -1299,6 +1290,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             menu.append(dict(title="Make Default", callback=menuMakeDefaultCallback))
             if item["object"].path and os.path.exists(item["object"].path):
                 menu.append("----")
+                menu.append(dict(title="Open Source UFO", callback=openUFO))
                 menu.append(dict(title="Reveal in Finder", callback=revealInFinderCallback))
 
             menu.append("----")
@@ -1306,7 +1298,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
 
         if selectedItems and sender.designspaceContent == "instances":
             menu.append("----")
-            menu.append(dict(title="Open Instance UFO", callback=openInstanceUFO))
+            menu.append(dict(title="Open Instance UFO", callback=openUFO))
             menu.append(dict(title="Reveal Instance in Finder", callback=revealInFinderCallback))
             menu.append("----")
             menu.append(dict(title="Update UFO Filename", callback=updateUFOFilenameFromFontNames))
@@ -1357,16 +1349,20 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
                 descriptor = item["object"]
                 if descriptor.path is None:
                     continue
-                name = descriptor.name
-                internalFontObject = self.operator.fonts.get(name)
-                if internalFontObject is None:
-                    continue
-                try:
-                    font = RFont(internalFontObject, showInterface=True)
-                    SendNotification.single("Sources", action="Open", font=font, designspace=self.operator)
-                except Exception as e:
-                    print(f"Bad UFO: {path}, {e}")
-                    pass
+                if descriptor.flavor == "instance":
+                    if os.path.exists(descriptor.path):
+                        OpenFont(descriptor.path)
+                elif descriptor.flavor == "source":
+                    name = descriptor.name
+                    internalFontObject = self.operator.fonts.get(name)
+                    if internalFontObject is None:
+                        continue
+                    try:
+                        font = RFont(internalFontObject, showInterface=True)
+                        SendNotification.single("Sources", action="Open", font=font, designspace=self.operator)
+                    except Exception as e:
+                        print(f"Bad UFO: {path}, {e}")
+                        pass
                 progress.update()
             progress.close()
 
@@ -1586,5 +1582,5 @@ if __name__ == '__main__':
     designspaceBundle = ExtensionBundle(path=pathForBundle)
 
     path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
-    path = None
+    # path = None
     DesignspaceEditorController(path)
