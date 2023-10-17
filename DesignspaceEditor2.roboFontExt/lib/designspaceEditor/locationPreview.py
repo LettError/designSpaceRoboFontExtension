@@ -145,7 +145,7 @@ class LocationPreview(Subscriber, WindowController):
 
         self.shouldShowSources = False
         self.shouldShowInstances = True
-        self.shouldShowPreviewLocation = None
+        self.shouldShowPreviewLocation = operator.lib.get("com.letterror.designspaceEditor.previewLocation")
 
         self.shouldSortBy = set()
 
@@ -367,6 +367,7 @@ class LocationPreview(Subscriber, WindowController):
     def designspaceEditorPreviewLocationDidChange(self, notification):
         if self.operator == notification["designspace"]:
             self.shouldShowPreviewLocation = notification["location"]
+            self.operator.lib["com.letterror.designspaceEditor.previewLocation"] = self.shouldShowPreviewLocation
             self.updatePreview()
 
     def designspaceEditorInstancesDidChangeSelection(self, notification):
