@@ -934,6 +934,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             sourceDescriptor = self.operator.addSourceDescriptor(
                 path=font.path,
                 filename=filename,
+                name=f"source.{len(self.operator.sources) + 1}",
                 familyName=font.info.familyName,
                 styleName=font.info.styleName,
                 location=defaultLocation
@@ -1585,4 +1586,5 @@ if __name__ == '__main__':
     designspaceBundle = ExtensionBundle(path=pathForBundle)
 
     path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
+    path = None
     DesignspaceEditorController(path)
