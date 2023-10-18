@@ -684,6 +684,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             dict(title="UFO", key="instanceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False),
             dict(title="Famiy Name", key="instanceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="Style Name", key="instanceStyleName", editable=True, width=130, minWidth=130, maxWidth=250),
+            dict(title="PostScript Name", key="instancePostscriptFontName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="📍", key="instanceLocation", editable=False, width=20)
         ]
 
@@ -1042,6 +1043,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             instanceUFOFileName=instanceDescriptor.filename if instanceDescriptor.filename is not None else os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}.ufo"),
             instanceFamilyName=instanceDescriptor.familyName or "",
             instanceStyleName=instanceDescriptor.styleName or "",
+            instancePostscriptFontName = instanceDescriptor.postScriptFontName or "",
             instanceLocation="✏️" if instanceDescriptor.designLocation else "👤",
             object=instanceDescriptor
         )
@@ -1054,6 +1056,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         instanceDescriptor = wrappedInstanceDescriptor["object"]
         instanceDescriptor.familyName = wrappedInstanceDescriptor["instanceFamilyName"]
         instanceDescriptor.styleName = wrappedInstanceDescriptor["instanceStyleName"]
+        instanceDescriptor.postScriptFontName = wrappedInstanceDescriptor["instancePostscriptFontName"]
         location = instanceDescriptor.designLocation or instanceDescriptor.userLocation
         for axis in self.operator.axes:
             location[axis.name] = wrappedInstanceDescriptor.get(f"axis_{axis.name}", axis.default)
@@ -1269,6 +1272,14 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
             self.setDocumentNeedSave(True, who="Instances")
 
+        def updatePostScriptFontNameFromFontNames(menuItem):
+            for item in selectedItems:
+                instanceDescriptor = item["object"]
+                # wrapInstanceDescriptor will create a new default filename
+                instanceDescriptor.postScriptFontName = f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}"
+                item.update(self.wrapInstanceDescriptor(instanceDescriptor))
+            self.setDocumentNeedSave(True, who="Instances")
+
         def openInstanceUFO(menuItem):
             for item in selectedItems:
                 instanceDescriptor = item["object"]
@@ -1320,6 +1331,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             menu.append(dict(title="Reveal Instance in Finder", callback=revealInFinderCallback))
             menu.append("----")
             menu.append(dict(title="Update UFO Filename", callback=updateUFOFilenameFromFontNames))
+            menu.append(dict(title="Update PostScript Font Name", callback=updatePostScriptFontNameFromFontNames))
             menu.append("----")
             menu.append(dict(title="Convert to User Location", callback=convertInstanceToUserLocation))
             menu.append(dict(title="Convert to Design Location", callback=convertInstanceToDesignLocation))
