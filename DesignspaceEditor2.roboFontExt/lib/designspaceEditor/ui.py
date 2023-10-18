@@ -1291,7 +1291,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             if item["object"].path and os.path.exists(item["object"].path):
                 menu.append("----")
                 menu.append(dict(title="Open Source UFO", callback=openUFO))
-                menu.append(dict(title="Reveal in Finder", callback=revealInFinderCallback))
+                menu.append(dict(title="Reveal Source in Finder", callback=revealInFinderCallback))
 
             menu.append("----")
             menu.append(dict(title="Force Sources Change", callback=forceSourcesChangeCallback))
