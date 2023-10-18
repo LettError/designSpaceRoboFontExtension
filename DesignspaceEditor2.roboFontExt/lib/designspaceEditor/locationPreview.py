@@ -19,10 +19,13 @@ skateboardPreviewTextLibKey = "com.letterror.skateboard.previewText"
 previewTextLibKey = "com.letterror.designspaceEditor.previewText"
 
 
-sourceIndicator = symbolImage("smallcircle.filled.circle.fill", (1, .5, 0, 1))
-instanceIndicator = symbolImage("smallcircle.filled.circle", (0, 0, 1, 1))
-previewLocationIndicator = symbolImage("mappin.and.ellipse", (1, 0, 0, 1), flipped=True)
 previewLocationButtonImage = symbolImage("mappin.and.ellipse", (0, 0, 0, 1))
+
+indicatorImageMap = dict(
+    source=symbolImage("smallcircle.filled.circle.fill", (1, .5, 0, 1)),
+    instance=symbolImage("smallcircle.filled.circle", (0, 0, 1, 1)),
+    previewLocation=symbolImage("mappin.and.ellipse", (1, 0, 0, 1), flipped=True)
+)
 
 
 class PreviewLocationFinder(ezui.WindowController):
@@ -261,8 +264,8 @@ class LocationPreview(Subscriber, WindowController):
                     if mathGlyph is not None:
                         dest = internalFontClasses.createGlyphObject()
                         mathGlyph.extractGlyph(dest)
-                        dest.lib['designLocation'] = Location(fullDesignLocation).asString()
-                        dest.lib['descriptor'] = descriptor
+                        dest.tempLib['designLocation'] = Location(fullDesignLocation).asString()
+                        dest.tempLib['descriptor'] = descriptor
 
                         glyphRecord = GlyphRecord(dest)
 
@@ -270,12 +273,7 @@ class LocationPreview(Subscriber, WindowController):
                             lineItem["glyphRecords"][-1].xAdvance = kerningObject.get((previousGlyphName, glyphName))
                         else:
                             # mark the first glyph
-                            if descriptor.flavor == "source":
-                                dest.lib["indicator"] = sourceIndicator
-                            elif descriptor.flavor == "instance":
-                                dest.lib["indicator"] = instanceIndicator
-                            elif descriptor.flavor == "previewLocation":
-                                dest.lib["indicator"] = previewLocationIndicator
+                            dest.tempLib["indicator"] = descriptor.flavor
 
                         lineItem["glyphRecords"].append(glyphRecord)
 
@@ -301,11 +299,14 @@ class LocationPreview(Subscriber, WindowController):
         self.w.preview._glyphLineView._shouldSendEvents = True
 
     def previewSelectionCallback(self, sender):
+        self.populateInfoStatusBar()
+
+    def populateInfoStatusBar(self):
         selection = self.w.preview.getSelectedGlyph()
         if selection:
             # selection.removeOverlap()
             self.w.infoText.set([
-                f"location: {selection.lib['designLocation']}",
+                f"location: {selection.tempLib['designLocation']}",
                 f"glyph: {selection.name}",
                 f"width: {selection.width:3.1f}",
                 f"area: {selection.area:3.1f}"
@@ -368,8 +369,8 @@ class LocationPreview(Subscriber, WindowController):
     def locationPreviewLineViewDidDrawGlyph(self, notification):
         # old style drawing!
         glyph = notification["glyph"]
-        if "indicator" in glyph.lib:
-            indicator = glyph.lib["indicator"]
+        if "indicator" in glyph.tempLib:
+            indicator = indicatorImageMap[glyph.tempLib["indicator"]]
             ctx.save()
             ctx.translate(0, self.dummyFont.info.unitsPerEm * .4)
             ctx.scale(-notification["scale"])
@@ -382,12 +383,15 @@ class LocationPreview(Subscriber, WindowController):
 
     def designspaceEditorInstancesDidChange(self, notification):
         self.updatePreview()
+        self.populateInfoStatusBar()
 
     def designspaceEditorSourcesDidChanged(self, notification):
         self.updatePreview()
+        self.populateInfoStatusBar()
 
     def designspaceEditorAxesDidChange(self, notification):
         self.updatePreview()
+        self.populateInfoStatusBar()
 
     def designspaceEditorSourceGlyphDidChange(self, notification):
         self.updatePreview()
