@@ -8,9 +8,9 @@ import mojo.drawingTools as ctx
 from mojo.UI import MultiLineView, splitText, GlyphRecord, StatusBar
 from mojo.subscriber import WindowController, Subscriber
 from mojo.events import addObserver, removeObserver
-from mojo.roboFont import RFont, RGlyph, internalFontClasses
+from mojo.roboFont import RFont, internalFontClasses
 
-from designspaceEditor.tools import UseVarLib, SendNotification, symbolImage
+from designspaceEditor.tools import UseVarLib, symbolImage
 from designspaceEditor.parsers.parserTools import numberToString
 
 from mutatorMath import Location
@@ -102,16 +102,18 @@ class PreviewLocationFinder(ezui.WindowController):
 
     def contentCallback(self, sender):
         if self.w.getItemValue("showPreviewLocation"):
-            SendNotification.single(who="PreviewLocation", designspace=self.operator, location=self.getLocation())
+            self.operator.previewLocationChanged(location=self.getLocation())
 
     def addAsInstanceCallback(self, sender):
-        print
+        self.operator.addInstanceDescriptor(
+            designLocation=self.getLocation()
+        )
 
     def showPreviewLocationCallback(self, sender):
         if sender.get():
-            SendNotification.single(who="PreviewLocation", designspace=self.operator, location=self.getLocation())
+            self.operator.previewLocationChanged(location=self.getLocation())
         else:
-            SendNotification.single(who="PreviewLocation", designspace=self.operator, location=None)
+            self.operator.previewLocationChanged(location=None)
 
 
 class PreviewInstance:

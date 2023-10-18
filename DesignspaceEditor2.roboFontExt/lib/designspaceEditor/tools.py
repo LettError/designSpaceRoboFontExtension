@@ -17,6 +17,20 @@ def holdRecursionDecorator(func):
     return wrapper
 
 
+def notificationConductor(func):
+    """
+    A decorator checking if the controller is on hold and
+    if the designspace from the notification is the same as the operator
+    """
+    def wrapper(self, notification):
+        if self.holdChanges:
+            return
+        if notification["designspace"] == self.operator:
+            with self.holdChanges:
+                func(self, notification)
+    return wrapper
+
+
 def addToolTipForColumn(listObject, columnIdentifier, tooltip):
     """
     Add a tooltip in an nsColumn header

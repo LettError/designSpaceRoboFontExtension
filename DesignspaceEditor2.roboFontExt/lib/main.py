@@ -290,38 +290,20 @@ designspaceEvents = [
 
 
 def designspaceEventExtractor(subscriber, info):
-    info["designspace"] = info["lowLevelEvents"][-1].get("designspace")
+    attributes = [
+        "designspace",
+        "axis",
+        "source",
+        "instance",
+        "location",
+        "selectedItems",
+        "glyph"
+    ]
+    for attribute in attributes:
+        data = info["lowLevelEvents"][-1]
+        if attribute in data:
+            info[attribute] = data[attribute]
 
-
-def designspaceSelectionEventExtractor(subscriber, info):
-    designspaceEventExtractor(subscriber, info)
-    info["selectedItems"] = info["lowLevelEvents"][-1]["selectedItems"]
-
-
-def designspaceGlyphDidChangeExtractor(subscriber, info):
-    designspaceEventExtractor(subscriber, info)
-    info["glyph"] = info["lowLevelEvents"][-1]["glyph"]
-
-
-def designspaceAttrbuteExtractor(attribute):
-    def wrapper(subscriber, info):
-        designspaceEventExtractor(subscriber, info)
-        info[attribute] = info["lowLevelEvents"][-1][attribute]
-    return wrapper
-
-
-eventInfoExtractionFunctionsMap = dict(
-    designspaceEditorAxesDidChangeSelection=designspaceSelectionEventExtractor,
-    designspaceEditorSourcesDidChangeSelection=designspaceSelectionEventExtractor,
-    designspaceEditorInstancesDidChangeSelection=designspaceSelectionEventExtractor,
-    designspaceEditorGlyphDidChange=designspaceGlyphDidChangeExtractor,
-
-    designspaceEditorAxesDidAddAxis=designspaceAttrbuteExtractor("axis"),
-    designspaceEditorSourcesDidAddSource=designspaceAttrbuteExtractor("source"),
-    designspaceEditorInstancesDidAddInstance=designspaceAttrbuteExtractor("instance"),
-
-    designspaceEditorPreviewLocationDidChange=designspaceAttrbuteExtractor("location")
-)
 
 for event in designspaceEvents:
     documentation = "".join([" " + c if c.isupper() else c for c in event.replace("designspaceEditor", "")]).lower().strip()
@@ -331,7 +313,7 @@ for event in designspaceEvents:
         lowLevelEventNames=[event],
         dispatcher="roboFont",
         documentation=f"Send when a Designspace Editor {documentation}.",
-        eventInfoExtractionFunction=eventInfoExtractionFunctionsMap.get(event, designspaceEventExtractor),
+        eventInfoExtractionFunction=designspaceEventExtractor,
         delay=.2,
         debug=True
     )
