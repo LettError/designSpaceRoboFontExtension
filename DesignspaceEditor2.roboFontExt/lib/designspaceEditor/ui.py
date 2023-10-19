@@ -204,6 +204,7 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
         self.changed(
             clearCaches=kwargs.pop("clearCaches", False),
             who="PreviewLocation",
+            location=location,
             **kwargs
         )
 
