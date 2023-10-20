@@ -95,6 +95,7 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
         with SendNotification("Axes", action="AddAxis", designspace=self) as notification:
             axisDescriptor = super().addAxisDescriptor(**kwargs)
             notification["axis"] = axisDescriptor
+        return axisDescriptor
 
     # sources
 
@@ -113,6 +114,7 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
         with SendNotification("Sources", action="AddSource", designspace=self) as notification:
             sourceDescriptor = super().addSourceDescriptor(**kwargs)
             notification["source"] = sourceDescriptor
+        return sourceDescriptor
 
     # instances
 
