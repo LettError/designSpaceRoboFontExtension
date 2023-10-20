@@ -165,7 +165,7 @@ class LocationPreview(Subscriber, WindowController):
 
         self.shouldSortBy = set()
 
-        self.w = vanilla.FloatingWindow((700, 400), "Instances Preview", minSize=(500, 300))
+        self.w = vanilla.FloatingWindow((700, 400), "Location Preview", minSize=(500, 300))
         self.w.input = vanilla.EditText((10, 10, -80, 22), callback=self.inputCallback)
         self.w.options = vanilla.ActionButton(
             (-80, 10, 30, 22),
