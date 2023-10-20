@@ -102,7 +102,7 @@ class PreviewLocationFinder(ezui.WindowController):
 
     def contentCallback(self, sender):
         if self.w.getItemValue("showPreviewLocation"):
-            self.operator.previewLocationChanged(location=self.getLocation())
+            self.operator.setPreviewLocation(location=self.getLocation())
 
     def addAsInstanceCallback(self, sender):
         self.operator.addInstanceDescriptor(
@@ -111,9 +111,9 @@ class PreviewLocationFinder(ezui.WindowController):
 
     def showPreviewLocationCallback(self, sender):
         if sender.get():
-            self.operator.previewLocationChanged(location=self.getLocation())
+            self.operator.setPreviewLocation(location=self.getLocation())
         else:
-            self.operator.previewLocationChanged(location=None)
+            self.operator.setPreviewLocation(location=None)
 
 
 class PreviewInstance:
@@ -161,7 +161,7 @@ class LocationPreview(Subscriber, WindowController):
 
         self.shouldShowSources = False
         self.shouldShowInstances = True
-        self.shouldShowPreviewLocation = operator.lib.get("com.letterror.designspaceEditor.previewLocation")
+        self.shouldShowPreviewLocation = operator.getPreviewLocation()
 
         self.shouldSortBy = set()
 
@@ -222,6 +222,7 @@ class LocationPreview(Subscriber, WindowController):
 
     def updatePreview(self):
         self.inputCallback(self.w.input)
+        self.populateInfoStatusBar()
 
     def inputCallback(self, sender):
         previewString = sender.get()
@@ -385,15 +386,12 @@ class LocationPreview(Subscriber, WindowController):
 
     def designspaceEditorInstancesDidChange(self, notification):
         self.updatePreview()
-        self.populateInfoStatusBar()
 
     def designspaceEditorSourcesDidChanged(self, notification):
         self.updatePreview()
-        self.populateInfoStatusBar()
 
     def designspaceEditorAxesDidChange(self, notification):
         self.updatePreview()
-        self.populateInfoStatusBar()
 
     def designspaceEditorSourceGlyphDidChange(self, notification):
         self.updatePreview()
@@ -415,7 +413,6 @@ class LocationPreview(Subscriber, WindowController):
     def designspaceEditorPreviewLocationDidChange(self, notification):
         if self.operator == notification["designspace"]:
             self.shouldShowPreviewLocation = notification["location"]
-            self.operator.lib["com.letterror.designspaceEditor.previewLocation"] = self.shouldShowPreviewLocation
             self.updatePreview()
 
     def designspaceEditorInstancesDidChangeSelection(self, notification):

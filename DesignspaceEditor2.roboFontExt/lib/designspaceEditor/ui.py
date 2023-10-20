@@ -200,6 +200,8 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
             **kwargs
         )
 
+    previewLocationLibKey = "com.letterror.designspaceEditor.previewLocation"
+
     def previewLocationChanged(self, location=None, **kwargs):
         self.changed(
             clearCaches=kwargs.pop("clearCaches", False),
@@ -207,6 +209,17 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
             location=location,
             **kwargs
         )
+
+    def getPreviewLocation(self):
+        return self.lib.get(self.previewLocationLibKey)
+
+    def setPreviewLocation(self, location):
+        if location is None:
+            if self.previewLocationLibKey in self.lib:
+                del self.lib[self.previewLocationLibKey]
+        else:
+            self.lib[self.previewLocationLibKey] = location
+        self.previewLocationChanged(location=location)
 
 
 class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
