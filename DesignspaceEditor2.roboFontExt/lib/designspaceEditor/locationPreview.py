@@ -250,44 +250,48 @@ class LocationPreview(Subscriber, WindowController):
         lines = []
 
         with UseVarLib(self.operator, useVarLib=False):
-            for descriptor in selectedDescriptors:
-                lineItem = dict(
-                    area=0,
-                    length=0,
-                    density=0,
-                    glyphRecords=[]
-                )
+            try:
+                for descriptor in selectedDescriptors:
+                    lineItem = dict(
+                        area=0,
+                        length=0,
+                        density=0,
+                        glyphRecords=[]
+                    )
 
-                previousGlyphName = None
-                fullDesignLocation = descriptor.getFullDesignLocation(self.operator)
-                kerningObject = self.operator.makeOneKerning(fullDesignLocation, pairs=possibleKerningPairs)
-                for glyphName in glyphNames:
-                    # do not bend, reasoning: the descriptor locations are in designspace values.
-                    mathGlyph = self.operator.makeOneGlyph(glyphName, fullDesignLocation, decomposeComponents=True)
-                    if mathGlyph is not None:
-                        dest = internalFontClasses.createGlyphObject()
-                        mathGlyph.extractGlyph(dest)
-                        dest.tempLib['designLocation'] = Location(fullDesignLocation).asString()
-                        dest.tempLib['descriptor'] = descriptor
+                    previousGlyphName = None
+                    fullDesignLocation = descriptor.getFullDesignLocation(self.operator)
+                    kerningObject = self.operator.makeOneKerning(fullDesignLocation, pairs=possibleKerningPairs)
+                    for glyphName in glyphNames:
+                        # do not bend, reasoning: the descriptor locations are in designspace values.
+                        mathGlyph = self.operator.makeOneGlyph(glyphName, fullDesignLocation, decomposeComponents=True)
+                        if mathGlyph is not None:
+                            dest = internalFontClasses.createGlyphObject()
+                            mathGlyph.extractGlyph(dest)
+                            dest.tempLib['designLocation'] = Location(fullDesignLocation).asString()
+                            dest.tempLib['descriptor'] = descriptor
 
-                        glyphRecord = GlyphRecord(dest)
+                            glyphRecord = GlyphRecord(dest)
 
-                        if previousGlyphName and lineItem["glyphRecords"]:
-                            lineItem["glyphRecords"][-1].xAdvance = kerningObject.get((previousGlyphName, glyphName))
-                        else:
-                            # mark the first glyph
-                            dest.tempLib["indicator"] = descriptor.flavor
+                            if previousGlyphName and lineItem["glyphRecords"]:
+                                lineItem["glyphRecords"][-1].xAdvance = kerningObject.get((previousGlyphName, glyphName))
+                            else:
+                                # mark the first glyph
+                                dest.tempLib["indicator"] = descriptor.flavor
 
-                        lineItem["glyphRecords"].append(glyphRecord)
+                            lineItem["glyphRecords"].append(glyphRecord)
 
-                        lineItem["length"] += dest.width
-                        lineItem["area"] += dest.area
+                            lineItem["length"] += dest.width
+                            lineItem["area"] += dest.area
 
-                    previousGlyphName = glyphName
+                        previousGlyphName = glyphName
 
-                if lineItem["length"] != 0:
-                    lineItem["density"] = lineItem["area"] / lineItem["length"]
-                lines.append(lineItem)
+                    if lineItem["length"] != 0:
+                        lineItem["density"] = lineItem["area"] / lineItem["length"]
+                    lines.append(lineItem)
+            except Exception:
+                lines = []
+                self.w.infoText.set(["The designspace is questionable, check the Designspace Problems."], warning=True)
 
         glyphRecords = []
         iterator = lines
