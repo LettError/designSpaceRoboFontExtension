@@ -1685,10 +1685,14 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     # axes notifications
 
+    designspaceEditorAxesDidAddAxisDelay = 0
+
     @notificationConductor
     def designspaceEditorAxesDidAddAxis(self, notification):
         axisDescriptor = notification["axis"]
         self.axes.list.append(AxisListItem(axisDescriptor, self))
+
+    designspaceEditorAxesDidRemoveAxisDelay = 0
 
     @notificationConductor
     def designspaceEditorAxesDidRemoveAxis(self, notification):
@@ -1700,10 +1704,14 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     # sources notifications
 
+    designspaceEditorSourcesDidAddSourceDelay = 0
+
     @notificationConductor
     def designspaceEditorSourcesDidAddSource(self, notification):
         sourceDescriptor = notification["source"]
         self.sources.list.append(self.wrapSourceDescriptor(sourceDescriptor))
+
+    designspaceEditorSourcesDidRemoveSourceDelay = 0
 
     @notificationConductor
     def designspaceEditorSourcesDidRemoveSource(self, notification):
@@ -1723,10 +1731,14 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     # instances notifications
 
+    designspaceEditorInstancesDidAddInstanceDelay = 0
+
     @notificationConductor
     def designspaceEditorInstancesDidAddInstance(self, notification):
         instanceDescriptor = notification["instance"]
         self.instances.list.append(self.wrapInstanceDescriptor(instanceDescriptor))
+
+    designspaceEditorInstancesDidRemoveInstanceDelay = 0
 
     @notificationConductor
     def designspaceEditorInstancesDidRemoveInstance(self, notification):
@@ -1751,5 +1763,5 @@ if __name__ == '__main__':
     designspaceBundle = ExtensionBundle(path=pathForBundle)
 
     path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
-    # path = None
+    path = None
     DesignspaceEditorController(path)
