@@ -1353,6 +1353,12 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 instanceDescriptor.userLocation.clear()
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
 
+        def newInstanceBetween(menuItem):
+            assert len(selectedItems) == 2
+            first = selectedItems[0]
+            second = selectedItems[1]
+            print(f"I can make a new instance between {first} and {second}")
+
         def updateUFOFilenameFromFontNames(menuItem):
             for item in selectedItems:
                 instanceDescriptor = item["object"]
@@ -1394,11 +1400,11 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         if sender.designspaceContent == "sources":
             if selectedItems:
                 menu.append("----")
-                menu.append(dict(title="Make Default", callback=menuMakeDefaultCallback))
                 if item["object"].path and os.path.exists(item["object"].path):
                     menu.append("----")
                     menu.append(dict(title="Open Source UFO", callback=openUFO))
                     menu.append(dict(title="Reveal Source in Finder", callback=revealInFinderCallback))
+                menu.append(dict(title="Move to Default Location", callback=menuMakeDefaultCallback))
 
             menu.append("----")
             menu.append(dict(title="Force Sources Change", callback=forceSourcesChangeCallback))
@@ -1412,6 +1418,8 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             menu.append("----")
             menu.append(dict(title="Convert to User Location", callback=convertInstanceToUserLocation))
             menu.append(dict(title="Convert to Design Location", callback=convertInstanceToDesignLocation))
+            if len(selectedItems) == 2:
+                menu.append(dict(title="New instance inbetween", callback=newInstanceBetween))
 
         return menu
 
