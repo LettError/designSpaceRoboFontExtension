@@ -55,23 +55,22 @@ def CurrentDesignspace():
     return None
 
 
-def AllDesignspaceWindows():
-    controllers = []
+def AllDesignspaces(usingFont=None):
+    operators = []
     for window in AppKit.NSApp().orderedWindows():
         delegate = window.delegate()
         if hasattr(delegate, "vanillaWrapper"):
             controller = delegate.vanillaWrapper()
             if controller.__class__.__name__ == "DesignspaceEditorController":
-                controllers.append(controller)
-    return controllers
-
-
-def AllDesignspaces():
-    return [controller.operator for controller in AllDesignspaceWindows()]
+                if usingFont is not None:
+                    if controller.operator.usesFont(usingFont):
+                        operators.append(controller.operator)
+                else:        
+                    operators.append(controller.operator)
+    return operators
 
 
 builtins.CurrentDesignspace = CurrentDesignspace
-builtins.AllDesignspaceWindows = AllDesignspaceWindows
 builtins.AllDesignspaces = AllDesignspaces
 
 
