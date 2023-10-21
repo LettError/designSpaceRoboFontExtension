@@ -56,7 +56,7 @@ def CurrentDesignspace():
 
 
 def AllDesignspaceWindows():
-    operators = []
+    controllers = []
     for window in AppKit.NSApp().orderedWindows():
         delegate = window.delegate()
         if hasattr(delegate, "vanillaWrapper"):
