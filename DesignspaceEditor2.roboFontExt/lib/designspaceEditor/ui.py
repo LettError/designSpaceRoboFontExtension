@@ -601,6 +601,13 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
     ]
 
     def __init__(self, path=None):
+        if path is not None:
+            # search for already open designspace files
+            for controller in AllDesignspaceWindows():
+                if controller.operator.path == path:
+                    controller.w.show()
+                    return
+
         self.holdChanges = HoldChanges()
         with self.holdChanges:
             super().__init__()
@@ -1771,5 +1778,5 @@ if __name__ == '__main__':
     designspaceBundle = ExtensionBundle(path=pathForBundle)
 
     path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
-    path = None
+    #path = None
     DesignspaceEditorController(path)

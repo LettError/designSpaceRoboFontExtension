@@ -55,18 +55,23 @@ def CurrentDesignspace():
     return None
 
 
-def AllDesignspaces():
-    operators = []
+def AllDesignspaceWindows():
+    controllers = []
     for window in AppKit.NSApp().orderedWindows():
         delegate = window.delegate()
         if hasattr(delegate, "vanillaWrapper"):
             controller = delegate.vanillaWrapper()
             if controller.__class__.__name__ == "DesignspaceEditorController":
-                operators.append(controller.operator)
-    return operators
+                controllers.append(controller)
+    return controllers
+
+
+def AllDesignspaces():
+    return [controller.operator for controller in AllDesignspaceWindows()]
 
 
 builtins.CurrentDesignspace = CurrentDesignspace
+builtins.AllDesignspaceWindows = AllDesignspaceWindows
 builtins.AllDesignspaces = AllDesignspaces
 
 
