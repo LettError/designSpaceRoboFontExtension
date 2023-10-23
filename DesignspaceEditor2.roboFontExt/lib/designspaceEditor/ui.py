@@ -901,7 +901,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 pass
         SendNotification.single(action="CloseDesignspace", designspace=self.operator)
         unregisterOperator(self.operator)
-        del self.operator
+        self.operator = None
         self.removeObserverNotifications()
 
     def load(self, path):
@@ -932,21 +932,20 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
     # AXES
 
     def axisToolsCallback(self, sender):
-        with self.holdChanges:
-            value = sender.get()
-            if value == 1:
-                # remove
-                for index in reversed(self.axes.list.getSelection()):
-                    item = self.axes.list[index]
-                    self.operator.removeAxis(item.axisDescriptor)
-            else:
-                # add
-                name = f"newAxis{len(self.operator.axes) + 1}"
-                tag = f"nwx{len(self.operator.axes) + 1}"
-                minimum = 0
-                maximum = 1000
-                default = 0
-                self._addAxis(name, tag, minimum, maximum, default)
+        value = sender.get()
+        if value == 1:
+            # remove
+            for index in reversed(self.axes.list.getSelection()):
+                item = self.axes.list[index]
+                self.operator.removeAxis(item.axisDescriptor)
+        else:
+            # add
+            name = f"newAxis{len(self.operator.axes) + 1}"
+            tag = f"nwx{len(self.operator.axes) + 1}"
+            minimum = 0
+            maximum = 1000
+            default = 0
+            self._addAxis(name, tag, minimum, maximum, default)
 
         self.setDocumentNeedSave(True, who="Axes")
         self.updateColumnHeadersFromAxes()
