@@ -45,35 +45,32 @@ DesignspaceOpener()
 
 # api callback
 
-def CurrentDesignspace():
+def _allDesignspaceWindows():
     for window in AppKit.NSApp().orderedWindows():
         delegate = window.delegate()
         if hasattr(delegate, "vanillaWrapper"):
             controller = delegate.vanillaWrapper()
-            if controller.__class__.__name__ == "DesignspaceEditorController":
-                return controller.operator
-    return None
+            if controller.__class__.__name__ == "DesignspaceEditorController" and controller.operator is not None:
+                yield controller
 
 
 def AllDesignspaceWindows():
-    controllers = []
-    for window in AppKit.NSApp().orderedWindows():
-        delegate = window.delegate()
-        if hasattr(delegate, "vanillaWrapper"):
-            controller = delegate.vanillaWrapper()
-            if controller.__class__.__name__ == "DesignspaceEditorController":
-                controllers.append(controller)
-    return controllers
+    return list(_allDesignspaceWindows())
 
 
 def AllDesignspaces():
-    return [controller.operator for controller in AllDesignspaceWindows()]
+    return [controller.operator for controller in _allDesignspaceWindows()]
 
 
-builtins.CurrentDesignspace = CurrentDesignspace
+def CurrentDesignspace():
+    for controller in _allDesignspaceWindows():
+        return controller.operator
+    return None
+
+
 builtins.AllDesignspaceWindows = AllDesignspaceWindows
 builtins.AllDesignspaces = AllDesignspaces
-
+builtins.CurrentDesignspace = CurrentDesignspace
 
 # menu
 
