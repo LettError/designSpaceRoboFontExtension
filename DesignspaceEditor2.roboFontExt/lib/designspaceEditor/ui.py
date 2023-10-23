@@ -1410,10 +1410,11 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                     menu.append("----")
                     menu.append(dict(title="Open Source UFO", callback=openUFO))
                     menu.append(dict(title="Reveal Source in Finder", callback=revealInFinderCallback))
+                menu.append("----")
                 menu.append(dict(title="Move to Default Location", callback=menuMakeDefaultCallback))
 
             menu.append("----")
-            menu.append(dict(title="Force Sources Change", callback=forceSourcesChangeCallback))
+            menu.append(dict(title="Force Refresh of All Sources", callback=forceSourcesChangeCallback))
 
         if selectedItems and sender.designspaceContent == "instances":
             menu.append("----")

@@ -45,21 +45,25 @@ DesignspaceOpener()
 
 # api callback
 
-def _allDesignspaceWindows():
+def _allDesignspaceWindows(usingFont=None):
     for window in AppKit.NSApp().orderedWindows():
         delegate = window.delegate()
         if hasattr(delegate, "vanillaWrapper"):
             controller = delegate.vanillaWrapper()
             if controller.__class__.__name__ == "DesignspaceEditorController" and controller.operator is not None:
-                yield controller
+                if usingFont is not None:
+                    if controller.operator.usesFont(usingFont):
+                        yield controller
+                else:
+                    yield controller
 
 
-def AllDesignspaceWindows():
-    return list(_allDesignspaceWindows())
+def AllDesignspaceWindows(usingFont=None):
+    return list(_allDesignspaceWindows(usingFont=usingFont))
 
 
-def AllDesignspaces():
-    return [controller.operator for controller in _allDesignspaceWindows()]
+def AllDesignspaces(usingFont=None):
+    return [controller.operator for controller in _allDesignspaceWindows(usingFont=usingFont)]
 
 
 def CurrentDesignspace():
