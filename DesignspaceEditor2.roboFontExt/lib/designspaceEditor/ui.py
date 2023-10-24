@@ -1056,7 +1056,10 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         instanceDescriptor = wrappedInstanceDescriptor["object"]
         instanceDescriptor.familyName = wrappedInstanceDescriptor["instanceFamilyName"]
         instanceDescriptor.styleName = wrappedInstanceDescriptor["instanceStyleName"]
-        instanceDescriptor.postScriptFontName = wrappedInstanceDescriptor["instancePostscriptFontName"]
+        psName = wrappedInstanceDescriptor["instancePostscriptFontName"]
+        if psName == "":
+            psName = None
+        instanceDescriptor.postScriptFontName = psName
         location = instanceDescriptor.designLocation or instanceDescriptor.userLocation
         for axis in self.operator.axes:
             location[axis.name] = wrappedInstanceDescriptor.get(f"axis_{axis.name}", axis.default)
@@ -1275,8 +1278,9 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         def updatePostScriptFontNameFromFontNames(menuItem):
             for item in selectedItems:
                 instanceDescriptor = item["object"]
-                # wrapInstanceDescriptor will create a new default filename
-                instanceDescriptor.postScriptFontName = f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}"
+                psName = f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}"
+                psName = psName.replace(" ", "")
+                instanceDescriptor.postScriptFontName = psName
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
             self.setDocumentNeedSave(True, who="Instances")
 
