@@ -16,6 +16,7 @@ from mojo.roboFont import AllFonts, OpenFont, RFont, internalFontClasses
 from lib.tools.debugTools import ClassNameIncrementer
 from lib.tools.misc import coalescingDecorator
 from lib.cells.doubleClickCell import RFDoubleClickCell
+from lib.formatters import PathFormatter
 
 from designspaceProblems import DesignSpaceChecker
 
@@ -764,7 +765,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             dict(title="", key="genericInfoButton", width=20, editable=False, cell=sourcesDoubleClickCell),
             dict(title="💾", key="sourceHasPath", width=20, editable=False),
             dict(title="📍", key="sourceIsDefault", width=20, editable=False),
-            dict(title="UFO", key="sourceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False),
+            dict(title="UFO", key="sourceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False, formatter=PathFormatter.alloc().init()),
             dict(title="Famiy Name", key="sourceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="Style Name", key="sourceStyleName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="Layer Name", key="sourceLayerName", editable=True, width=130, minWidth=130, maxWidth=250),
@@ -830,7 +831,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
         instancesColumnDescriptions = [
             # dict(title="", key="genericInfoButton", width=20, editable=False, cell=instancesDoubleClickCell),
-            dict(title="UFO", key="instanceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False),
+            dict(title="UFO", key="instanceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False, formatter=PathFormatter.alloc().init()),
             dict(title="Famiy Name", key="instanceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="Style Name", key="instanceStyleName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="📍", key="instanceLocation", editable=False, width=20)
