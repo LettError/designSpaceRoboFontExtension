@@ -1161,7 +1161,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             instanceUFOFileName=instanceDescriptor.filename if instanceDescriptor.filename is not None else os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}.ufo"),
             instanceFamilyName=instanceDescriptor.familyName or "",
             instanceStyleName=instanceDescriptor.styleName or "",
-            instancePostscriptFontName = instanceDescriptor.postScriptFontName or "",
+            instancePostscriptFontName=instanceDescriptor.postScriptFontName or "",
             instanceLocation="✏️" if instanceDescriptor.designLocation else "👤",
             object=instanceDescriptor
         )
