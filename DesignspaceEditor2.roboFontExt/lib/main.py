@@ -10,7 +10,7 @@ from mojo.subscriber import registerSubscriberEvent, Subscriber, registerRoboFon
 from mojo.UI import GetFile
 
 from designspaceEditor.ui import DesignspaceEditorController
-
+from designspaceEditor import extensionIdentifier
 
 # checking older version of the Designspace Editor and warn
 oldBundle = ExtensionBundle("DesignSpaceEdit")
@@ -78,7 +78,7 @@ builtins.CurrentDesignspace = CurrentDesignspace
 
 # menu
 
-recentDocumentPathsKey = "com.letterror.designspaceEditor.recentDocumentPaths"
+recentDocumentPathsKey = f"{extensionIdentifier}.recentDocumentPaths"
 maxRecentDocuments = 10
 
 

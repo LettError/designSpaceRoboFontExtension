@@ -6,6 +6,7 @@ import ezui
 import mojo.drawingTools as ctx
 
 from mojo.UI import MultiLineView, splitText, GlyphRecord, StatusBar
+from mojo.extensions import getExtensionDefault, setExtensionDefault
 from mojo.subscriber import WindowController, Subscriber
 from mojo.events import addObserver, removeObserver
 from mojo.roboFont import RFont, internalFontClasses
@@ -15,8 +16,17 @@ from designspaceEditor.parsers.parserTools import numberToString
 
 from mutatorMath import Location
 
+from designspaceEditor import extensionIdentifier
+
+
 skateboardPreviewTextLibKey = "com.letterror.skateboard.previewText"
-previewTextLibKey = "com.letterror.designspaceEditor.previewText"
+previewTextLibKey = f"{extensionIdentifier}.previewText"
+
+inverseDefaultKey = f"{extensionIdentifier}.inverse"
+singleLineDefaultKey = f"{extensionIdentifier}.singleLine"
+showSourcesDefaultKey = f"{extensionIdentifier}.showSources"
+showInstancesDefaultKey = f"{extensionIdentifier}.showInstances"
+shouldSortByDefaultKey = f"{extensionIdentifier}.shouldSortBy"
 
 
 previewLocationButtonImage = symbolImage("mappin.and.ellipse", (0, 0, 0, 1))
@@ -153,24 +163,24 @@ class LocationPreview(Subscriber, WindowController):
         self.dummyFont.info.unitsPerEm = max(upms) if upms else 1000
 
         self.displayPrefs = {}
-        self.displayPrefs['Inverse'] = False
+        self.displayPrefs['Inverse'] = getExtensionDefault(inverseDefaultKey, False)
         self.displayPrefs['Beam'] = False
-        self.displayPrefs['displayMode'] = "Multi Line"
+        self.displayPrefs['displayMode'] = "Single Line" if getExtensionDefault(singleLineDefaultKey, False) else "Multi Line"
         self.displayPrefs['Stroke'] = False
         self.displayPrefs['Fill'] = True
 
-        self.shouldShowSources = False
-        self.shouldShowInstances = True
+        self.shouldShowSources = getExtensionDefault(showSourcesDefaultKey, False)
+        self.shouldShowInstances = getExtensionDefault(showInstancesDefaultKey, True)
         self.shouldShowPreviewLocation = operator.getPreviewLocation()
 
-        self.shouldSortBy = set()
+        self.shouldSortBy = set(getExtensionDefault(shouldSortByDefaultKey, []))
 
         self.w = vanilla.FloatingWindow((700, 400), "Location Preview", minSize=(500, 300))
         self.w.input = vanilla.EditText((10, 10, -80, 22), callback=self.inputCallback)
         self.w.options = vanilla.ActionButton(
             (-80, 10, 30, 22),
             [
-                dict(title="Single Line", callback=self.singleLineMenuItemCallback, state=False),
+                dict(title="Single Line", callback=self.singleLineMenuItemCallback, state=self.displayPrefs['displayMode'] == "Single Line"),
                 dict(title="Invert", callback=self.invertMenuItemCallback, state=self.displayPrefs['Inverse']),
                 "----",
                 dict(title="Show Sources", callback=self.showSourcesMenuItemCallback, state=self.shouldShowSources),
@@ -329,6 +339,7 @@ class LocationPreview(Subscriber, WindowController):
     def invertMenuItemCallback(self, sender):
         choice = not sender.state()
         sender.setState_(choice)
+        setExtensionDefault(inverseDefaultKey, choice)
         if choice:
             self.displayPrefs['Inverse'] = True
         else:
@@ -338,6 +349,7 @@ class LocationPreview(Subscriber, WindowController):
     def singleLineMenuItemCallback(self, sender):
         choice = not sender.state()
         sender.setState_(choice)
+        setExtensionDefault(singleLineDefaultKey, choice)
         if choice:
             self.w.preview.setDisplayStates(dict(displayMode="Single Line"))
         else:
@@ -345,11 +357,13 @@ class LocationPreview(Subscriber, WindowController):
 
     def showSourcesMenuItemCallback(self, sender):
         self.shouldShowSources = not sender.state()
+        setExtensionDefault(showSourcesDefaultKey, self.shouldShowSources)
         sender.setState_(self.shouldShowSources)
         self.updatePreview()
 
     def showInstancesMenuItemCallback(self, sender):
         self.shouldShowInstances = not sender.state()
+        setExtensionDefault(showInstancesDefaultKey, self.shouldShowInstances)
         sender.setState_(self.shouldShowInstances)
         self.updatePreview()
 
@@ -360,6 +374,7 @@ class LocationPreview(Subscriber, WindowController):
             self.shouldSortBy.add(key)
         elif not choice and key in self.shouldSortBy:
             self.shouldSortBy.remove(key)
+        setExtensionDefault(shouldSortByDefaultKey, list(self.shouldSortBy))
         self.updatePreview()
 
     def sortByLineAreaMenuItemCallback(self, sender):

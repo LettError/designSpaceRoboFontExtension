@@ -26,6 +26,7 @@ from designspaceEditor.parsers.parserTools import numberToString
 from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges, symbolImage, NumberListFormatter, SendNotification, notificationConductor
 from designspaceEditor.locationPreview import LocationPreview
 from designspaceEditor.designspaceSubscribers import registerOperator, unregisterOperator
+from designspaceEditor import extensionIdentifier
 
 
 designspaceBundle = ExtensionBundle("DesignspaceEditor2")
@@ -203,7 +204,7 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
             **kwargs
         )
 
-    previewLocationLibKey = "com.letterror.designspaceEditor.previewLocation"
+    previewLocationLibKey = f"{extensionIdentifier}.previewLocation"
 
     def previewLocationChanged(self, location=None, **kwargs):
         self.changed(
