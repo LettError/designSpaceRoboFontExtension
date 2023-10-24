@@ -1175,7 +1175,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         instanceDescriptor = wrappedInstanceDescriptor["object"]
         instanceDescriptor.familyName = wrappedInstanceDescriptor["instanceFamilyName"]
         instanceDescriptor.styleName = wrappedInstanceDescriptor["instanceStyleName"]
-        psName = wrappedInstanceDescriptor["instancePostscriptFontName"]
+        psName = wrappedInstanceDescriptor.get("instancePostscriptFontName")
         if psName == "":
             psName = None
         instanceDescriptor.postScriptFontName = psName
