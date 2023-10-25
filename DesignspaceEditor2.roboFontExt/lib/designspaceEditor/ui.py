@@ -1116,9 +1116,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     def unwrapSourceDescriptor(self, wrappedSourceDescriptor):
         sourceDescriptor = wrappedSourceDescriptor["object"]
-        sourceDescriptor.familyName = wrappedSourceDescriptor.get("sourceFamilyName")
-        sourceDescriptor.styleName = wrappedSourceDescriptor.get("sourceStyleName")
-        sourceDescriptor.layerName = wrappedSourceDescriptor.get("sourceLayerName")
+        sourceDescriptor.familyName = wrappedSourceDescriptor["sourceFamilyName"] if wrappedSourceDescriptor.get("sourceFamilyName") else None
+        sourceDescriptor.styleName = wrappedSourceDescriptor["sourceStyleName"] if wrappedSourceDescriptor.get("sourceStyleName") else None
+        sourceDescriptor.layerName = wrappedSourceDescriptor["sourceLayerName"] if wrappedSourceDescriptor.get("sourceLayerName") else None
         for axis in self.operator.axes:
             sourceDescriptor.location[axis.name] = wrappedSourceDescriptor.get(f"axis_{axis.name}", axis.default)
         return sourceDescriptor
@@ -1194,9 +1194,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     def unwrapInstanceDescriptor(self, wrappedInstanceDescriptor):
         instanceDescriptor = wrappedInstanceDescriptor["object"]
-        instanceDescriptor.familyName = wrappedInstanceDescriptor.get("instanceFamilyName")
-        instanceDescriptor.styleName = wrappedInstanceDescriptor.get("instanceStyleName")
-        instanceDescriptor.postScriptFontName = wrappedInstanceDescriptor.get("instancePostscriptFontName")
+        instanceDescriptor.familyName = wrappedInstanceDescriptor["instanceFamilyName"] if wrappedInstanceDescriptor.get("instanceFamilyName") else None
+        instanceDescriptor.styleName = wrappedInstanceDescriptor["instanceStyleName"] if wrappedInstanceDescriptor.get("instanceStyleName") else None
+        instanceDescriptor.postScriptFontName = wrappedInstanceDescriptor["instancePostscriptFontName"] if wrappedInstanceDescriptor.get("instancePostscriptFontName") else None
         location = instanceDescriptor.designLocation or instanceDescriptor.userLocation
         for axis in self.operator.axes:
             location[axis.name] = wrappedInstanceDescriptor.get(f"axis_{axis.name}", axis.default)
