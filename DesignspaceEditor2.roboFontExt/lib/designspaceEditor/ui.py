@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 import weakref
 import AppKit
 
@@ -1191,7 +1192,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             for index in self.instances.list.getSelection():
                 item = self.instances.list[index]
                 instanceDescriptor = item["object"]
-                self.operator.addInstanceDescriptor(**instanceDescriptor.asdict())
+                self.operator.addInstanceDescriptor(
+                    **deepcopy(instanceDescriptor.asdict())
+                )
 
         elif value == 1:
             # Add Sources as Instances
