@@ -149,6 +149,20 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
             notification["instance"] = instanceDescriptor
         return instanceDescriptor
 
+    def openInterface(self):
+        for controller in AllDesignspaceWindows():
+            if controller.operator == self:
+                controller.w.show()
+                return
+        controller = DesignspaceEditorController()
+        controller.loadOperator(self)
+
+    def close(self):
+        for controller in AllDesignspaceWindows():
+            if controller.operator == self:
+                controller.w.close()
+                return
+
     # send notifications
 
     def changed(self, clearCaches=True, **kwargs):
@@ -921,6 +935,12 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 )
             self.loadObjects()
             self.setWindowTitleFromPath(path)
+
+    def loadOperator(self, operator):
+        self.operator = operator
+        self.operator.loadFonts()
+        self.loadObjects()
+        self.setWindowTitleFromPath(operator.path)
 
     def loadObjects(self):
         with self.holdChanges:

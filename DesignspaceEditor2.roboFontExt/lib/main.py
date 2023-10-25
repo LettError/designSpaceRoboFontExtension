@@ -9,7 +9,7 @@ from mojo.extensions import ExtensionBundle, getExtensionDefault, setExtensionDe
 from mojo.subscriber import registerSubscriberEvent, Subscriber, registerRoboFontSubscriber
 from mojo.UI import GetFile
 
-from designspaceEditor.ui import DesignspaceEditorController
+from designspaceEditor.ui import DesignspaceEditorController, DesignspaceEditorOperator
 from designspaceEditor import extensionIdentifier
 
 # checking older version of the Designspace Editor and warn
@@ -72,9 +72,30 @@ def CurrentDesignspace():
     return None
 
 
+def OpenDesignspace(path, showInterface=True):
+    if showInterface:
+        controller = DesignspaceEditorController(path)
+        return controller.operator
+    else:
+        operator = DesignspaceEditorOperator(extrapolate=True)
+        operator.read(path)
+        return operator
+
+
+def NewDesignspace(showInterface=True):
+    if showInterface:
+        controller = DesignspaceEditorController()
+        return controller.operator
+    else:
+        operator = DesignspaceEditorOperator(extrapolate=True)
+        return operator
+
+
 builtins.AllDesignspaceWindows = AllDesignspaceWindows
 builtins.AllDesignspaces = AllDesignspaces
 builtins.CurrentDesignspace = CurrentDesignspace
+builtins.OpenDesignspace = OpenDesignspace
+builtins.NewDesignspace = NewDesignspace
 
 # menu
 
