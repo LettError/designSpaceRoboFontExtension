@@ -1095,9 +1095,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     def unwrapSourceDescriptor(self, wrappedSourceDescriptor):
         sourceDescriptor = wrappedSourceDescriptor["object"]
-        sourceDescriptor.familyName = wrappedSourceDescriptor["sourceFamilyName"] if wrappedSourceDescriptor["sourceFamilyName"] else None
-        sourceDescriptor.styleName = wrappedSourceDescriptor["sourceStyleName"] if wrappedSourceDescriptor["sourceStyleName"] else None
-        sourceDescriptor.layerName = wrappedSourceDescriptor["sourceLayerName"] if wrappedSourceDescriptor["sourceLayerName"] else None
+        sourceDescriptor.familyName = wrappedSourceDescriptor.get("sourceFamilyName")
+        sourceDescriptor.styleName = wrappedSourceDescriptor.get("sourceStyleName")
+        sourceDescriptor.layerName = wrappedSourceDescriptor.get("sourceLayerName")
         for axis in self.operator.axes:
             sourceDescriptor.location[axis.name] = wrappedSourceDescriptor.get(f"axis_{axis.name}", axis.default)
         return sourceDescriptor
@@ -1173,12 +1173,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     def unwrapInstanceDescriptor(self, wrappedInstanceDescriptor):
         instanceDescriptor = wrappedInstanceDescriptor["object"]
-        instanceDescriptor.familyName = wrappedInstanceDescriptor["instanceFamilyName"]
-        instanceDescriptor.styleName = wrappedInstanceDescriptor["instanceStyleName"]
-        psName = wrappedInstanceDescriptor.get("instancePostscriptFontName")
-        if psName == "":
-            psName = None
-        instanceDescriptor.postScriptFontName = psName
+        instanceDescriptor.familyName = wrappedInstanceDescriptor.get("instanceFamilyName")
+        instanceDescriptor.styleName = wrappedInstanceDescriptor.get("instanceStyleName")
+        instanceDescriptor.postScriptFontName = wrappedInstanceDescriptor.get("instancePostscriptFontName")
         location = instanceDescriptor.designLocation or instanceDescriptor.userLocation
         for axis in self.operator.axes:
             location[axis.name] = wrappedInstanceDescriptor.get(f"axis_{axis.name}", axis.default)
