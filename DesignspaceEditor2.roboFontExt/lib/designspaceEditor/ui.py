@@ -881,6 +881,15 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         self.locationLabels.editor = CodeEditor((0, 30, 0, 0), lexer=DesignspaceLexer(), showLineNumbers=False, callback=self.locationLabelsEditorCallback)
 
         # VARIABLE FONTS
+        variableFontsEditorToolsSsegmentDescriptions = [
+            dict(title="Add All Possible Variable Fonts"),
+        ]
+        self.variableFonts.editorTools = vanilla.SegmentedButton(
+            (10, 5, 200, 22),
+            selectionStyle="momentary",
+            callback=self.variableFontsEditorToolsCallback,
+            segmentDescriptions=variableFontsEditorToolsSsegmentDescriptions
+        )
         self.variableFonts.editor = CodeEditor((0, 30, 0, 0), lexer=DesignspaceLexer(), showLineNumbers=False, callback=self.variableFontsEditorCallback)
 
         # PROBLEMS
@@ -1291,6 +1300,30 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         self.operator.locationLabels.clear()
         self.operator.locationLabels.extend(locationLabels)
         self.setDocumentNeedSave(True, who="LocationLabels")
+
+    # variable fonts
+
+    def variableFontsEditorToolsCallback(self, sender):
+        value = sender.get()
+        if value == 0:
+            # Add All Possible Variable Fonts
+            def callback(result=True):
+                if result:
+                    # this does not check and compare with extising variable font entries
+                    self.operator.variableFonts.clear()
+                    self.operator.variableFonts.extend(self.operator.getVariableFonts())
+                    self.variableFonts.editor.set(variableFontsParser.dumpVariableFonts(self.operator.variableFonts))
+                    self.setDocumentNeedSave(True, who="VariableFonts")
+
+            if self.operator.variableFonts:
+                self.showAskYesNo(
+                    messageText="Add All Possible Variable Fonts will remove existing variable fonts.",
+                    informativeText="Do you want to replace them?",
+                    callback=callback
+                )
+            else:
+                callback()
+
 
     @coalescingDecorator(delay=0.2)
     def variableFontsEditorCallback(self, sender):
