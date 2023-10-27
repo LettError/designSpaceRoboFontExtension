@@ -1588,7 +1588,6 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             if notificationsKwargs:
                 self.operator.changed(**notificationsKwargs)
             self.operator.changed()
-            self.w.getNSWindow().setDocumentEdited_(True)
         else:
             self.w.getNSWindow().setDocumentEdited_(False)
 
@@ -1790,6 +1789,12 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 return
 
     # sources notifications
+
+    designspaceEditorDidChangeDelay = 0
+
+    @notificationConductor
+    def designspaceEditorDidChange(self, notification):
+        self.w.getNSWindow().setDocumentEdited_(True)
 
     designspaceEditorSourcesDidAddSourceDelay = 0
 
