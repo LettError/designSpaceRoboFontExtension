@@ -1432,30 +1432,31 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
         def newInstanceBetween(menuItem):
             # make a new instance at the average of all selected instances
-            first = selectedItems[0]
-            firstLocation = first['object'].getFullDesignLocation(self.operator)
+            first = selectedItems[0]['object']
+            firstLocation = first.getFullDesignLocation(self.operator)
             firstContinuous, firstDiscrete = self.operator.splitLocation(firstLocation)
-            second = selectedItems[1]
-            secondLocation = second['object'].getFullDesignLocation(self.operator)
+            second = selectedItems[1]['object']
+            secondLocation = second.getFullDesignLocation(self.operator)
             secondContinuous, secondDiscrete = self.operator.splitLocation(secondLocation)
             # make sure both selected instances are in the same discrete space
-            if firstDiscrete == secondDiscrete:
-                location = self.operator.newDefaultLocation(discreteLocation=firstDiscrete)
-                for axisName in firstContinuous.keys():
-                    newValue = .5*(firstContinuous.get(axisName) + secondContinuous.get(axisName))
-                    location[axisName] = newValue
-                newFamilyName = first['object'].familyName
-                newStyleName = f"{first['object'].styleName}_{second['object'].styleName}"
-                postScriptFontName = f"{newFamilyName}-{newStyleName}"
-                instanceUFOFileName = f"{newFamilyName}-{newStyleName}.ufo"
-                self.operator.addInstanceDescriptor(
-                    familyName = first['object'].familyName,
-                    styleName = newStyleName,
-                    designLocation = location,
-                    filename = instanceUFOFileName,
-                    postScriptFontName = postScriptFontName,
-                    )
-            # what if not? fail quietly? 
+            if firstDiscrete != secondDiscrete:
+                self.showMessage("Can't make a new instance:", "Select instances in the same discrete spaces.")
+                return
+            location = self.operator.newDefaultLocation(discreteLocation=firstDiscrete)
+            for axisName in firstContinuous.keys():
+                newValue = .5*(firstContinuous.get(axisName) + secondContinuous.get(axisName))
+                location[axisName] = newValue
+            newFamilyName = first.familyName
+            newStyleName = f"{first.styleName}_{second.styleName}"
+            postScriptFontName = f"{newFamilyName}-{newStyleName}"
+            instanceUFOFileName = f"{newFamilyName}-{newStyleName}.ufo"
+            self.operator.addInstanceDescriptor(
+                familyName = first.familyName,
+                styleName = newStyleName,
+                designLocation = location,
+                filename = instanceUFOFileName,
+                postScriptFontName = postScriptFontName,
+                )
 
         def updateUFOFilenameFromFontNames(menuItem):
             for item in selectedItems:
