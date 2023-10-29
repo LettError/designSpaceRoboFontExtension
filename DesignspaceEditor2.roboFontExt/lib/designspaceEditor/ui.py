@@ -1431,10 +1431,31 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
 
         def newInstanceBetween(menuItem):
-            assert len(selectedItems) == 2
+            # make a new instance at the average of all selected instances
             first = selectedItems[0]
+            firstLocation = first['object'].getFullDesignLocation(self.operator)
+            firstContinuous, firstDiscrete = self.operator.splitLocation(firstLocation)
             second = selectedItems[1]
-            print(f"I can make a new instance between {first} and {second}")
+            secondLocation = second['object'].getFullDesignLocation(self.operator)
+            secondContinuous, secondDiscrete = self.operator.splitLocation(secondLocation)
+            # make sure both selected instances are in the same discrete space
+            if firstDiscrete == secondDiscrete:
+                location = self.operator.newDefaultLocation(discreteLocation=firstDiscrete)
+                for axisName in firstContinuous.keys():
+                    newValue = .5*(firstContinuous.get(axisName) + secondContinuous.get(axisName))
+                    location[axisName] = newValue
+                newFamilyName = first['object'].familyName
+                newStyleName = f"{first['object'].styleName}_{second['object'].styleName}"
+                postScriptFontName = f"{newFamilyName}-{newStyleName}"
+                instanceUFOFileName = f"{newFamilyName}-{newStyleName}.ufo"
+                self.operator.addInstanceDescriptor(
+                    familyName = first['object'].familyName,
+                    styleName = newStyleName,
+                    designLocation = location,
+                    filename = instanceUFOFileName,
+                    postScriptFontName = postScriptFontName,
+                    )
+            # what if not? fail quietly? 
 
         def updateUFOFilenameFromFontNames(menuItem):
             for item in selectedItems:
@@ -1444,11 +1465,11 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
             self.setDocumentNeedSave(True, who="Instances")
 
-        def updatePostScriptFontNameFromFontNames(menuItem):
+        def updatePostScriptFontNameFromFontNamesCallback(menuItem):
             for item in selectedItems:
                 instanceDescriptor = item["object"]
                 psName = f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}"
-                psName = psName.replace(" ", "")
+                psName = psName.replace(" ", "")    # does this need to filter more?
                 instanceDescriptor.postScriptFontName = psName
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
             self.setDocumentNeedSave(True, who="Instances")
@@ -1503,7 +1524,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             menu.append(dict(title="Reveal Instance in Finder", callback=revealInFinderCallback))
             menu.append("----")
             menu.append(dict(title="Update UFO Filename", callback=updateUFOFilenameFromFontNames))
-            menu.append(dict(title="Update PostScript Font Name", callback=updatePostScriptFontNameFromFontNames))
+            menu.append(dict(title="Update PostScript Font Name", callback=updatePostScriptFontNameFromFontNamesCallback))
             menu.append("----")
             menu.append(dict(title="Convert to User Location", callback=convertInstanceToUserLocation))
             menu.append(dict(title="Convert to Design Location", callback=convertInstanceToDesignLocation))
