@@ -1120,7 +1120,6 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         allDefaults = self.findAllDefaults()
         wrapped = dict(
             sourceHasPath=checkSymbol if sourceDescriptor.path and os.path.exists(sourceDescriptor.path) else "",
-            #sourceIsDefault=defaultSymbol if sourceDescriptor == self.operator.findDefault() else "",
             sourceIsDefault=defaultSymbol if sourceDescriptor in allDefaults else "",
             sourceUFOFileName=sourceDescriptor.filename if sourceDescriptor.filename is not None and sourceDescriptor.filename != sourceDescriptor.path else "[pending save]",
             sourceFamilyName=sourceDescriptor.familyName or "",
