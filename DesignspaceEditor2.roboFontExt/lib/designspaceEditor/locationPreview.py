@@ -301,7 +301,7 @@ class LocationPreview(Subscriber, WindowController):
                     lines.append(lineItem)
             except Exception:
                 lines = []
-                self.w.infoText.set(["The designspace is questionable, check the Designspace Problems."], warning=True)
+                self.w.infoText.set(["This designspace may not work as expected, check the Designspace Problems."], warning=True)
 
         glyphRecords = []
         iterator = lines

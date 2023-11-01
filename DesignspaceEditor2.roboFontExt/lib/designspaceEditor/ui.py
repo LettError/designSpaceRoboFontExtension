@@ -1430,6 +1430,12 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 instanceDescriptor.userLocation.clear()
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
 
+        def menuSetPreviewToSelectionCallback(menuItem):
+            selectedObject = selectedItems[0]['object']
+            selectedDesignLocation = selectedObject.getFullDesignLocation(self.operator)
+            print('menuSetPreviewToSelectionCallback setting location to', selectedDesignLocation)
+            self.operator.setPreviewLocation(selectedDesignLocation)
+
         def newInstanceBetween(menuItem):
             # make a new instance at the average of all selected instances
             first = selectedItems[0]['object']
@@ -1515,6 +1521,8 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                     menu.append(dict(title="Reveal Source in Finder", callback=revealInFinderCallback))
                 menu.append("----")
                 menu.append(dict(title="Move to Default Location", callback=menuMakeDefaultCallback))
+                if len(selectedItems) == 1:
+                    menu.append(dict(title="Set Preview to Selection", callback=menuSetPreviewToSelectionCallback))
 
             menu.append("----")
             menu.append(dict(title="Force Refresh of All Sources", callback=forceSourcesChangeCallback))
@@ -1529,6 +1537,8 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             menu.append("----")
             menu.append(dict(title="Convert to User Location", callback=convertInstanceToUserLocation))
             menu.append(dict(title="Convert to Design Location", callback=convertInstanceToDesignLocation))
+            if len(selectedItems) == 1:
+                menu.append(dict(title="Set Preview to Selection", callback=menuSetPreviewToSelectionCallback))
             if len(selectedItems) == 2:
                 menu.append(dict(title="New instance inbetween", callback=newInstanceBetween))
 
