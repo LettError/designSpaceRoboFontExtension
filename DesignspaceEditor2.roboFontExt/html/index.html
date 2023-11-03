@@ -1,776 +1,8 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<style>
-html {
-    max-width: 800px;
-    padding: 15px;
-    margin-left: auto;
-    margin-right: auto;
-}
-body {
-    -ms-text-size-adjust: 100%;
-    -webkit-text-size-adjust: 100%;
-    line-height: 1.5;
-    color: #333;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    font-size: 16px;
-    line-height: 1.5;
-    word-wrap: break-word;
-}
-.bigicon{
-    margin-top: 60pt;
-}
-body .pl-c {
-    color: #969896;
-}
-body .pl-c1,
-body .pl-s .pl-v {
-    color: #0086b3;
-}
-body .pl-e,
-body .pl-en {
-    color: #795da3;
-}
-body .pl-s .pl-s1,
-body .pl-smi {
-    color: #333;
-}
-body .pl-ent {
-    color: #63a35c;
-}
-body .pl-k {
-    color: #a71d5d;
-}
-body .pl-pds,
-body .pl-s,
-body .pl-s .pl-pse .pl-s1,
-body .pl-sr,
-body .pl-sr .pl-cce,
-body .pl-sr .pl-sra,
-body .pl-sr .pl-sre {
-    color: #183691;
-}
-body .pl-v {
-    color: #ed6a43;
-}
-body .pl-id {
-    color: #b52a1d;
-}
-body .pl-ii {
-    color: #f8f8f8;
-    background-color: #b52a1d;
-}
-body .pl-sr .pl-cce {
-    font-weight: 700;
-    color: #63a35c;
-}
-body .pl-ml {
-    color: #693a17;
-}
-body .pl-mh,
-body .pl-mh .pl-en,
-body .pl-ms {
-    font-weight: 700;
-    color: #1d3e81;
-}
-body .pl-mq {
-    color: teal;
-}
-body .pl-mi {
-    font-style: italic;
-    color: #333;
-}
-body .pl-mb {
-    font-weight: 700;
-    color: #333;
-}
-body .pl-md {
-    color: #bd2c00;
-    background-color: #ffecec;
-}
-body .pl-mi1 {
-    color: #55a532;
-    background-color: #eaffea;
-}
-body .pl-mdr {
-    font-weight: 700;
-    color: #795da3;
-}
-body .pl-mo {
-    color: #1d3e81;
-}
-body .octicon {
-    display: inline-block;
-    vertical-align: text-top;
-    fill: currentColor;
-}
-body a {
-    background-color: transparent;
-    -webkit-text-decoration-skip: objects;
-}
-body a:active,
-body a:hover {
-    outline-width: 0;
-}
-body strong {
-    font-weight: inherit;
-}
-body strong {
-    font-weight: bolder;
-}
-body h1 {
-    font-size: 2em;
-    margin: 0.67em 0;
-}
-body img {
-    border-style: none;
-}
-body svg:not(:root) {
-    overflow: hidden;
-}
-body code,
-body kbd,
-body pre {
-    font-family: monospace, monospace;
-    font-size: 1em;
-}
-body hr {
-    box-sizing: content-box;
-    height: 0;
-    overflow: visible;
-}
-body input {
-    font: inherit;
-    margin: 0;
-}
-body input {
-    overflow: visible;
-}
-body [type="checkbox"] {
-    box-sizing: border-box;
-    padding: 0;
-}
-body * {
-    box-sizing: border-box;
-}
-body input {
-    font-family: inherit;
-    font-size: inherit;
-    line-height: inherit;
-}
-body a {
-    color: #4078c0;
-    text-decoration: none;
-}
-body a:active,
-body a:hover {
-    text-decoration: underline;
-}
-body strong {
-    font-weight: 600;
-}
-body hr {
-    height: 0;
-    margin: 15px 0;
-    overflow: hidden;
-    background: 0 0;
-    border: 0;
-    border-bottom: 1px solid #ddd;
-}
-body hr::before {
-    display: table;
-    content: "";
-}
-body hr::after {
-    display: table;
-    clear: both;
-    content: "";
-}
-body table {
-    border-spacing: 0;
-    border-collapse: collapse;
-}
-body td,
-body th {
-    padding: 0;
-}
-body h1,
-body h2,
-body h3,
-body h4,
-body h5,
-body h6 {
-    margin-top: 0;
-    margin-bottom: 0;
-}
-body h1 {
-    font-size: 32px;
-    font-weight: 600;
-}
-body h2 {
-    font-size: 24px;
-    font-weight: 600;
-}
-body h3 {
-    font-size: 20px;
-    font-weight: 600;
-}
-body h4 {
-    font-size: 16px;
-    font-weight: 600;
-}
-body h5 {
-    font-size: 14px;
-    font-weight: 600;
-}
-body h6 {
-    font-size: 12px;
-    font-weight: 600;
-}
-body p {
-    margin-top: 0;
-    margin-bottom: 10px;
-}
-body blockquote {
-    margin: 0;
-}
-body ol,
-body ul {
-    padding-left: 0;
-    margin-top: 0;
-    margin-bottom: 0;
-}
-body ol ol,
-body ul ol {
-    list-style-type: lower-roman;
-}
-body ol ol ol,
-body ol ul ol,
-body ul ol ol,
-body ul ul ol {
-    list-style-type: lower-alpha;
-}
-body dd {
-    margin-left: 0;
-}
-body code {
-    font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
-    font-size: 12px;
-}
-body pre {
-    margin-top: 0;
-    margin-bottom: 0;
-    font: 12px Consolas, "Liberation Mono", Menlo, Courier, monospace;
-}
-body .octicon {
-    vertical-align: text-bottom;
-}
-body input {
-    -webkit-font-feature-settings: "liga" 0;
-    font-feature-settings: "liga" 0;
-}
-body::before {
-    display: table;
-    content: "";
-}
-body::after {
-    display: table;
-    clear: both;
-    content: "";
-}
-body > :first-child {
-    margin-top: 0 !important;
-}
-body > :last-child {
-    margin-bottom: 0 !important;
-}
-body a:not([href]) {
-    color: inherit;
-    text-decoration: none;
-}
-body .anchor {
-    float: left;
-    padding-right: 4px;
-    margin-left: -20px;
-    line-height: 1;
-}
-body .anchor:focus {
-    outline: 0;
-}
-body blockquote,
-body dl,
-body ol,
-body p,
-body pre,
-body table,
-body ul {
-    margin-top: 0;
-    margin-bottom: 16px;
-}
-body hr {
-    height: 0.25em;
-    padding: 0;
-    margin: 24px 0;
-    background-color: #e7e7e7;
-    border: 0;
-}
-body blockquote {
-    padding: 0 1em;
-    color: #777;
-    border-left: 0.25em solid #ddd;
-}
-body blockquote > :first-child {
-    margin-top: 0;
-}
-body blockquote > :last-child {
-    margin-bottom: 0;
-}
-body kbd {
-    display: inline-block;
-    padding: 3px 5px;
-    font-size: 11px;
-    line-height: 10px;
-    color: #555;
-    vertical-align: middle;
-    background-color: #fcfcfc;
-    border: solid 1px #ccc;
-    border-bottom-color: #bbb;
-    border-radius: 3px;
-    box-shadow: inset 0 -1px 0 #bbb;
-}
-body h1,
-body h2,
-body h3,
-body h4,
-body h5,
-body h6 {
-    margin-top: 30pt;
-    margin-bottom: 16px;
-    font-weight: 600;
-    line-height: 1.25;
-}
-body h1 .octicon-link,
-body h2 .octicon-link,
-body h3 .octicon-link,
-body h4 .octicon-link,
-body h5 .octicon-link,
-body h6 .octicon-link {
-    color: #000;
-    vertical-align: middle;
-    visibility: hidden;
-}
-body h1:hover .anchor,
-body h2:hover .anchor,
-body h3:hover .anchor,
-body h4:hover .anchor,
-body h5:hover .anchor,
-body h6:hover .anchor {
-    text-decoration: none;
-}
-body h1:hover .anchor .octicon-link,
-body h2:hover .anchor .octicon-link,
-body h3:hover .anchor .octicon-link,
-body h4:hover .anchor .octicon-link,
-body h5:hover .anchor .octicon-link,
-body h6:hover .anchor .octicon-link {
-    visibility: visible;
-}
-body h1 {
-    padding-bottom: 0.3em;
-    font-size: 2em;
-    border-bottom: 1px solid #eee;
-}
-body h2 {
-    padding-bottom: 0.3em;
-    font-size: 1.5em;
-    border-bottom: 1px solid #eee;
-}
-body h3 {
-    font-size: 1.25em;
-}
-body h4 {
-    font-size: 1em;
-}
-body h5 {
-    font-size: 0.875em;
-}
-body h6 {
-    font-size: 0.85em;
-    color: #777;
-}
-body ol,
-body ul {
-    padding-left: 2em;
-}
-body ol ol,
-body ol ul,
-body ul ol,
-body ul ul {
-    margin-top: 0;
-    margin-bottom: 0;
-}
-body li > p {
-    margin-top: 16px;
-}
-body li + li {
-    margin-top: 0.25em;
-}
-body dl {
-    padding: 0;
-}
-body dl dt {
-    padding: 0;
-    margin-top: 16px;
-    font-size: 1em;
-    font-style: italic;
-    font-weight: 700;
-}
-body dl dd {
-    padding: 0 16px;
-    margin-bottom: 16px;
-}
-body table {
-    display: block;
-    width: 100%;
-    overflow: auto;
-}
-body table th {
-    font-weight: 700;
-}
-body table td,
-body table th {
-    padding: 6px 13px;
-    border: 1px solid #ddd;
-}
-body table tr {
-    background-color: #fff;
-    border-top: 1px solid #ccc;
-}
-body table tr:nth-child(2n) {
-    background-color: #f8f8f8;
-}
-body img {
-    max-width: 100%;
-    box-sizing: content-box;
-    background-color: #fff;
-}
-body code {
-    padding: 0;
-    padding-top: 0.2em;
-    padding-bottom: 0.2em;
-    margin: 0;
-    font-size: 85%;
-    background-color: rgba(0, 0, 0, 0.04);
-    border-radius: 3px;
-}
-body pre {
-    word-wrap: normal;
-}
-body pre > code {
-    padding: 0;
-    margin: 0;
-    font-size: 100%;
-    word-break: normal;
-    white-space: pre;
-    background: 0 0;
-    border: 0;
-}
-body .highlight {
-    margin-bottom: 16px;
-}
-body .highlight pre {
-    margin-bottom: 0;
-    word-break: normal;
-}
-body .highlight pre,
-body pre {
-    padding: 16px;
-    overflow: auto;
-    font-size: 85%;
-    line-height: 1.45;
-    background-color: #f7f7f7;
-    border-radius: 3px;
-}
-body pre code {
-    display: inline;
-    max-width: auto;
-    padding: 0;
-    margin: 0;
-    overflow: visible;
-    line-height: inherit;
-    word-wrap: normal;
-    background-color: transparent;
-    border: 0;
-}
-body pre code::after,
-body pre code::before {
-    content: normal;
-}
-body .pl-0 {
-    padding-left: 0 !important;
-}
-body .pl-1 {
-    padding-left: 3px !important;
-}
-body .pl-2 {
-    padding-left: 6px !important;
-}
-body .pl-3 {
-    padding-left: 12px !important;
-}
-body .pl-4 {
-    padding-left: 24px !important;
-}
-body .pl-5 {
-    padding-left: 36px !important;
-}
-body .pl-6 {
-    padding-left: 48px !important;
-}
-body .full-commit .btn-outline:not(:disabled):hover {
-    color: #4078c0;
-    border: 1px solid #4078c0;
-}
-body kbd {
-    display: inline-block;
-    padding: 3px 5px;
-    font: 11px Consolas, "Liberation Mono", Menlo, Courier, monospace;
-    line-height: 10px;
-    color: #555;
-    vertical-align: middle;
-    background-color: #fcfcfc;
-    border: solid 1px #ccc;
-    border-bottom-color: #bbb;
-    border-radius: 3px;
-    box-shadow: inset 0 -1px 0 #bbb;
-}
-body :checked + .radio-label {
-    position: relative;
-    z-index: 1;
-    border-color: #4078c0;
-}
-body .task-list-item {
-    list-style-type: none;
-}
-body .task-list-item + .task-list-item {
-    margin-top: 3px;
-}
-body .task-list-item input {
-    margin: 0 0.2em 0.25em -1.6em;
-    vertical-align: middle;
-}
-body hr {
-    border-bottom-color: #eee;
-}
-.codehilite .c {
-    color: #999;
-}
-.codehilite .err {
-    color: red;
-}
-.codehilite .g {
-    color: #363636;
-}
-.codehilite .k {
-    color: #4998ff;
-}
-.codehilite .l {
-    color: #93a1a1;
-}
-.codehilite .n {
-    color: #363636;
-}
-.codehilite .o {
-    color: #aa25ff;
-}
-.codehilite .x {
-    color: #cb4b16;
-}
-.codehilite .p {
-    color: #93a1a1;
-}
-.codehilite .cm {
-    color: #586e75;
-}
-.codehilite .cp {
-    color: #aa25ff;
-}
-.codehilite .c1 {
-    color: #586e75;
-}
-.codehilite .cs {
-    color: #aa25ff;
-}
-.codehilite .gd {
-    color: #2aa198;
-}
-.codehilite .ge {
-    color: #93a1a1;
-    font-style: italic;
-}
-.codehilite .gr {
-    color: #dc322f;
-}
-.codehilite .gh {
-    color: #cb4b16;
-}
-.codehilite .gi {
-    color: #aa25ff;
-}
-.codehilite .go {
-    color: #93a1a1;
-}
-.codehilite .gp {
-    color: #93a1a1;
-}
-.codehilite .gs {
-    color: #93a1a1;
-    font-weight: 700;
-}
-.codehilite .gu {
-    color: #cb4b16;
-}
-.codehilite .gt {
-    color: #93a1a1;
-}
-.codehilite .kc {
-    color: #cb4b16;
-}
-.codehilite .kd {
-    color: #268bd2;
-}
-.codehilite .kn {
-    color: #4998ff;
-}
-.codehilite .kp {
-    color: #aa25ff;
-}
-.codehilite .kr {
-    color: #268bd2;
-}
-.codehilite .kt {
-    color: #dc322f;
-}
-.codehilite .ld {
-    color: #c42f07;
-}
-.codehilite .m {
-    color: #c42f07;
-}
-.codehilite .s {
-    color: #ff05da;
-}
-.codehilite .na {
-    color: #93a1a1;
-}
-.codehilite .nb {
-    color: #0bd51e;
-}
-.codehilite .nc {
-    color: #ff3ca8;
-}
-.codehilite .no {
-    color: #ff3ca8;
-}
-.codehilite .nd {
-    color: #ff3ca8;
-}
-.codehilite .ni {
-    color: #ff3ca8;
-}
-.codehilite .ne {
-    color: #ff3ca8;
-}
-.codehilite .nf {
-    color: #ff3ca8;
-}
-.codehilite .nl {
-    color: #ff3ca8;
-}
-.codehilite .nn {
-    color: #354980;
-}
-.codehilite .nx {
-    color: #555;
-}
-.codehilite .py {
-    color: #93a1a1;
-}
-.codehilite .nt {
-    color: #268bd2;
-}
-.codehilite .nv {
-    color: #268bd2;
-}
-.codehilite .ow {
-    color: #aa25ff;
-}
-.codehilite .w {
-    color: #93a1a1;
-}
-.codehilite .mf {
-    color: #c42f07;
-}
-.codehilite .mh {
-    color: #c42f07;
-}
-.codehilite .mi {
-    color: #c42f07;
-}
-.codehilite .mo {
-    color: #c42f07;
-}
-.codehilite .sb {
-    color: #ff05da;
-}
-.codehilite .sc {
-    color: #ff05da;
-}
-.codehilite .sd {
-    color: #ff05da;
-}
-.codehilite .s2 {
-    color: #ff05da;
-}
-.codehilite .se {
-    color: #ff05da;
-}
-.codehilite .sh {
-    color: #ff05da;
-}
-.codehilite .si {
-    color: #ff05da;
-}
-.codehilite .sx {
-    color: #ff05da;
-}
-.codehilite .sr {
-    color: #ff05da;
-}
-.codehilite .s1 {
-    color: #ff05da;
-}
-.codehilite .ss {
-    color: #ff05da;
-}
-.codehilite .bp {
-    color: #f29108;
-}
-.codehilite .vc {
-    color: #268bd2;
-}
-.codehilite .vg {
-    color: #268bd2;
-}
-.codehilite .vi {
-    color: #268bd2;
-}
-.codehilite .il {
-    color: #c42f07;
-}
-
-</style>
+<link rel="stylesheet" href="styles.css">
+<title>DesignspaceEditor2 for RoboFont</title>
 </head>
 <body>
 
@@ -781,15 +13,14 @@ body hr {
 <h1 id="toc_0">DesignSpaceEditor2</h1>
 
 
-<p>An extension for RoboFont 4.5+ to create and edit     <a
-        href="https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html"
-        >
-        designspaces format 5.</a> with support for scripting.
+<p>Create and edit designspaces with Robofont 4.5+, with support for scripting.
+    <br>By TypeMyType and LettError.
 </p>
 
 <h3 id="toc">Contents</h3>
 <ul>
-    <li><a href="#toc_1">Designspace Editor Usage</a></li>
+    <li><a href="#toc_1">Designspace Editor 2 Usage</a></li>
+    <li><a href="#toc_1b">Toolbar</a></li>
     <li><a href="#toc_2">Axes Tab</a></li>
     <li><a href="#toc_3">Sources Tab</a></li>
     <li><a href="#toc_4">Instances Tab</a></li>
@@ -804,6 +35,7 @@ body hr {
     <li><a href="#toc_12b">Overview of DSE2 Notifications</a></li>
     <li><a href="#toc_13">Scripting with the current designspace</a></li>
     <li><a href="#toc_14">Useful methods of the UFOOperator</a></li>
+    <li><a href="#toc_20">Acknowledgements</a></li>
 </ul>
 
 
@@ -812,10 +44,13 @@ body hr {
 
 
 
-<h3>DesignSpaceEditor2 can:</h3>
+<h3>Goals</h3>
 
 <ul>
-<li>Open, edit and save existing designspace format 4 and format 5 files.</li>
+<li>Open, edit and save existing <a
+        href="https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html"
+        >
+        designspaces format 5</a> files.</li>
 <li>You can create a new designspace and fill it with axes, sources and instances.</li>
 <li>You can edit all sorts of axis labels, location labels and localisations.</li>
 <li>You can quickly open the UFOs listed as sources.</li>
@@ -823,9 +58,90 @@ body hr {
 <li>You can preview and <a href="#toc_4">add instances</a>.</li>
 <li>You can validate designspaces and find compatibility and structural issues.</li>
 <li>DSE2 collects and sends designspace-related notifications about changes to the designspace, and also changes in the source font data. Other tools in RF can request interpolated glyphs, kerning and font info at specific locations, using MutatorMath as well as Varlib interpolation models. </li>
-<li>You can experiment with extrapolations and anisotropic interpolations and see previews for such exotic things as well as generate UFOs for them. Even if these can not be expressed as Variable fonts.</li>
+<li>You can experiment with <b>extrapolation</b> and <b>anisotropic interpolations</b> and see previews for such exotic things. <b>Even if these are not supported as Variable fonts, you can export them as UFO.</b></li>
 <li>You can write scripts that use the current designspace.</li>
 </ul>
+
+
+<h2 id="toc_1b">Toolbar <a href="#toc">↑</a></h2>
+
+<table>
+    <tr>
+        <td class="smallicon">
+            <a href="#toc_2"><img src="toolbar_500_500_icon_axes.png"></a>
+        </td>
+        <td class="smallicon">
+            <a href="#toc_3"><img src="toolbar_500_500_icon_sources.png"></a>
+        </td>
+        <td class="smallicon">
+            <a href="#toc_4"><img src="toolbar_500_500_icon_instances.png"></a>
+        </td>
+        <td class="smallicon">
+            <a href="#toc_5"><img src="toolbar_500_500_icon_rules.png"></a>
+        </td>
+        <td class="smallicon">
+            <a href="#toc_6"><img src="toolbar_500_500_icon_location_labels.png"></a>
+        </td>
+        <td class="smallicon">
+            <a href="#toc_8"><img src="toolbar_500_500_icon_variable_fonts.png"></a>
+        </td>
+        <td class="smallicon">
+            <a href="#toc_9"><img src="toolbar_500_500_icon_problems.png"></a>
+        </td>
+    </tr>
+
+    <tr>
+        <td class="smallicon">
+            <a href="#toc_2">Axes</a>
+        </td>
+        <td class="smallicon">
+            <a href="#toc_3">Sources</a>
+        </td>
+        <td class="smallicon">
+            <a href="#toc_4">Instances</a>
+        </td>
+        <td class="smallicon">
+            <a href="#toc_5">Rules</a>
+        </td>
+        <td class="smallicon">
+            <a href="#toc_6">Location Labels</a>
+        </td>
+        <td class="smallicon">
+            <a href="#toc_8">Variable Fonts</a>
+        </td>
+        <td class="smallicon">
+            <a href="#toc_9">Problems</a>
+        </td>
+    </tr>
+
+    <tr>
+        <td class="smallicon">
+            <img src="chart.bar.doc.horizontal2x.png">
+        </td>
+        <td class="smallicon">
+            <img src="square.and.arrow.down2x.png">
+        </td>
+        <td class="smallicon">
+            <img src="questionmark.circle2x.png">
+        </td>
+    </tr>
+
+    <tr>
+        <td class="smallicon">
+            <a href="#toc_10b">Location Preview Window</a>
+        </td>
+        <td class="smallicon">
+            Save Document
+        </td>
+        <td class="smallicon">
+            Help
+        </td>
+    </tr>
+
+</table>
+
+
+
 
 
 <h2 id="toc_1">Designspace Editor Usage <a href="#toc">↑</a></h2>
@@ -847,7 +163,7 @@ body hr {
     </ul>
     Then add the axis values for each new source. Make sure there is at least 1 source on the default value of all axes.
 </li>
-<li>Save the document in <b>the same folder as your sources, or one level up.</b> The document will store a relative path to the sources and instances, so it makes sense to keep them close together.</li>
+<li>Save the designspace in <b>the same folder as your sources, or one level up.</b> It stores a relative path to the sources and instances, so it makes sense to keep them close together.</li>
 <li><a href="#toc_4">Add instances</a>, rules, axis labels, location labels and whatever else you need to do.</li>
 <li>Preview selected instances in text. </li>
 <li>Save early and often.</li>
@@ -855,22 +171,27 @@ body hr {
 
 Note that DSE2 does not maintain formatting or comments in designspace it edits. We know some of you are very particular about the xml. 
 
+
+
+
+
 <p><img class="bigicon" src="toolbar_500_500_icon_axes.png" alt="DSE2 axes icon"></p>
 
 <h2 id="toc_2">Axes Tab <a href="#toc">↑</a></h3>
 
 <img alt="screenshot of DSE2 axes tab" src="screenshot_mutatorsans_axestab.png">
 
+
 <h3>Axes Tab Buttons</h3>
 
+Quick buttons for easy axes. Obviously you can edit these values here.
 <ul>
-<li><strong>Add Weight Axis</strong>: this adds a new continuous <code>wght</code> axis from 400 to 700. (obviously you can edit these values here)</li>
+<li><strong>Add Weight Axis</strong>: this adds a new continuous <code>wght</code> axis from 400 to 700.</li>
 <li><strong>Add Width Axis</strong>: this adds a new continuous <code>wdth</code> axis from 100 to 50</li>
 <li><strong>Add Optical Axis</strong>: this adds a new <code>opsz</code> axis, from 10 to 16.</li>
 <li><strong>+</strong> add a new axis: add a new axis with any name.</li>
 <li><strong>—</strong> delete the selected axis. <strong>Note: no undo!</strong></li>
 </ul>
-
 <h3>Axes Tab Columns</h3>
 
 <table>
@@ -890,25 +211,32 @@ Note that DSE2 does not maintain formatting or comments in designspace it edits.
     <tr>
         <td>Tag
         </td>
-        <td>A 4-letter tag, <em>the technical name</em> of this axis. All lowercase for a standard, pre-defined axis, such as <code>wght</code>, <code>wdth</code>, <code>opsz</code>, <code>ital</code> and <code>slnt</code>. Use all-uppercase for your own axes. <code>FORK</code>, <code>MONO</code>.
+        <td>A 4-letter tag, <em>the technical identifier</em> for this axis.
+            <ul>
+                <li>
+                    All lowercase for a standard, pre-defined axis, such as <code>wght</code>, <code>wdth</code>, <code>opsz</code>, <code>ital</code> and <code>slnt</code>.
+                </li>
+                <li>
+                    Use all-uppercase for your own axes. <code>FORK</code>, <code>MONO</code>.
+                </li>
         </td>
     </tr>
     <tr>
         <td>Minimum
         </td>
-        <td>The minimum value of this axis, required.
+        <td>The minimum value of this axis, required for continuous axes.
         </td>
     </tr>
     <tr>
         <td>Maximum
         </td>
-        <td>The maximum value of this axis, required.
+        <td>The maximum value of this axis, required for continuous axes.
         </td>
     </tr>
     <tr>
         <td>Default
         </td>
-        <td>The default value of this axis, required. The default needs to be between minimum and maximum or equal to one of them.
+        <td>The default value of this axis, required. For a continuous axis the default needs to be between minimum and maximum or equal to one of them. For a discrete axis the default must be one of the axis values.
         </td>
     </tr>
     <tr>
@@ -924,20 +252,20 @@ Note that DSE2 does not maintain formatting or comments in designspace it edits.
     <tr>
         <td>📈
         </td>
-        <td>Indicates this axis has a map. Click the <img src="toolbar_25_25_info.circle.fill.svg"> for the editor.
+        <td>Indicates this axis has a map. Click the <img src="toolbar_25_25_info.circle.fill.svg"> for the Axis Map editor.
         </td>
     </tr>
     <tr>
         <td>🏷️
         </td>
-        <td>Indicates this axis has tags. Click the <img src="toolbar_25_25_info.circle.fill.svg"> for the editor.
+        <td>Indicates this axis has labels. Click the <img src="toolbar_25_25_info.circle.fill.svg"> for the Axis Label editor.
         </td>
     </tr>
 </table>
 
 
 
-<h3>Axis Map syntax</h3>
+<h3>Axis Map editor syntax</h3>
 
 <div><pre><code class="language-none"># user space value
 #   (numbers exposed to the user in a UI) 
@@ -970,7 +298,7 @@ Note that DSE2 does not maintain formatting or comments in designspace it edits.
     </li>
 </ul>
 
-<h3>Axis Labels syntax</h3>
+<h3>Axis Label editor syntax</h3>
 
 <div><pre><code class="language-none"># Axis Labels syntax
 
@@ -1021,7 +349,7 @@ Note that DSE2 does not maintain formatting or comments in designspace it edits.
 
 <p>This tab shows the source UFOs for this designspace.</p>
 
-<p><strong>Sources Tab Buttons</strong></p>
+<h3>Sources Buttons</h3>
 
 <ul>
 <li><strong>Open UFO</strong> open a file dialog to pick a new UFO. It will be added to the default location. Edit the location!</li>
@@ -1029,7 +357,31 @@ Note that DSE2 does not maintain formatting or comments in designspace it edits.
 <li><strong>Replace UFO</strong> Select one of the sources and pick a new ufo to replace it.</li>
 </ul>
 
+<h3>Sources Menus</h3>
+
 <p>Double click in the <img src="toolbar_25_25_info.circle.fill.svg"> icon opens a popover editor for <strong>Localised Family Name</strong> and <strong>Muted Glyphs</strong>.</p>
+
+<p>
+    Control click on a source for a contextual menu:
+    <ul>
+        <li>
+            <b>Open Source UFO</b>: opens the UFO, if it is not already open in RF.
+        </li>
+        <li>
+            <b>Reveal Source in Finder</b>
+        </li>
+        <li>
+            <b>Move to Default Location</b>: this puts the source at the default location of the continuous axes. Values will be in design coordinates.
+        </li>
+        <li>
+            <b>Set preview to Location</b>: If you have a Location Preview window open, it will show this location.
+        </li>
+        <li>
+            <b>Force Refresh of All Sources</b>: bug clunky debugging reset.
+        </li>
+    </ul>
+</p>
+
 
 <h3>Sources Columns</h3>
 
@@ -1088,6 +440,8 @@ Note that DSE2 does not maintain formatting or comments in designspace it edits.
 a b c d</code></pre></div>
 
 
+
+
 <p><img class="bigicon" src="toolbar_500_500_icon_instances.png" alt="DSE2 instances icon"></p>
 
 <h2 id="toc_4">Instances Tab <a href="#toc">↑</a></h3>
@@ -1095,6 +449,46 @@ a b c d</code></pre></div>
 <img alt="screenshot of DSE2 tab for instances" src="screenshot_mutatorsans_instancestab.jpg">
 
 <p>This tab shows the instances defined for this designspace. These instances can be different things in different contexts. Each instance can be compiled to separate UFO files. But it can also be interpreted as an named location in a variable font.</p>
+
+<h3>Instances Buttons</h3>
+
+<ul>
+    <li><strong>+</strong> add a new instance</li>
+    <li><strong>—</strong> delete the selected instance. <strong>Note: no undo!</strong>
+    </li>
+    <li><strong>Duplicate:</strong> duplicates the selected instances</li>
+    <li><strong>Add Source as Instances:</strong> makes new instances at the designspace locations of the sources.</li>
+    <li><strong>Generate with MutatorMath:</strong> use the MutatorMath model to generate instances. For instance if you want to calculate instances at anisotropic locations, or if you want to extrapolate over axis extremes. MutatorMath is a bit more forgiving when it comes to the number of off-curves and missing sources.</li>
+    <li><strong>Generate with VarLib:</strong> use the fontTools VarLib model to generate instances, if you want to stay close to how the instances will appear as part of a variable font. This model wants all data to be present and correct.</li>
+</ul>
+
+<h3>Instances Menus</h3>
+<p>
+    Control click on an instance for a contextual menu:
+    <ul>
+        <li>
+            <b>Open Instance UFO</b>: opens the UFO, if it exists.
+        </li>
+        <li>
+            <b>Reveal Instance in Finder</b>: show the UFO, if it exists.
+        </li>
+        <li>
+            <b>Update UFO Filename</b>: make a new filename for this UFO instance, based on the family and stylename according this pattern: <code>instances/[familyName]-[styleName].ufo</code>
+        </li>
+        <li>
+            <b>Update PostScript Fontname</b>: make a new PostScript fontname for this UFO instance, based on the family and stylename according this pattern: <code>[familyName]-[styleName]</code>
+        </li>
+        <li>
+            <b>Convert to User Location</b>: convert this design coordinates to user coordinates, according to axis mapping.
+        </li>
+        <li>
+            <b>Convert to Design Location</b>: convert this user coordinates to design coordinates, according to axis mapping.
+        </li>
+        <li>
+            <b>Set Preview to Selection</b>: If you have a Location Preview window open, it will show this location.
+        </li>
+    </ul>
+</p>
 
 <h3>Instances Columns</h3>
 
@@ -1158,19 +552,6 @@ The axis columns accepts two values separated by a space to indicate an anisotro
 <li>Note: it is not clear what to expect of interactions between an axis map and an anisotropic location. The authors advise to experiment with anisotropy <strong>before</strong> defining axis maps for anisotropic instance locations.</li>
 </ul>
 
-
-
-<h3>Instances Tab Buttons</h3>
-
-<ul>
-    <li><strong>+</strong> add a new instance</li>
-    <li><strong>—</strong> delete the selected instance. <strong>Note: no undo!</strong>
-    </li>
-    <li><strong>Duplicate:</strong> duplicates the selected instances</li>
-    <li><strong>Add Source as Instances:</strong> makes new instances at the designspace locations of the sources.</li>
-    <li><strong>Generate with MutatorMath:</strong> use the MutatorMath model to generate instances. For instance if you want to calculate instances at anisotropic locations, or if you want to extrapolate over axis extremes. MutatorMath is a bit more forgiving when it comes to the number of off-curves and missing sources.</li>
-    <li><strong>Generate with VarLib:</strong> use the fontTools VarLib model to generate instances, if you want to stay close to how the instances will appear as part of a variable font. This model wants all data to be present and correct.</li>
-</ul>
 
 
 <p><img class="bigicon" src="toolbar_500_500_icon_rules.png" alt="DSE2 rules icon"></p>
@@ -1305,7 +686,10 @@ This uses <a
 <p>This tab is for your notes and are stored in the Designspace. This can be any kind of note or remark. Notes are not processed in any way.</p>
 
 
-<p><img class="bigicon" src="toolbar_500_500_icon_notifications.png" alt="DSE2 notes icon"></p>
+
+<p>
+    <img alt="screenshot of DSE2 location preview window" src="screenshot_mutatorsans_previewwindow1.jpg">
+</p>
 
 
 
@@ -1316,7 +700,7 @@ This uses <a
 </p>
 
 <ul>
-    <li>Click the button in the toolbar <img alt="icon for the location preview window" src="preview_icon.jpg"> </li>
+    <li><img alt="icon for the location preview window" src="chart.bar.doc.horizontal2x.png"> </li>
     <li>Type text and /glyphnames in the text box at the top.</li>
     <li>Some options available in the two menus at the top right:
         <ul>
@@ -1333,17 +717,17 @@ This uses <a
     </li>
 </ul>
 
-<p>
-    <img alt="screenshot of DSE2 location preview window" src="screenshot_mutatorsans_previewwindow1.jpg">
-</p>
 
+
+
+<p><img class="bigicon" src="toolbar_500_500_icon_notifications.png" alt="DSE2 notes icon"></p>
 
 
 
 
 <h2 id="toc_11">Notifications<a href="#toc">↑</a></h3>
 
-<p>DesignspaceEditor2 sends notifications for designspace related events. Tools can subscribe to these and access to the designspace data. With these notifications it will be easier to build tools, visualiations, previews etc. that work with your designspaces.</p>
+<p>DesignspaceEditor2 sends notifications for events for the documents it has open. This means scripts and tools can subscribe to these and get access to live designspace data. With these notifications it will be easier to build new things that work with your designspaces.</p>
 
 <p>The source for these notifications at <a href="https://github.com/LettError/designSpaceRoboFontExtension/blob/5e0d700daedcac683bf00a5685e9cddef5b3aab1/DesignspaceEditor2.roboFontExt/lib/main.py#L55"> github.com/LettError/designSpaceRoboFontExtension</a>.
 </p>
@@ -1789,6 +1173,10 @@ registerRoboFontSubscriber(DesignspaceEditorSubscriber)
 </table>
 
 
+
+<p><img class="bigicon" src="toolbar_500_500_icon_notifications.png" alt="DSE2 notes icon"></p>
+
+
 <h2 id="toc_13">Scripting with the current designspace<a href="#toc">↑</a></h2>
 
 With a document open in DesignspaceEditor you can call <code>CurrentDesignspace()</code>, similar to <code>CurrentFont()</code> and <code>CurrentGlyph()</code>. This returns the designspace wrapped in a <code>UFOOperator</code> object that can calculate single glyphs, kerning and font info. 
@@ -2072,6 +1460,16 @@ print(d.axes)
     </ul>
 </p>
 
+
+<h2 id="toc_20">Acknowledgements<a href="#toc">↑</a></h2>
+
+<ul>
+    <li>
+        All the work on Designspace format 5, greatly improving the support for Variable Fonts, by <a href="https://github.com/fonttools">the FontTools developers</a>.
+    </li>
+    <li>All the GitHub sponsors for <a href="https://github.com/sponsors/letterror">LettError</a> and <a href="https://github.com/sponsors/typemytype">TypeMyType</a> that make projects like this possible.
+    </li>
+</ul>
 
 </body>
 </html>
