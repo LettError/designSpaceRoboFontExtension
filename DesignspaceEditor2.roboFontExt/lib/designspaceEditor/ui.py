@@ -1107,23 +1107,8 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         self.operator.fonts[sourceDescriptor.name] = font.asDefcon()
         self.setDocumentNeedSave(True)
 
-    def findAllDefaults(self):
-        # ======================================================
-        # = remove when UFOOPerator in RoboFont gets an update =
-        # ======================================================
-        # collect all default sourcedescriptors for all discrete locations
-        # this method is also added to ufooperator
-        defaults = []
-        discreteSpaces = self.operator.getDiscreteLocations()
-        if not discreteSpaces:
-            discreteSpaces = [None]
-        for discreteLocation in discreteSpaces:
-            defaultSourceDescriptor = self.operator.findDefault(discreteLocation=discreteLocation)
-            defaults.append(defaultSourceDescriptor)
-        return defaults
-
     def wrapSourceDescriptor(self, sourceDescriptor):
-        allDefaults = self.findAllDefaults()
+        allDefaults = self.operator.findAllDefaults()
         wrapped = dict(
             sourceHasPath=checkSymbol if sourceDescriptor.path and os.path.exists(sourceDescriptor.path) else "",
             sourceIsDefault=defaultSymbol if sourceDescriptor in allDefaults else "",
