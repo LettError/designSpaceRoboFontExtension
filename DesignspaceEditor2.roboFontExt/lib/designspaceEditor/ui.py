@@ -944,6 +944,18 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         self.sources.list.append(self.wrapSourceDescriptor(sourceDescriptor))
         self.setDocumentNeedSave(True)
 
+    def findAllDefaults(self):
+        # collect all default sourcedescriptors for all discrete locations
+        # this method is also added to ufooperator
+        defaults = []
+        discreteSpaces = self.operator.getDiscreteLocations()
+        if not discreteSpaces:
+            discreteSpaces = [None]
+        for discreteLocation in discreteSpaces:
+            defaultSourceDescriptor = self.operator.findDefault(discreteLocation=discreteLocation)
+            defaults.append(defaultSourceDescriptor)
+        return defaults
+
     def wrapSourceDescriptor(self, sourceDescriptor):
         wrapped = dict(
             sourceHasPath=checkSymbol if sourceDescriptor.path and os.path.exists(sourceDescriptor.path) else "",
