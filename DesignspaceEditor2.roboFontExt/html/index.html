@@ -179,7 +179,7 @@ Note that DSE2 does not maintain formatting or comments in designspace it edits.
 <img alt="screenshot of DSE2 axes tab" src="screenshot_mutatorsans_axestab.png">
 
 
-<h3>Axes Tab Buttons</h3>
+<h3>Axes Buttons</h3>
 
 Quick buttons for easy axes. Obviously you can edit these values here.
 <ul>
@@ -189,7 +189,7 @@ Quick buttons for easy axes. Obviously you can edit these values here.
 <li><strong>+</strong> add a new axis: add a new axis with any name.</li>
 <li><strong>—</strong> delete the selected axis. <strong>Note: no undo!</strong></li>
 </ul>
-<h3>Axes Tab Columns</h3>
+<h3>Axes Columns</h3>
 
 <table>
     <tr>
@@ -264,10 +264,11 @@ Quick buttons for easy axes. Obviously you can edit these values here.
 
 <h3>Axis Map editor syntax</h3>
 
-<div><pre><code class="language-none"># user space value
+<div>
+    <pre><code class="language-none"># user space value
 #   (numbers exposed to the user in a UI)
 # maps to
-# designspace value
+#   designspace value
 #   (the internal values used to position sources and instances in the designspace)
 50 &gt; 10
 100 &gt; 20
@@ -275,8 +276,8 @@ Quick buttons for easy axes. Obviously you can edit these values here.
 150 &gt; 990
 
 # Please note: in these examples, lines starting with # are comments.
-# The comments are not saved in the designspace.
-</code></pre></div>
+# The comments are not saved in the designspace.</code></pre>
+</div>
 
 <ul>
     <li>
@@ -324,7 +325,8 @@ Quick buttons for easy axes. Obviously you can edit these values here.
 
 # Please note: in these examples, lines starting with # are comments.
 # The comments are not saved in the designspace.
-</code></pre></div>
+</code></pre>
+</div>
 
 <ul>
     <li>
@@ -344,7 +346,6 @@ Quick buttons for easy axes. Obviously you can edit these values here.
 
 <img alt="screenshot of DSE2 sources tab" src="screenshot_mutatorsans_sourcestab.jpg">
 
-<p>This tab shows the source UFOs for this designspace.</p>
 
 <h3>Sources Buttons</h3>
 
@@ -413,28 +414,33 @@ Quick buttons for easy axes. Obviously you can edit these values here.
     </tr>
     <tr>
         <td>🌐</td>
-        <td>indicates if there are localised names for this source. Click the <img src="toolbar_25_25_info.circle.fill.svg"> for the editor.</td>
+        <td>indicates if there are localised names for this source. Click the <img src="toolbar_25_25_info.circle.fill.svg"> for the <b>Localised Family Name editor </b>.</td>
     </tr>
     <tr>
         <td>🔕</td>
-        <td>indicates if there are muted glyphs in this source. Click the <img src="toolbar_25_25_info.circle.fill.svg"> for the editor.</td>
+        <td>indicates if there are muted glyphs in this source. Click the <img src="toolbar_25_25_info.circle.fill.svg"> for the <b>Muted Glyph editor</b>.</td>
     </tr>
     <tr>
         <td>column for each axis</td>
-        <td>Axis values, <strong>in designspace coordinates.</strong><br>If you have discrete axes, make sure this value matches one of the values of the axis. Make sure it is between axis minimum and axis maximum. No anisotropy.</td>
+        <td>
+            Axis values for sources are <strong>in designspace coordinates.</strong>
+            <br>
+        If you have discrete axes, make sure this value matches one of the values of the axis. Make sure it is between axis minimum and axis maximum. No anisotropy.</td>
     </tr>
 </table>
 
-<h3>Localised Family Name syntax</h3>
+<h3>Localised Family Name editor syntax</h3>
 
-<div><pre><code class="language-none"># starts with a ? &lt;language tag&gt; &lt;localised string&gt;
+<div><pre><code class="language-none"># localised name starts with a ? &lt;language tag&gt; &lt;localised string&gt;
 ? fr &#39;Montserrat&#39;
-? ja &#39;モンセラート&#39;</code></pre></div>
+? ja &#39;モンセラート&#39;</code></pre>
+</div>
 
-<h3>Muted Glyph syntax</h3>
+<h3>Muted Glyph editor syntax</h3>
 
 <div><pre><code class="language-none"># a space separated list of glyph names
-a b c d</code></pre></div>
+a b c d</code></pre>
+</div>
 
 
 
@@ -484,6 +490,9 @@ a b c d</code></pre></div>
         <li>
             <b>Set Preview to Selection</b>: If you have a Location Preview window open, it will show this location.
         </li>
+        <li>
+            <b>New instance inbetween</b>: with two instances selected in the same discrete location, this creates a new instance between the two.
+        </li>
     </ul>
 </p>
 
@@ -516,7 +525,7 @@ a b c d</code></pre></div>
     </tr>
     <tr>
         <td>column for each axis</td>
-        <td>Axis values, <strong>in userspace coordinates</strong>. Anisotropic values separated by space (see below)</td>
+        <td>Axis values can be in <strong>userspace</strong> or <strong>design coordinates</strong>. Anisotropic values separated by space (see below)</td>
     </tr>
 </table>
 
@@ -526,7 +535,7 @@ a b c d</code></pre></div>
 
 <ul>
     <li>
-        From DesignSpace 5 on instances can be placed with userspace values.
+        Instances can have axis values in <b>userspace</b> coordinates.
     </li>
     <li>
         Control-click on an instance to get the pop up menu with some options.
@@ -540,13 +549,20 @@ a b c d</code></pre></div>
 </ul>
 
 <h3>About anisotropic instances</h3>
-<ul>
-<li>
-The axis columns accepts two values separated by a space to indicate an anisotropic location. For instance: <code>900 800</code> means: <em>horizontal interpolation at value <code>900</code> and vertical interpolation at value <code>800</code></em>.</li>
 
-<li><b>Please note: anisotropic locations are not supported in Variable Fonts.</b> Tools that generate fonts from designspaces may ignore the second value, or ignore the instance. It is a useful tool during exploration and design and so designspaces can store them.</li>
-<li>MutatorMath can calculate anisotropic instances. See UFOOperator</li>
-<li>Note: it is not clear what to expect of interactions between an axis map and an anisotropic location. The authors advise to experiment with anisotropy <strong>before</strong> defining axis maps for anisotropic instance locations.</li>
+<ul>
+    <li>
+        The axis columns will two values separated by a space to indicate an anisotropic location. For instance: <code>900 800</code> means: <em>horizontal interpolation at value <code>900</code> and vertical interpolation at value <code>800</code></em>.
+    </li>
+    <li>
+        <b>Please note: anisotropic locations are not supported in Variable Fonts.</b> Tools that generate fonts from designspaces may ignore the second value, or ignore the entire instance. Anisotropy is a useful tool during exploration and design and so designspaces can store them.
+    </li>
+    <li>
+        MutatorMath can calculate anisotropic instances. See UFOOperator
+    </li>
+    <li>
+        Note: it is not clear what to expect of interactions between an axis map and an anisotropic location. The authors advise to experiment with anisotropy <strong>before</strong> defining axis maps for anisotropic instance locations.
+    </li>
 </ul>
 
 
@@ -557,7 +573,7 @@ The axis columns accepts two values separated by a space to indicate an anisotro
 
 <img alt="screenshot of DSE2 rules tab" src="screenshot_mutatorsans_rulestab.jpg">
 
-<p>The rules tab is an editor for defining rules and condition sets. Tools may interpret these into <code>rvrn</code> features.</p>
+<p class="caption">The rules tab is an editor for defining rules and condition sets. Tools may interpret these into <code>rvrn</code> features.</p>
 
 <h3>Rules syntax</h3>
 
@@ -579,7 +595,8 @@ switching a&#39;s
 
 # Please note: in these examples, lines starting with # are comments.
 # The comments are not saved in the designspace.
-</code></pre></div>
+</code></pre>
+</div>
 
 
 <p><img class="bigicon" src="toolbar_500_500_icon_location_labels.png" alt="DSE2 location labels icon"></p>
@@ -611,7 +628,8 @@ Neue Style Italic
 
 # Please note: in these examples, lines starting with # are comments.
 # The comments are not saved in the designspace.
-</code></pre></div>
+</code></pre>
+</div>
 
 <p><img class="bigicon" src="toolbar_500_500_icon_variable_fonts.png" alt="DSE2 variable fonts icon"></p>
 
@@ -658,7 +676,8 @@ Neue Style Italic
 
 # Please note: in these examples, lines starting with # are comments.
 # The comments are not saved in the designspace.
-</code></pre></div>
+</code></pre>
+</div>
 
 
 <p><img class="bigicon" src="toolbar_500_500_icon_problems.png" alt="DSE2 problems icon"></p>
@@ -730,7 +749,7 @@ This uses <a
 
 This is a demo of Subscriber receiving designspace notifications.
 
-<code><pre>
+<pre><code>
 from mojo.subscriber import Subscriber, registerRoboFontSubscriber
 
 class DesignspaceEditorSubscriber(Subscriber):
@@ -750,8 +769,7 @@ class DesignspaceEditorSubscriber(Subscriber):
         print("rules did chagne for:", info["designspace"])
 
 registerRoboFontSubscriber(DesignspaceEditorSubscriber)
-</pre>
-</code>
+</code></pre>
 
 <ul>
     <li>
@@ -1178,32 +1196,25 @@ With a document open in DesignspaceEditor you can call <code>CurrentDesignspace(
 <h3>Calculating a glyph</h3>
 The example below calculates a single glyph at the default location. It returns a mathGlyph.
 
-<code>
-    <pre>d = CurrentDesignspace()
+<pre><code>d = CurrentDesignspace()
 loc = d.newDefaultLocation()
-g = d.makeOneGlyph("A", location=loc)
-    </pre>
-</code>
+g = d.makeOneGlyph("A", location=loc)</code></pre>
 
 You can use <code>AllDesignspaces()</code> to get a list of all open designspace documents. Optionally you can pass a font object with <code>usingFont</code> to get only the designspaces that use that font.
 
-<code>
-    <pre>import os
+<pre><code>import os
 d = AllDesignspaces()
 for i, doc in enumerate(AllDesignspaces()):
     print(f"{i}: {os.path.basename(doc.path)}")
 f = CurrentFont()
 for doc in AllDesignspaces(usingFont=f):
-    print(f"\nOnly using {os.path.basename(f.path)}:", f"{os.path.basename(doc.path)}")
-    </pre>
+    print(f"\nOnly using {os.path.basename(f.path)}:", f"{os.path.basename(doc.path)}")</code></pre>
 
-    <pre>
-0: Sans_wdth.designspace
+<pre><code>0: Sans_wdth.designspace
 1: Experimental_serif.designspace
 
-Only using Test-Light.ufo: Experimental_serif.designspace
-</pre>
-</code>
+Only using Test-Light.ufo: Experimental_serif.designspace</code></pre>
+
 
 
 <h3>Calculating kerning and info</h3>

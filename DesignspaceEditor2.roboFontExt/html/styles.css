@@ -22,7 +22,10 @@ body {
     margin-right: auto;
 }
 .bigicon{
-    margin-top: 60pt;
+    margin-top: 80pt;
+}
+.caption{
+    font-size:10pt;
 }
 body .pl-c {
     color: #969896;
