@@ -2,42 +2,792 @@
 <head>
 <meta charset="UTF-8">
 <style>
-    html{max-width:800px;padding:15px;margin-left:auto;margin-right:auto;}body{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%;line-height:1.5;color:#333;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";font-size:16px;line-height:1.5;word-wrap:break-word}body .pl-c{color:#969896}body .pl-c1,body .pl-s .pl-v{color:#0086b3}body .pl-e,body .pl-en{color:#795da3}body .pl-s .pl-s1,body .pl-smi{color:#333}body .pl-ent{color:#63a35c}body .pl-k{color:#a71d5d}body .pl-pds,body .pl-s,body .pl-s .pl-pse .pl-s1,body .pl-sr,body .pl-sr .pl-cce,body .pl-sr .pl-sra,body .pl-sr .pl-sre{color:#183691}body .pl-v{color:#ed6a43}body .pl-id{color:#b52a1d}body .pl-ii{color:#f8f8f8;background-color:#b52a1d}body .pl-sr .pl-cce{font-weight:700;color:#63a35c}body .pl-ml{color:#693a17}body .pl-mh,body .pl-mh .pl-en,body .pl-ms{font-weight:700;color:#1d3e81}body .pl-mq{color:teal}body .pl-mi{font-style:italic;color:#333}body .pl-mb{font-weight:700;color:#333}body .pl-md{color:#bd2c00;background-color:#ffecec}body .pl-mi1{color:#55a532;background-color:#eaffea}body .pl-mdr{font-weight:700;color:#795da3}body .pl-mo{color:#1d3e81}body .octicon{display:inline-block;vertical-align:text-top;fill:currentColor}body a{background-color:transparent;-webkit-text-decoration-skip:objects}body a:active,body a:hover{outline-width:0}body strong{font-weight:inherit}body strong{font-weight:bolder}body h1{font-size:2em;margin:.67em 0}body img{border-style:none}body svg:not(:root){overflow:hidden}body code,body kbd,body pre{font-family:monospace,monospace;font-size:1em}body hr{box-sizing:content-box;height:0;overflow:visible}body input{font:inherit;margin:0}body input{overflow:visible}body [type=checkbox]{box-sizing:border-box;padding:0}body *{box-sizing:border-box}body input{font-family:inherit;font-size:inherit;line-height:inherit}body a{color:#4078c0;text-decoration:none}body a:active,body a:hover{text-decoration:underline}body strong{font-weight:600}body hr{height:0;margin:15px 0;overflow:hidden;background:0 0;border:0;border-bottom:1px solid #ddd}body hr::before{display:table;content:""}body hr::after{display:table;clear:both;content:""}body table{border-spacing:0;border-collapse:collapse}body td,body th{padding:0}body h1,body h2,body h3,body h4,body h5,body h6{margin-top:0;margin-bottom:0}body h1{font-size:32px;font-weight:600}body h2{font-size:24px;font-weight:600}body h3{font-size:20px;font-weight:600}body h4{font-size:16px;font-weight:600}body h5{font-size:14px;font-weight:600}body h6{font-size:12px;font-weight:600}body p{margin-top:0;margin-bottom:10px}body blockquote{margin:0}body ol,body ul{padding-left:0;margin-top:0;margin-bottom:0}body ol ol,body ul ol{list-style-type:lower-roman}body ol ol ol,body ol ul ol,body ul ol ol,body ul ul ol{list-style-type:lower-alpha}body dd{margin-left:0}body code{font-family:Consolas,"Liberation Mono",Menlo,Courier,monospace;font-size:12px}body pre{margin-top:0;margin-bottom:0;font:12px Consolas,"Liberation Mono",Menlo,Courier,monospace}body .octicon{vertical-align:text-bottom}body input{-webkit-font-feature-settings:"liga" 0;font-feature-settings:"liga" 0}body::before{display:table;content:""}body::after{display:table;clear:both;content:""}body>:first-child{margin-top:0!important}body>:last-child{margin-bottom:0!important}body a:not([href]){color:inherit;text-decoration:none}body .anchor{float:left;padding-right:4px;margin-left:-20px;line-height:1}body .anchor:focus{outline:0}body blockquote,body dl,body ol,body p,body pre,body table,body ul{margin-top:0;margin-bottom:16px}body hr{height:.25em;padding:0;margin:24px 0;background-color:#e7e7e7;border:0}body blockquote{padding:0 1em;color:#777;border-left:.25em solid #ddd}body blockquote>:first-child{margin-top:0}body blockquote>:last-child{margin-bottom:0}body kbd{display:inline-block;padding:3px 5px;font-size:11px;line-height:10px;color:#555;vertical-align:middle;background-color:#fcfcfc;border:solid 1px #ccc;border-bottom-color:#bbb;border-radius:3px;box-shadow:inset 0 -1px 0 #bbb}body h1,body h2,body h3,body h4,body h5,body h6{margin-top:24px;margin-bottom:16px;font-weight:600;line-height:1.25}body h1 .octicon-link,body h2 .octicon-link,body h3 .octicon-link,body h4 .octicon-link,body h5 .octicon-link,body h6 .octicon-link{color:#000;vertical-align:middle;visibility:hidden}body h1:hover .anchor,body h2:hover .anchor,body h3:hover .anchor,body h4:hover .anchor,body h5:hover .anchor,body h6:hover .anchor{text-decoration:none}body h1:hover .anchor .octicon-link,body h2:hover .anchor .octicon-link,body h3:hover .anchor .octicon-link,body h4:hover .anchor .octicon-link,body h5:hover .anchor .octicon-link,body h6:hover .anchor .octicon-link{visibility:visible}body h1{padding-bottom:.3em;font-size:2em;border-bottom:1px solid #eee}body h2{padding-bottom:.3em;font-size:1.5em;border-bottom:1px solid #eee}body h3{font-size:1.25em}body h4{font-size:1em}body h5{font-size:.875em}body h6{font-size:.85em;color:#777}body ol,body ul{padding-left:2em}body ol ol,body ol ul,body ul ol,body ul ul{margin-top:0;margin-bottom:0}body li>p{margin-top:16px}body li+li{margin-top:.25em}body dl{padding:0}body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:700}body dl dd{padding:0 16px;margin-bottom:16px}body table{display:block;width:100%;overflow:auto}body table th{font-weight:700}body table td,body table th{padding:6px 13px;border:1px solid #ddd}body table tr{background-color:#fff;border-top:1px solid #ccc}body table tr:nth-child(2n){background-color:#f8f8f8}body img{max-width:100%;box-sizing:content-box;background-color:#fff}body code{padding:0;padding-top:.2em;padding-bottom:.2em;margin:0;font-size:85%;background-color:rgba(0,0,0,.04);border-radius:3px}body pre{word-wrap:normal}body pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}body .highlight{margin-bottom:16px}body .highlight pre{margin-bottom:0;word-break:normal}body .highlight pre,body pre{padding:16px;overflow:auto;font-size:85%;line-height:1.45;background-color:#f7f7f7;border-radius:3px}body pre code{display:inline;max-width:auto;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}body pre code::after,body pre code::before{content:normal}body .pl-0{padding-left:0!important}body .pl-1{padding-left:3px!important}body .pl-2{padding-left:6px!important}body .pl-3{padding-left:12px!important}body .pl-4{padding-left:24px!important}body .pl-5{padding-left:36px!important}body .pl-6{padding-left:48px!important}body .full-commit .btn-outline:not(:disabled):hover{color:#4078c0;border:1px solid #4078c0}body kbd{display:inline-block;padding:3px 5px;font:11px Consolas,"Liberation Mono",Menlo,Courier,monospace;line-height:10px;color:#555;vertical-align:middle;background-color:#fcfcfc;border:solid 1px #ccc;border-bottom-color:#bbb;border-radius:3px;box-shadow:inset 0 -1px 0 #bbb}body :checked+.radio-label{position:relative;z-index:1;border-color:#4078c0}body .task-list-item{list-style-type:none}body .task-list-item+.task-list-item{margin-top:3px}body .task-list-item input{margin:0 .2em .25em -1.6em;vertical-align:middle}body hr{border-bottom-color:#eee}.codehilite .c{color:#999}.codehilite .err{color:red}.codehilite .g{color:#363636}.codehilite .k{color:#4998ff}.codehilite .l{color:#93a1a1}.codehilite .n{color:#363636}.codehilite .o{color:#aa25ff}.codehilite .x{color:#cb4b16}.codehilite .p{color:#93a1a1}.codehilite .cm{color:#586e75}.codehilite .cp{color:#aa25ff}.codehilite .c1{color:#586e75}.codehilite .cs{color:#aa25ff}.codehilite .gd{color:#2aa198}.codehilite .ge{color:#93a1a1;font-style:italic}.codehilite .gr{color:#dc322f}.codehilite .gh{color:#cb4b16}.codehilite .gi{color:#aa25ff}.codehilite .go{color:#93a1a1}.codehilite .gp{color:#93a1a1}.codehilite .gs{color:#93a1a1;font-weight:700}.codehilite .gu{color:#cb4b16}.codehilite .gt{color:#93a1a1}.codehilite .kc{color:#cb4b16}.codehilite .kd{color:#268bd2}.codehilite .kn{color:#4998ff}.codehilite .kp{color:#aa25ff}.codehilite .kr{color:#268bd2}.codehilite .kt{color:#dc322f}.codehilite .ld{color:#c42f07}.codehilite .m{color:#c42f07}.codehilite .s{color:#ff05da}.codehilite .na{color:#93a1a1}.codehilite .nb{color:#0bd51e}.codehilite .nc{color:#ff3ca8}.codehilite .no{color:#ff3ca8}.codehilite .nd{color:#ff3ca8}.codehilite .ni{color:#ff3ca8}.codehilite .ne{color:#ff3ca8}.codehilite .nf{color:#ff3ca8}.codehilite .nl{color:#ff3ca8}.codehilite .nn{color:#354980}.codehilite .nx{color:#555}.codehilite .py{color:#93a1a1}.codehilite .nt{color:#268bd2}.codehilite .nv{color:#268bd2}.codehilite .ow{color:#aa25ff}.codehilite .w{color:#93a1a1}.codehilite .mf{color:#c42f07}.codehilite .mh{color:#c42f07}.codehilite .mi{color:#c42f07}.codehilite .mo{color:#c42f07}.codehilite .sb{color:#ff05da}.codehilite .sc{color:#ff05da}.codehilite .sd{color:#ff05da}.codehilite .s2{color:#ff05da}.codehilite .se{color:#ff05da}.codehilite .sh{color:#ff05da}.codehilite .si{color:#ff05da}.codehilite .sx{color:#ff05da}.codehilite .sr{color:#ff05da}.codehilite .s1{color:#ff05da}.codehilite .ss{color:#ff05da}.codehilite .bp{color:#f29108}.codehilite .vc{color:#268bd2}.codehilite .vg{color:#268bd2}.codehilite .vi{color:#268bd2}.codehilite .il{color:#c42f07}
+html {
+    max-width: 800px;
+    padding: 15px;
+    margin-left: auto;
+    margin-right: auto;
+}
+body {
+    -ms-text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+    line-height: 1.5;
+    color: #333;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    font-size: 16px;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+.bigicon{
+    margin-top: 60pt;
+}
+body .pl-c {
+    color: #969896;
+}
+body .pl-c1,
+body .pl-s .pl-v {
+    color: #0086b3;
+}
+body .pl-e,
+body .pl-en {
+    color: #795da3;
+}
+body .pl-s .pl-s1,
+body .pl-smi {
+    color: #333;
+}
+body .pl-ent {
+    color: #63a35c;
+}
+body .pl-k {
+    color: #a71d5d;
+}
+body .pl-pds,
+body .pl-s,
+body .pl-s .pl-pse .pl-s1,
+body .pl-sr,
+body .pl-sr .pl-cce,
+body .pl-sr .pl-sra,
+body .pl-sr .pl-sre {
+    color: #183691;
+}
+body .pl-v {
+    color: #ed6a43;
+}
+body .pl-id {
+    color: #b52a1d;
+}
+body .pl-ii {
+    color: #f8f8f8;
+    background-color: #b52a1d;
+}
+body .pl-sr .pl-cce {
+    font-weight: 700;
+    color: #63a35c;
+}
+body .pl-ml {
+    color: #693a17;
+}
+body .pl-mh,
+body .pl-mh .pl-en,
+body .pl-ms {
+    font-weight: 700;
+    color: #1d3e81;
+}
+body .pl-mq {
+    color: teal;
+}
+body .pl-mi {
+    font-style: italic;
+    color: #333;
+}
+body .pl-mb {
+    font-weight: 700;
+    color: #333;
+}
+body .pl-md {
+    color: #bd2c00;
+    background-color: #ffecec;
+}
+body .pl-mi1 {
+    color: #55a532;
+    background-color: #eaffea;
+}
+body .pl-mdr {
+    font-weight: 700;
+    color: #795da3;
+}
+body .pl-mo {
+    color: #1d3e81;
+}
+body .octicon {
+    display: inline-block;
+    vertical-align: text-top;
+    fill: currentColor;
+}
+body a {
+    background-color: transparent;
+    -webkit-text-decoration-skip: objects;
+}
+body a:active,
+body a:hover {
+    outline-width: 0;
+}
+body strong {
+    font-weight: inherit;
+}
+body strong {
+    font-weight: bolder;
+}
+body h1 {
+    font-size: 2em;
+    margin: 0.67em 0;
+}
+body img {
+    border-style: none;
+}
+body svg:not(:root) {
+    overflow: hidden;
+}
+body code,
+body kbd,
+body pre {
+    font-family: monospace, monospace;
+    font-size: 1em;
+}
+body hr {
+    box-sizing: content-box;
+    height: 0;
+    overflow: visible;
+}
+body input {
+    font: inherit;
+    margin: 0;
+}
+body input {
+    overflow: visible;
+}
+body [type="checkbox"] {
+    box-sizing: border-box;
+    padding: 0;
+}
+body * {
+    box-sizing: border-box;
+}
+body input {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+body a {
+    color: #4078c0;
+    text-decoration: none;
+}
+body a:active,
+body a:hover {
+    text-decoration: underline;
+}
+body strong {
+    font-weight: 600;
+}
+body hr {
+    height: 0;
+    margin: 15px 0;
+    overflow: hidden;
+    background: 0 0;
+    border: 0;
+    border-bottom: 1px solid #ddd;
+}
+body hr::before {
+    display: table;
+    content: "";
+}
+body hr::after {
+    display: table;
+    clear: both;
+    content: "";
+}
+body table {
+    border-spacing: 0;
+    border-collapse: collapse;
+}
+body td,
+body th {
+    padding: 0;
+}
+body h1,
+body h2,
+body h3,
+body h4,
+body h5,
+body h6 {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+body h1 {
+    font-size: 32px;
+    font-weight: 600;
+}
+body h2 {
+    font-size: 24px;
+    font-weight: 600;
+}
+body h3 {
+    font-size: 20px;
+    font-weight: 600;
+}
+body h4 {
+    font-size: 16px;
+    font-weight: 600;
+}
+body h5 {
+    font-size: 14px;
+    font-weight: 600;
+}
+body h6 {
+    font-size: 12px;
+    font-weight: 600;
+}
+body p {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+body blockquote {
+    margin: 0;
+}
+body ol,
+body ul {
+    padding-left: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+body ol ol,
+body ul ol {
+    list-style-type: lower-roman;
+}
+body ol ol ol,
+body ol ul ol,
+body ul ol ol,
+body ul ul ol {
+    list-style-type: lower-alpha;
+}
+body dd {
+    margin-left: 0;
+}
+body code {
+    font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 12px;
+}
+body pre {
+    margin-top: 0;
+    margin-bottom: 0;
+    font: 12px Consolas, "Liberation Mono", Menlo, Courier, monospace;
+}
+body .octicon {
+    vertical-align: text-bottom;
+}
+body input {
+    -webkit-font-feature-settings: "liga" 0;
+    font-feature-settings: "liga" 0;
+}
+body::before {
+    display: table;
+    content: "";
+}
+body::after {
+    display: table;
+    clear: both;
+    content: "";
+}
+body > :first-child {
+    margin-top: 0 !important;
+}
+body > :last-child {
+    margin-bottom: 0 !important;
+}
+body a:not([href]) {
+    color: inherit;
+    text-decoration: none;
+}
+body .anchor {
+    float: left;
+    padding-right: 4px;
+    margin-left: -20px;
+    line-height: 1;
+}
+body .anchor:focus {
+    outline: 0;
+}
+body blockquote,
+body dl,
+body ol,
+body p,
+body pre,
+body table,
+body ul {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+body hr {
+    height: 0.25em;
+    padding: 0;
+    margin: 24px 0;
+    background-color: #e7e7e7;
+    border: 0;
+}
+body blockquote {
+    padding: 0 1em;
+    color: #777;
+    border-left: 0.25em solid #ddd;
+}
+body blockquote > :first-child {
+    margin-top: 0;
+}
+body blockquote > :last-child {
+    margin-bottom: 0;
+}
+body kbd {
+    display: inline-block;
+    padding: 3px 5px;
+    font-size: 11px;
+    line-height: 10px;
+    color: #555;
+    vertical-align: middle;
+    background-color: #fcfcfc;
+    border: solid 1px #ccc;
+    border-bottom-color: #bbb;
+    border-radius: 3px;
+    box-shadow: inset 0 -1px 0 #bbb;
+}
+body h1,
+body h2,
+body h3,
+body h4,
+body h5,
+body h6 {
+    margin-top: 30pt;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+body h1 .octicon-link,
+body h2 .octicon-link,
+body h3 .octicon-link,
+body h4 .octicon-link,
+body h5 .octicon-link,
+body h6 .octicon-link {
+    color: #000;
+    vertical-align: middle;
+    visibility: hidden;
+}
+body h1:hover .anchor,
+body h2:hover .anchor,
+body h3:hover .anchor,
+body h4:hover .anchor,
+body h5:hover .anchor,
+body h6:hover .anchor {
+    text-decoration: none;
+}
+body h1:hover .anchor .octicon-link,
+body h2:hover .anchor .octicon-link,
+body h3:hover .anchor .octicon-link,
+body h4:hover .anchor .octicon-link,
+body h5:hover .anchor .octicon-link,
+body h6:hover .anchor .octicon-link {
+    visibility: visible;
+}
+body h1 {
+    padding-bottom: 0.3em;
+    font-size: 2em;
+    border-bottom: 1px solid #eee;
+}
+body h2 {
+    padding-bottom: 0.3em;
+    font-size: 1.5em;
+    border-bottom: 1px solid #eee;
+}
+body h3 {
+    font-size: 1.25em;
+}
+body h4 {
+    font-size: 1em;
+}
+body h5 {
+    font-size: 0.875em;
+}
+body h6 {
+    font-size: 0.85em;
+    color: #777;
+}
+body ol,
+body ul {
+    padding-left: 2em;
+}
+body ol ol,
+body ol ul,
+body ul ol,
+body ul ul {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+body li > p {
+    margin-top: 16px;
+}
+body li + li {
+    margin-top: 0.25em;
+}
+body dl {
+    padding: 0;
+}
+body dl dt {
+    padding: 0;
+    margin-top: 16px;
+    font-size: 1em;
+    font-style: italic;
+    font-weight: 700;
+}
+body dl dd {
+    padding: 0 16px;
+    margin-bottom: 16px;
+}
+body table {
+    display: block;
+    width: 100%;
+    overflow: auto;
+}
+body table th {
+    font-weight: 700;
+}
+body table td,
+body table th {
+    padding: 6px 13px;
+    border: 1px solid #ddd;
+}
+body table tr {
+    background-color: #fff;
+    border-top: 1px solid #ccc;
+}
+body table tr:nth-child(2n) {
+    background-color: #f8f8f8;
+}
+body img {
+    max-width: 100%;
+    box-sizing: content-box;
+    background-color: #fff;
+}
+body code {
+    padding: 0;
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
+    margin: 0;
+    font-size: 85%;
+    background-color: rgba(0, 0, 0, 0.04);
+    border-radius: 3px;
+}
+body pre {
+    word-wrap: normal;
+}
+body pre > code {
+    padding: 0;
+    margin: 0;
+    font-size: 100%;
+    word-break: normal;
+    white-space: pre;
+    background: 0 0;
+    border: 0;
+}
+body .highlight {
+    margin-bottom: 16px;
+}
+body .highlight pre {
+    margin-bottom: 0;
+    word-break: normal;
+}
+body .highlight pre,
+body pre {
+    padding: 16px;
+    overflow: auto;
+    font-size: 85%;
+    line-height: 1.45;
+    background-color: #f7f7f7;
+    border-radius: 3px;
+}
+body pre code {
+    display: inline;
+    max-width: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    line-height: inherit;
+    word-wrap: normal;
+    background-color: transparent;
+    border: 0;
+}
+body pre code::after,
+body pre code::before {
+    content: normal;
+}
+body .pl-0 {
+    padding-left: 0 !important;
+}
+body .pl-1 {
+    padding-left: 3px !important;
+}
+body .pl-2 {
+    padding-left: 6px !important;
+}
+body .pl-3 {
+    padding-left: 12px !important;
+}
+body .pl-4 {
+    padding-left: 24px !important;
+}
+body .pl-5 {
+    padding-left: 36px !important;
+}
+body .pl-6 {
+    padding-left: 48px !important;
+}
+body .full-commit .btn-outline:not(:disabled):hover {
+    color: #4078c0;
+    border: 1px solid #4078c0;
+}
+body kbd {
+    display: inline-block;
+    padding: 3px 5px;
+    font: 11px Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    line-height: 10px;
+    color: #555;
+    vertical-align: middle;
+    background-color: #fcfcfc;
+    border: solid 1px #ccc;
+    border-bottom-color: #bbb;
+    border-radius: 3px;
+    box-shadow: inset 0 -1px 0 #bbb;
+}
+body :checked + .radio-label {
+    position: relative;
+    z-index: 1;
+    border-color: #4078c0;
+}
+body .task-list-item {
+    list-style-type: none;
+}
+body .task-list-item + .task-list-item {
+    margin-top: 3px;
+}
+body .task-list-item input {
+    margin: 0 0.2em 0.25em -1.6em;
+    vertical-align: middle;
+}
+body hr {
+    border-bottom-color: #eee;
+}
+.codehilite .c {
+    color: #999;
+}
+.codehilite .err {
+    color: red;
+}
+.codehilite .g {
+    color: #363636;
+}
+.codehilite .k {
+    color: #4998ff;
+}
+.codehilite .l {
+    color: #93a1a1;
+}
+.codehilite .n {
+    color: #363636;
+}
+.codehilite .o {
+    color: #aa25ff;
+}
+.codehilite .x {
+    color: #cb4b16;
+}
+.codehilite .p {
+    color: #93a1a1;
+}
+.codehilite .cm {
+    color: #586e75;
+}
+.codehilite .cp {
+    color: #aa25ff;
+}
+.codehilite .c1 {
+    color: #586e75;
+}
+.codehilite .cs {
+    color: #aa25ff;
+}
+.codehilite .gd {
+    color: #2aa198;
+}
+.codehilite .ge {
+    color: #93a1a1;
+    font-style: italic;
+}
+.codehilite .gr {
+    color: #dc322f;
+}
+.codehilite .gh {
+    color: #cb4b16;
+}
+.codehilite .gi {
+    color: #aa25ff;
+}
+.codehilite .go {
+    color: #93a1a1;
+}
+.codehilite .gp {
+    color: #93a1a1;
+}
+.codehilite .gs {
+    color: #93a1a1;
+    font-weight: 700;
+}
+.codehilite .gu {
+    color: #cb4b16;
+}
+.codehilite .gt {
+    color: #93a1a1;
+}
+.codehilite .kc {
+    color: #cb4b16;
+}
+.codehilite .kd {
+    color: #268bd2;
+}
+.codehilite .kn {
+    color: #4998ff;
+}
+.codehilite .kp {
+    color: #aa25ff;
+}
+.codehilite .kr {
+    color: #268bd2;
+}
+.codehilite .kt {
+    color: #dc322f;
+}
+.codehilite .ld {
+    color: #c42f07;
+}
+.codehilite .m {
+    color: #c42f07;
+}
+.codehilite .s {
+    color: #ff05da;
+}
+.codehilite .na {
+    color: #93a1a1;
+}
+.codehilite .nb {
+    color: #0bd51e;
+}
+.codehilite .nc {
+    color: #ff3ca8;
+}
+.codehilite .no {
+    color: #ff3ca8;
+}
+.codehilite .nd {
+    color: #ff3ca8;
+}
+.codehilite .ni {
+    color: #ff3ca8;
+}
+.codehilite .ne {
+    color: #ff3ca8;
+}
+.codehilite .nf {
+    color: #ff3ca8;
+}
+.codehilite .nl {
+    color: #ff3ca8;
+}
+.codehilite .nn {
+    color: #354980;
+}
+.codehilite .nx {
+    color: #555;
+}
+.codehilite .py {
+    color: #93a1a1;
+}
+.codehilite .nt {
+    color: #268bd2;
+}
+.codehilite .nv {
+    color: #268bd2;
+}
+.codehilite .ow {
+    color: #aa25ff;
+}
+.codehilite .w {
+    color: #93a1a1;
+}
+.codehilite .mf {
+    color: #c42f07;
+}
+.codehilite .mh {
+    color: #c42f07;
+}
+.codehilite .mi {
+    color: #c42f07;
+}
+.codehilite .mo {
+    color: #c42f07;
+}
+.codehilite .sb {
+    color: #ff05da;
+}
+.codehilite .sc {
+    color: #ff05da;
+}
+.codehilite .sd {
+    color: #ff05da;
+}
+.codehilite .s2 {
+    color: #ff05da;
+}
+.codehilite .se {
+    color: #ff05da;
+}
+.codehilite .sh {
+    color: #ff05da;
+}
+.codehilite .si {
+    color: #ff05da;
+}
+.codehilite .sx {
+    color: #ff05da;
+}
+.codehilite .sr {
+    color: #ff05da;
+}
+.codehilite .s1 {
+    color: #ff05da;
+}
+.codehilite .ss {
+    color: #ff05da;
+}
+.codehilite .bp {
+    color: #f29108;
+}
+.codehilite .vc {
+    color: #268bd2;
+}
+.codehilite .vg {
+    color: #268bd2;
+}
+.codehilite .vi {
+    color: #268bd2;
+}
+.codehilite .il {
+    color: #c42f07;
+}
+
 </style>
 </head>
 <body>
 
 
-<p><img src="toolbar_500_500_icon_location_labels.png" alt="DSE2 location labels icon"></p>
+<p><img class="bigicon" src="toolbar_500_500_icon_location_labels.png" alt="DSE2 location labels icon"></p>
 
 
 <h1 id="toc_0">DesignSpaceEditor2</h1>
 
 
-<p>An extension for RoboFont 4.4+ to create and edit designspaces format 4 and 5. Labels, variable fonts, mappings can be edited in a compact syntax, examples on this page. For the <strong>designspace</strong> 5 format go
-    <a
+<p>An extension for RoboFont 4.5+ to create and edit     <a
         href="https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html"
         >
-        to the specification at FontTools
-    </a>.
+        designspaces format 5.</a> with support for scripting.
 </p>
 
-<p>This extension can:</p>
-
-<ul>
-<li>DesignSpaceEditor2 is for very recent RoboFont 4.4+ only.</li>
-<li>Open, edit and save existing designspace format 4 and format 5 files.</li>
-<li>You can start a new designspace.</li>
-<li>You can edit all sorts of location labels and localisations.</li>
-<li>You can quickly open the UFOs listed as sources.</li>
-<li>You can generate UFOs for defined instances.</li>
-<li>You can preview and add instances.</li>
-<li>Validate designspaces and point out compatibility and structural issues.</li>
-<li>It collects and sends designspace-related notifications about changes to the designspace, and also changes in the source font data. Other extensions can then ask for interpolated glyphs, kerning and font info at specific locations, using MutatorMath as well as Varlib interpolation models. </li>
-<li>Experiment with extrapolations and anisotropic interpolations and see previews for such exotic things as well as generate UFOs for them. Even if these can not be expressed as Variable fonts.</li>
-</ul>
-
-<h2 id="toc">Contents</h2>
+<h3 id="toc">Contents</h3>
 <ul>
     <li><a href="#toc_1">Designspace Editor Usage</a></li>
     <li><a href="#toc_2">Axes Tab</a></li>
@@ -48,27 +798,68 @@
     <li><a href="#toc_8">Variable Fonts Tab</a></li>
     <li><a href="#toc_9">Problems Tab</a></li>
     <li><a href="#toc_10">Notes Tab</a></li>
+    <li><a href="#toc_10b">Location Preview Window</a></li>
     <li><a href="#toc_11">Notifications</a></li>
     <li><a href="#toc_12">Receiving and responding to notifications</a></li>
+    <li><a href="#toc_12b">Overview of DSE2 Notifications</a></li>
     <li><a href="#toc_13">Scripting with the current designspace</a></li>
+    <li><a href="#toc_14">Useful methods of the UFOOperator</a></li>
 </ul>
+
+
+
+
+
+
+
+<h3>DesignSpaceEditor2 can:</h3>
+
+<ul>
+<li>Open, edit and save existing designspace format 4 and format 5 files.</li>
+<li>You can create a new designspace and fill it with axes, sources and instances.</li>
+<li>You can edit all sorts of axis labels, location labels and localisations.</li>
+<li>You can quickly open the UFOs listed as sources.</li>
+<li>You can generate UFOs for defined instances.</li>
+<li>You can preview and <a href="#toc_4">add instances</a>.</li>
+<li>You can validate designspaces and find compatibility and structural issues.</li>
+<li>DSE2 collects and sends designspace-related notifications about changes to the designspace, and also changes in the source font data. Other tools in RF can request interpolated glyphs, kerning and font info at specific locations, using MutatorMath as well as Varlib interpolation models. </li>
+<li>You can experiment with extrapolations and anisotropic interpolations and see previews for such exotic things as well as generate UFOs for them. Even if these can not be expressed as Variable fonts.</li>
+<li>You can write scripts that use the current designspace.</li>
+</ul>
+
 
 <h2 id="toc_1">Designspace Editor Usage <a href="#toc">↑</a></h2>
 
 <ol>
-<li>From the RF extensions menu, open an existing designspace file or create a new one.</li>
-<li>You should start by defining at least one axis in the Axes tab. Give it a useful names make sure it has the appropriate tag, and make sure the minimum, default and maximum values make sense.</li>
-<li>Add source UFOs with the file dialog, or from the UFOs that are open in RF. Edit their axis values. Make sure there is at least 1 source on the default value of all axes.</li>
-<li>Then save the document in <b>the same folder as your sources, or one level up.</b> The document will store a relative path to the sources and instances, so it makes sense to keep them close together.</li>
-<li>Define instances, rules, axis labels, location labels and whatever else you need to do.</li>
+<li>From the RF extensions menu, <b>open an existing designspace</b> or <b>create a new one.</b></li>
+<li>Add at least one axis in the <a href="#toc_2">Axes Tab</a>. Give it a useful name and make sure it has the appropriate tag, and make sure the minimum, default and maximum values make sense.</li>
+<li>Add source UFOs
+    <ul>
+        <li>
+            with the file dialog
+        </li>
+        <li>
+            or use the <b>+</b> button to add the UFOs that are open in RF
+        </li>
+        <li>
+            or drag and drop into the DSE <a href="#toc_3">Sources Tab</a>
+        </li>
+    </ul>
+    Then add the axis values for each new source. Make sure there is at least 1 source on the default value of all axes.
+</li>
+<li>Save the document in <b>the same folder as your sources, or one level up.</b> The document will store a relative path to the sources and instances, so it makes sense to keep them close together.</li>
+<li><a href="#toc_4">Add instances</a>, rules, axis labels, location labels and whatever else you need to do.</li>
 <li>Preview selected instances in text. </li>
 <li>Save early and often.</li>
 </ol>
 
+Note that DSE2 does not maintain formatting or comments in designspace it edits. We know some of you are very particular about the xml. 
 
-<p><img src="toolbar_500_500_icon_axes.png" alt="DSE2 axes icon"></p>
+<p><img class="bigicon" src="toolbar_500_500_icon_axes.png" alt="DSE2 axes icon"></p>
 
 <h2 id="toc_2">Axes Tab <a href="#toc">↑</a></h3>
+
+<img alt="screenshot of DSE2 axes tab" src="screenshot_mutatorsans_axestab.png">
 
 <h3>Axes Tab Buttons</h3>
 
@@ -80,7 +871,7 @@
 <li><strong>—</strong> delete the selected axis. <strong>Note: no undo!</strong></li>
 </ul>
 
-<h3>Columns</h3>
+<h3>Axes Tab Columns</h3>
 
 <table>
     <tr>
@@ -222,9 +1013,11 @@
 
 
 
-<p><img src="toolbar_500_500_icon_sources.png" alt="DSE2 sources icon"></p>
+<p><img class="bigicon" src="toolbar_500_500_icon_sources.png" alt="DSE2 sources icon"></p>
 
 <h2 id="toc_3">Sources Tab <a href="#toc">↑</a></h3>
+
+<img alt="screenshot of DSE2 sources tab" src="screenshot_mutatorsans_sourcestab.jpg">
 
 <p>This tab shows the source UFOs for this designspace.</p>
 
@@ -295,9 +1088,11 @@
 a b c d</code></pre></div>
 
 
-<p><img src="toolbar_500_500_icon_instances.png" alt="DSE2 instances icon"></p>
+<p><img class="bigicon" src="toolbar_500_500_icon_instances.png" alt="DSE2 instances icon"></p>
 
 <h2 id="toc_4">Instances Tab <a href="#toc">↑</a></h3>
+
+<img alt="screenshot of DSE2 tab for instances" src="screenshot_mutatorsans_instancestab.jpg">
 
 <p>This tab shows the instances defined for this designspace. These instances can be different things in different contexts. Each instance can be compiled to separate UFO files. But it can also be interpreted as an named location in a variable font.</p>
 
@@ -334,9 +1129,6 @@ a b c d</code></pre></div>
     </tr>
 </table>
 
-<p>
-    <img src="instancestab_preview_popup.jpg" alt="DSE2 Instance Preview Window with anisotropic instance.">
-</p>
 
 
 <h3>About userspace and designspace locations</h3>
@@ -378,18 +1170,14 @@ The axis columns accepts two values separated by a space to indicate an anisotro
     <li><strong>Add Source as Instances:</strong> makes new instances at the designspace locations of the sources.</li>
     <li><strong>Generate with MutatorMath:</strong> use the MutatorMath model to generate instances. For instance if you want to calculate instances at anisotropic locations, or if you want to extrapolate over axis extremes. MutatorMath is a bit more forgiving when it comes to the number of off-curves and missing sources.</li>
     <li><strong>Generate with VarLib:</strong> use the fontTools VarLib model to generate instances, if you want to stay close to how the instances will appear as part of a variable font. This model wants all data to be present and correct.</li>
-    <li><strong>Instance Preview:</strong> opens a new window with a preview of the selected instances. Check the "Single Line" to get everything on the same line.
-    </li>
 </ul>
 
-<p>
-    <img src="previewWindow.jpg" alt="DSE2 Instance Preview Window">
-</p>
 
-
-<p><img src="toolbar_500_500_icon_rules.png" alt="DSE2 rules icon"></p>
+<p><img class="bigicon" src="toolbar_500_500_icon_rules.png" alt="DSE2 rules icon"></p>
 
 <h2 id="toc_5">Rules Tab <a href="#toc">↑</a></h3>
+
+<img alt="screenshot of DSE2 rules tab" src="screenshot_mutatorsans_rulestab.jpg">
 
 <p>The rules tab is an editor for defining rules and condition sets. Tools may interpret these into <code>rvrn</code> features.</p>
 
@@ -416,7 +1204,7 @@ switching a&#39;s
 </code></pre></div>
 
 
-<p><img src="toolbar_500_500_icon_location_labels.png" alt="DSE2 location labels icon"></p>
+<p><img class="bigicon" src="toolbar_500_500_icon_location_labels.png" alt="DSE2 location labels icon"></p>
 
 <h2 id="toc_6">Location Labels Tab <a href="#toc">↑</a></h3>
 
@@ -447,9 +1235,12 @@ Neue Style Italic
 # The comments are not saved in the designspace.
 </code></pre></div>
 
-<p><img src="toolbar_500_500_icon_variable_fonts.png" alt="DSE2 variable fonts icon"></p>
+<p><img class="bigicon" src="toolbar_500_500_icon_variable_fonts.png" alt="DSE2 variable fonts icon"></p>
 
 <h2 id="toc_8">Variable Fonts Tab <a href="#toc">↑</a></h3>
+
+<img alt="screenshot of DSE2 variable fonts tab" src="screenshot_mutatorsans_variablefontstab.jpg">
+
 <p>This describes different subset variable fonts that can be generated from the current designspace file. For instance this could mean a smaller number of axes, or a specific range of an axis. You can also specify different filenames for these variable fonts.</p>
 
 <a href="https://fonttools.readthedocs.io/en/latest/designspaceLib/xml.html#variable-fonts-element">See also fonttools documentation</a>
@@ -492,9 +1283,11 @@ Neue Style Italic
 </code></pre></div>
 
 
-<p><img src="toolbar_500_500_icon_problems.png" alt="DSE2 problems icon"></p>
+<p><img class="bigicon" src="toolbar_500_500_icon_problems.png" alt="DSE2 problems icon"></p>
 
 <h2 id="toc_9">Problems Tab <a href="#toc">↑</a></h3>
+
+<img alt="screenshot of DSE2 problems tab" src="screenshot_mutatorsans_problemstab.jpg">
 
 <p>This tab lists some of the problems this designspace might have. From structural issues that block any further processing, to missing ufos, missing or duplicate values and glyphs with compatibility issues. 
 This uses <a
@@ -505,14 +1298,48 @@ This uses <a
 </p>
 
 
-<p><img src="toolbar_500_500_icon_notes.png" alt="DSE2 notes icon"></p>
+<p><img class="bigicon" src="toolbar_500_500_icon_notes.png" alt="DSE2 notes icon"></p>
 
 <h2 id="toc_10">Notes Tab <a href="#toc">↑</a></h3>
 
 <p>This tab is for your notes and are stored in the Designspace. This can be any kind of note or remark. Notes are not processed in any way.</p>
 
 
-<p><img src="toolbar_500_500_icon_notifications.png" alt="DSE2 notes icon"></p>
+<p><img class="bigicon" src="toolbar_500_500_icon_notifications.png" alt="DSE2 notes icon"></p>
+
+
+
+<h2 id="toc_10b">Location Preview Window<a href="#toc">↑</a></h3>
+
+<p>
+    The most requested feature for designspace editing tools: a preview for instance and source locations. 
+</p>
+
+<ul>
+    <li>Click the button in the toolbar <img alt="icon for the location preview window" src="preview_icon.jpg"> </li>
+    <li>Type text and /glyphnames in the text box at the top.</li>
+    <li>Some options available in the two menus at the top right:
+        <ul>
+            <li>
+                Single Line / Multiline: see all selected locations on separate lines, or on a single line.
+            </li>
+            <li>Invert: white on black, or black on white</li>
+            <li>Show Sources / Show Instances: if checked, show the selected items from each tab.</li>
+            <li>Sort Line by area: rank the lines based on the total surface areas of all glyphs on the line. This is calculated without removing overlap, so there may be some edge cases.</li>
+            <li>Sort Line by length: rank the lines by their total length.</li>
+            <li>Sort Line by density: rank the lines by the black / white ratio</li>
+            
+
+    </li>
+</ul>
+
+<p>
+    <img alt="screenshot of DSE2 location preview window" src="screenshot_mutatorsans_previewwindow1.jpg">
+</p>
+
+
+
+
 
 <h2 id="toc_11">Notifications<a href="#toc">↑</a></h3>
 
@@ -521,6 +1348,43 @@ This uses <a
 <p>The source for these notifications at <a href="https://github.com/LettError/designSpaceRoboFontExtension/blob/5e0d700daedcac683bf00a5685e9cddef5b3aab1/DesignspaceEditor2.roboFontExt/lib/main.py#L55"> github.com/LettError/designSpaceRoboFontExtension</a>.
 </p>
 
+<h3 id="toc_12">Receiving and responding to notifications<a href="#toc">↑</a></h3>
+
+This is a demo of Subscriber receiving designspace notifications.
+
+<code><pre>
+from mojo.subscriber import Subscriber, registerRoboFontSubscriber
+
+class DesignspaceEditorSubscriber(Subscriber):
+    
+    debug = True
+    
+    def designspaceEditorDidOpenDesignspace(self, info):
+        print("opened a designspace:", info["designspace"])
+    
+    def designspaceEditorDidCloseDesignspace(self, info):
+        print("closed a designspace:", info["designspace"])
+    
+    def designspaceEditorAxesDidAddAxis(self, info):
+        print("created a new axis:", info["axis"], "for", info["designspace"])
+    
+    def designspaceEditorRulesDidChange(self, info):
+        print("rules did chagne for:", info["designspace"])
+
+registerRoboFontSubscriber(DesignspaceEditorSubscriber)
+</pre>
+</code>
+
+<ul>
+    <li>
+        <a href="https://robofont.com/documentation/topics/subscriber/?highlight=subscriber">
+            Additional Subscriber documentation at RoboFont.com
+        </a>
+    </li>
+</ul>
+
+
+<h3 id="toc_12b">Overview of DSE2 Notifications<a href="#toc">↑</a></h3>
 
 
 <table>
@@ -924,41 +1788,6 @@ This uses <a
 
 </table>
 
-<h3 id="toc_12">Receiving and responding to notifications<a href="#toc">↑</a></h3>
-
-This is a demo of Subscriber receiving designspace notifications.
-
-<code><pre>
-from mojo.subscriber import Subscriber, registerRoboFontSubscriber
-
-class DesignspaceEditorSubscriber(Subscriber):
-    
-    debug = True
-    
-    def designspaceEditorDidOpenDesignspace(self, info):
-        print("opened a designspace:", info["designspace"])
-    
-    def designspaceEditorDidCloseDesignspace(self, info):
-        print("closed a designspace:", info["designspace"])
-    
-    def designspaceEditorAxesDidAddAxis(self, info):
-        print("created a new axis:", info["axis"], "for", info["designspace"])
-    
-    def designspaceEditorRulesDidChange(self, info):
-        print("rules did chagne for:", info["designspace"])
-
-registerRoboFontSubscriber(DesignspaceEditorSubscriber)
-</pre>
-</code>
-
-<ul>
-    <li>
-        <a href="https://robofont.com/documentation/topics/subscriber/?highlight=subscriber">
-            Additional Subscriber documentation at RoboFont.com
-        </a>
-    </li>
-</ul>
-
 
 <h2 id="toc_13">Scripting with the current designspace<a href="#toc">↑</a></h2>
 
@@ -967,7 +1796,7 @@ With a document open in DesignspaceEditor you can call <code>CurrentDesignspace(
 <h3>Calculating a glyph</h3>
 The example below calculates a single glyph at the default location. It returns a mathGlyph.
 
-<code>python
+<code>
     <pre>d = CurrentDesignspace()
 loc = d.newDefaultLocation()
 g = d.makeOneGlyph("A", location=loc)
@@ -976,7 +1805,7 @@ g = d.makeOneGlyph("A", location=loc)
 
 You can use <code>AllDesignspaces()</code> to get a list of all open designspace documents. Optionally you can pass a font object with <code>usingFont</code> to get only the designspaces that use that font.
 
-<code>python
+<code>
     <pre>import os
 d = AllDesignspaces()
 for i, doc in enumerate(AllDesignspaces()):
@@ -996,9 +1825,9 @@ Only using Test-Light.ufo: Experimental_serif.designspace
 
 
 <h3>Calculating kerning and info</h3>
-The example below calculates a single kerning pair and an info object. <code>makeOneKerning</code> accepts a list of pairs to calculate. If no pairs are given, all pairs will be calculated.
+This example calculates a single kerning pair and an info object. <code>makeOneKerning</code> accepts a list of pairs to calculate. This can be faster, for instance if you want to prepare a preview of just a handful of glyphs, but with proper kerning. If no pairs are given, all pairs will be calculated.
 
-<code>python
+<code>
     <pre>d = CurrentDesignspace()
 loc = d.newDefaultLocation()
 
@@ -1010,6 +1839,238 @@ info = d.makeOneInfo(loc)
 print(info)
     </pre>
 </code>
+
+
+<h3>Calculating an instance and drawing in Drawbot</h3>
+
+With the Drawbot extension in RoboFont, you can call <code>CurrentDesignspace()</code> and draw interpolated glyphs. 
+
+<code>
+    <pre>size(1000, 500)
+d = CurrentDesignspace()
+fill(None)
+stroke(0)
+strokeWidth(.5)
+with savedState():
+    translate(100, 100)
+    scale(0.5)
+    for i in range(20):
+        loc = d.randomLocation()
+        g = d.makeOneGlyph("A", location=loc)
+        bp = BezierPath()
+        g.draw(bp)
+        drawPath(bp)
+</pre>
+</code>
+
+<h2 id="toc_14">Useful methods of the UFOOperator<a href="#toc">↑</a></h2>
+
+<p>
+<code>CurrentDesignspace</code> returns a <code>UFOOperator</code> object representing the designspace. <code>UFOOperator</code> takes care of the loading the fonts, it builds interpolators for all the things, (in varlib and mutatormath flavors), it understands anisotropic interpolations, and it can handle extrapolation. <code>UFOOperator</code> also keeps a cache of results, so there is some efficiency. The object is pretty easy to script with as well. To see how UFOOperator works, please check the source on <a href="https://github.com/LettError/ufoProcessor/blob/master/Lib/ufoProcessor/ufoOperator.py">GitHub</a>.
+</p>
+
+<code>UFOOperator</code> has the many of the attributes and methods as the fonttools designspace object, and then some additional ones. Building a new designspace with UFOOperator is very similar to what <a href="https://fonttools.readthedocs.io/en/latest/designspaceLib/scripting.html">is described here</a>.
+
+<code>
+    <pre>d = CurrentDesignspace()
+print(d.sources)
+print(d.instances)
+print(d.axes)
+</pre>
+</code>
+
+<p>
+    In general: <code>d.useVarlib=True</code> will appply the fonttools.varlib model interpolations. <code>d.useVarlib=False</code> will use the mutatorMath model for interpolations. The Varlib model is very close to how Variable Fonts work. MutatorMath is a bit more flexible: it can do anisotropic interpolation. Both models can extrapolate now, though their results might not be the same if there are unaligned, off-axis masters in the system.</p>
+
+<p>
+    UFOOperator will assume locations are in <b>designspace locations</b>. You can use the `bend` argument to indicate that a location has to be mapped. The competing coordinate systems can be a bit confusing, especially if you use userLocations in the instances. Often the axis mappings are added much later than the instances, so there will be a moment when you have to carefully look at where the instances are. The DSE has a menu for converting <b>User locations</b> to <b>Design locations</b> and back. So, before you assume the code is getting the wrong results, check your axis mappings and locations, and make sure you are passing the right type to UFOOperator. If you're sure the location is in designspace coordinates, leave `bend=False`. 
+</p>
+
+<p>
+    This is a selection of the methods available in UFOOperator that are probably must useful to the scripter. Check <a href="https://github.com/LettError/ufoProcessor/blob/master/Lib/ufoProcessor/ufoOperator.py">GitHub</a> for more.
+</p>
+
+
+
+
+<h4>Methods for making things</h4>
+<p>
+    <ul>
+        <li>
+            <code><b>makeOneGlyph</b>(glyphName, location, decomposeComponents=True, useVarlib=False, roundGeometry=False, clip=False)</code> make a glyph for this location.
+            <ul>
+                <li><code>location</code> is in design coordinates</li>
+                <li>
+                    <code>decomposeComponents</code> returns a glyph with outlines, useful if you want to draw a single glyph and you don't have a font to draw the components.
+                </li>
+                <li>
+                    <code>useVarlib</code> can be used to switch between varlib and mutatormath, just for this one glyph.
+                </li>
+                <li>
+                    <code>roundGeometry</code> will round all coordinates to full integers.
+                </li>
+                <li>
+                    <code>clip</code> prevents extrapolation in case the location axis values exceeds the axis extremes.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <code><b>makeOneInfo</b>(location, roundGeometry=False, clip=False)</code>: make an info object for this location.
+            <ul>
+                <li><code>location</code> is in design coordinates</li>
+                <li>
+                    <code>clip</code> prevents extrapolation in case the location axis values exceeds the axis extremes.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <code><b>makeOneKerning</b>(location, pairs=None)</code> make a kerning object for this location.
+            <ul>
+                <li><code>location</code> is in design coordinates</li>
+                <li><code>pairs</code> optional list of pairs to include. This can be faster, for instance if you want to prepare a preview of just a handful of glyphs, but with proper kerning. If no pairs are given, all kerning will be calculated.</li>
+            </ul>
+        </li>
+        <li>
+            <code><b>makeFontProportions</b>(location, bend=False, roundGeometry=True)</code> Calculate the basic font proportions for this location, to map out expectations for drawing.
+        </li>
+        <li>
+            <code><b>generateUFOs</b>(useVarlib=None)</code> generate <i>all</i> available instance descriptors as UFOs.
+            <ul>
+                <li>
+                    This will calculate all glyphs, kerning, and font info for each instance.
+                </li>
+                <li>
+                    UFOs are saved at the path is stored in the instanceDescriptors.
+                </li>
+                <li>
+                    If no instances are defined, nothing will generate.
+                </li>
+                <li>
+                    Any rules defined in this designspace are <i>not</i> executed for these UFOs. This was different for UFOProcessor that swapped glyphs according to the rules. Motivation: rule execution has become very sophisticated and can not always be emulated by swapping. So, it needs to happen, but not here.
+                </li>
+                <li>
+                    While pretty fast, this will take a bit of time.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <code><b>makeInstance</b>(instanceDescriptor, glyphNames=None, decomposeComponents=False, pairs=None, bend=False)</code> this saves a single UFO instance to disk. 
+            <ul>
+                <li>
+                    <code>glyphNames</code> is an optional list of glyph names to generate. Note this does not update any features. 
+                </li>
+                <li>
+                    <code>decomposeComponents</code> can be True to decompose all glyphs. This is useful when generating small sets of outlines for a preview.
+                </li>
+                <li>
+                    <code>pairs</code> is an optional list of kern pairs to make. If no pairs given, all kerning will be calculated.
+                </li>
+            </ul>
+        </li>
+    </ul>
+</p>
+
+<h4>Preparing a UFOOperator</h4>
+
+<p>
+    <ul>
+        <li>
+            <code><b>loadFonts</b>()</code>: this loads the fonts, needs to called before anything can be calculated. Note: the designspace you get from CurrentDesignspace already has the fonts loaded.
+        </li>
+        <li>
+            <code><b>updateFonts</b>(fontObjects)</code>: fontObjects is a list of RoboFont font objects that are to be used in the designspace. If you want to explicitly want to put new fonts in the machine.
+        </li>
+        <li>
+            <code><b>getFonts</b>()</code> returns a list of (font object, location) tuples. Note: the same font object can be used in multiple locations.
+        </li>
+    </ul>
+</p>
+
+<h4>Methods for locations</h4>
+
+<p>
+    <ul>
+        <li>
+            <code><b>findDefault</b>(discreteLocation=None)</code> returns the default location for the system or the discrete location.
+        </li>
+        <li>
+            <code><b>findAllDefaults</b>()</code> collect all default sourcedescriptors for all discrete locations.
+        </li>
+        <li>
+            <code><b>findDefaultFont</b>(discreteLocation=None)</code>: returns the default fontObject for the system or the discrete location.
+        </li>
+        <li>
+            <code><b>splitLocation</b>(location)</code>: returns the design location split into a <b>continouous</b> and a <b>discrete</b> part
+        </li>
+        <li>
+            <code><b>getFullDesignLocation</b>(location)</code>: returns the given location converted to designspace coordinates.
+        </li>
+        <li>
+            <code><b>getDiscreteLocations</b>()</code>: return a list of all possible discrete locations for this system.
+        </li>
+        <li>
+            <code><b>newDefaultLocation</b>(bend=False, discreteLocation=None)</code>: returns a new location that is on the default of all axes.
+            <ul>
+                <li>
+                    Use `bend=True` to get a default in user space coordinates.
+                </li>
+                <li>
+                    Use `bend=False` to get the default in designspace coordinates.</li>
+                <li>
+                    Pass a discreteLocation dict to obtain the default for that discrete location.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <code><b>isAnisotropic</b>(location)</code> returns True if this location is anisotropic.
+        </li>
+        <li>
+            <code><b>splitAnisotropic</b>(location)</code> returns the x and y components of this location as two separate location dicts.
+        </li>
+        <li>
+            <code><b>getLocationType</b>(location)</code> splits the location in its anisotropic components, as well as continuous and discrete parts. Specifically returns: <code>anisotropic, continuousLocation, discreteLocation, locHorizontal, locVertical</code>.
+        </li>
+        <li>
+            <code><b>randomLocation</b>(extrapolate=0, anisotropic=False, roundValues=True, discreteLocation=None)</code> returns a good, reliable random location, for quick testing and entertainment. This is more complicated than you might think.
+            <ul>
+                <li>
+                    <code>extrapolate=0</code> is a factor that determines the amount of extrapolation. The <code>(max-min)</code> distance. So <code>0 = no extrapolation</code>. And <code>0.1 = 0.1 * (max - min)</code>
+                </li>
+                <li>
+                    <code>anisotropic=True</code> <i>all</i> continuous axes get separate x, y values
+                </li>
+                <li>for discrete axes a random choice from the defined values is return</li>
+                <li>for continuous axes an interpolated value between axis.minimum and axis.maximum
+  * Note: this returns a designspace location, not a userspace location.</li>
+            </ul>
+        </li>
+        <li>
+            <code><b>locationWillClip</b>(location</code> will return True is this designlocation will be clipped in one or more of the axes.
+        </li>
+        <li>
+            <code><b>clipDesignLocation</b>(location)</code> returns a clipped version of this designlocation
+        </li>
+        <li>
+            <code><b>getAxisExtremes</b>(axisRecord)</code> returns the <code>axisMinimum</code>, <code>axisDefault</code> and <code>axisMaximum</code> in design coordinates. Designspace axisDescriptors keep these axis values in userspace coordinates and that is not always practical.
+        </li>
+    </ul>
+</p>
+
+<h4>Miscellaneous</h4>
+
+<p>
+    <ul>
+        <li>
+            <code><b>glyphChanged</b>(glyphName, includeDependencies=False)</code>. This instructs the operator to clear any cached data related to this glyph. If you want to make sure the next time you calculate something with this glyph the results will be fresh. There are more specific cache-related methods.
+        </li>
+        <li>
+            <code><b>collectForegroundLayerNames</b>()</code> returns a list of the names of all the foreground layers used by all sources.
+        </li>
+        <li>
+            <code><b>getCharacterMapping</b>(discreteLocation=None)</code> returns a unicode -> glyphname map for the default of the whole system or discreteLocation. As the defaults at discrete locations can be quite different, UFOOperator makes no assumptions about what is available.
+        </li>
+    </ul>
+</p>
 
 
 </body>
