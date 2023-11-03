@@ -1108,6 +1108,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         self.setDocumentNeedSave(True)
 
     def findAllDefaults(self):
+        # ======================================================
+        # = remove when UFOOPerator in RoboFont gets an update =
+        # ======================================================
         # collect all default sourcedescriptors for all discrete locations
         # this method is also added to ufooperator
         defaults = []
