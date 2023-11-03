@@ -142,7 +142,6 @@ class LocationPreview(Subscriber, WindowController):
     debug = True
 
     def build(self, operator=None, selectedSources=None, selectedInstances=None, previewString=None):
-        addObserver(self, "locationPreviewLineViewDidDrawGlyph", "spaceCenterDraw")
         self.operator = operator
 
         self.dummyFont = RFont(showInterface=False)
@@ -215,6 +214,7 @@ class LocationPreview(Subscriber, WindowController):
                 del self.operator.lib[skateboardPreviewTextLibKey]
             else:
                 previewString = self.operator.lib.get(previewTextLibKey, "Abc")
+        addObserver(self, "locationPreviewLineViewDidDrawGlyph", "spaceCenterDraw")
         self.setPreviewString(previewString)
 
     def started(self):
@@ -351,9 +351,10 @@ class LocationPreview(Subscriber, WindowController):
         sender.setState_(choice)
         setExtensionDefault(singleLineDefaultKey, choice)
         if choice:
-            self.w.preview.setDisplayStates(dict(displayMode="Single Line"))
+            self.displayPrefs['displayMode'] = "Single Line"
         else:
-            self.w.preview.setDisplayStates(dict(displayMode="Multi Line"))
+            self.displayPrefs['displayMode'] = "Multi Line"
+        self.w.preview.setDisplayStates(dict(displayMode=self.displayPrefs['displayMode']))
 
     def showSourcesMenuItemCallback(self, sender):
         self.shouldShowSources = not sender.state()
@@ -394,9 +395,14 @@ class LocationPreview(Subscriber, WindowController):
         if "indicator" in glyph.tempLib:
             indicator = indicatorImageMap[glyph.tempLib["indicator"]]
             ctx.save()
-            ctx.translate(0, self.dummyFont.info.unitsPerEm * .4)
+            if self.displayPrefs['displayMode'] == "Single Line":
+                ctx.translate(glyph.width / 2, self.dummyFont.info.descender)
+                x = -indicator.size().width / 2
+            else:
+                ctx.translate(0, self.dummyFont.info.unitsPerEm * .4)
+                x = 0
             ctx.scale(-notification["scale"])
-            ctx.image(indicator, (0, 0))
+            ctx.image(indicator, (x, 0))
             ctx.restore()
 
     # subscriber notifications
