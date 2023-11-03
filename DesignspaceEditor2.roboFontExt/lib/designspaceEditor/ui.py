@@ -1111,7 +1111,10 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         # collect all default sourcedescriptors for all discrete locations
         # this method is also added to ufooperator
         defaults = []
-        for discreteLocation in self.operator.getDiscreteLocations():
+        discreteSpaces = self.operator.getDiscreteLocations()
+        if not discreteSpaces:
+            discreteSpaces = [None]
+        for discreteLocation in discreteSpaces:
             defaultSourceDescriptor = self.operator.findDefault(discreteLocation=discreteLocation)
             defaults.append(defaultSourceDescriptor)
         return defaults
