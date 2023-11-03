@@ -957,9 +957,10 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         return defaults
 
     def wrapSourceDescriptor(self, sourceDescriptor):
+        allDefaults = self.findAllDefaults()
         wrapped = dict(
             sourceHasPath=checkSymbol if sourceDescriptor.path and os.path.exists(sourceDescriptor.path) else "",
-            sourceIsDefault=defaultSymbol if sourceDescriptor == self.operator.findDefault() else "",
+            sourceIsDefault=defaultSymbol if sourceDescriptor in allDefaults else "",
             sourceUFOFileName=sourceDescriptor.filename if sourceDescriptor.filename is not None and sourceDescriptor.filename != sourceDescriptor.path else "[pending save]",
             sourceFamilyName=sourceDescriptor.familyName or "",
             sourceStyleName=sourceDescriptor.styleName or "",
@@ -971,6 +972,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         for axis, value in sourceDescriptor.location.items():
             wrapped[f"axis_{axis}"] = value
         return wrapped
+
 
     def unwrapSourceDescriptor(self, wrappedSourceDescriptor):
         sourceDescriptor = wrappedSourceDescriptor["object"]
