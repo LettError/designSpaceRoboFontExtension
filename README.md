@@ -8,11 +8,11 @@ Create and edit designspaces with Robofont 4.5+, with support for scripting.
 
 ## Documentation
 
-![DesignspaceEditor2 documentation](https://letterror.github.io/designSpaceRoboFontExtension/) (or click the (?) symbol in the toolbar.)
+[DesignspaceEditor2 documentation](https://letterror.github.io/designSpaceRoboFontExtension/) (or click the (?) symbol in the toolbar.)
 
 ## Goals
 
- * Open, edit and save existing ![designspaces format 5](https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html) files.
+ * Open, edit and save existing [designspaces format 5](https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html) files.
         >
  * You can create a new designspace and fill it with axes, sources and instances.
  * You can edit all sorts of axis labels, location labels and localisations.
