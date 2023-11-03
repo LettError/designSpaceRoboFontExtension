@@ -10,7 +10,9 @@
 <p><img class="bigicon" src="toolbar_500_500_icon_location_labels.png" alt="DSE2 location labels icon"></p>
 
 
-<h1 id="toc_0">DesignSpaceEditor2</h1>
+<h1 id="toc_0">
+    <a href="https://github.com/LettError/designSpaceRoboFontExtension">DesignSpaceEditor 2</a>
+</h1>
 
 
 <p>Create and edit designspaces with Robofont 4.5+, with support for scripting.
@@ -19,29 +21,24 @@
 
 <h3 id="toc">Contents</h3>
 <ul>
-    <li><a href="#toc_1">Designspace Editor 2 Usage</a></li>
-    <li><a href="#toc_1b">Toolbar</a></li>
-    <li><a href="#toc_2">Axes Tab</a></li>
-    <li><a href="#toc_3">Sources Tab</a></li>
-    <li><a href="#toc_4">Instances Tab</a></li>
-    <li><a href="#toc_5">Rules Tab</a></li>
-    <li><a href="#toc_6">Location Labels Tab</a></li>
-    <li><a href="#toc_8">Variable Fonts Tab</a></li>
-    <li><a href="#toc_9">Problems Tab</a></li>
-    <li><a href="#toc_10">Notes Tab</a></li>
-    <li><a href="#toc_10b">Location Preview Window</a></li>
-    <li><a href="#toc_11">Notifications</a></li>
-    <li><a href="#toc_12">Receiving and responding to notifications</a></li>
-    <li><a href="#toc_12b">Overview of DSE2 Notifications</a></li>
-    <li><a href="#toc_13">Scripting with the current designspace</a></li>
-    <li><a href="#toc_14">Useful methods of the UFOOperator</a></li>
-    <li><a href="#toc_20">Acknowledgements</a></li>
+    <li><a href="#designspace-editor">Designspace Editor 2 Usage</a></li>
+    <li><a href="#toolbar">Toolbar</a></li>
+    <li><a href="#axes">Axes Tab</a></li>
+    <li><a href="#sources">Sources Tab</a></li>
+    <li><a href="#instances">Instances Tab</a></li>
+    <li><a href="#rules">Rules Tab</a></li>
+    <li><a href="#location-labels">Location Labels Tab</a></li>
+    <li><a href="#variable-fonts">Variable Fonts Tab</a></li>
+    <li><a href="#problems">Problems Tab</a></li>
+    <li><a href="#notes">Notes Tab</a></li>
+    <li><a href="#location-preview-window">Location Preview Window</a></li>
+    <li><a href="#designspace-notifications">Notifications</a></li>
+    <li><a href="#designspace-notification-subscriber">Receiving and responding to notifications</a></li>
+    <li><a href="#designspace-notification-overview">Overview of DSE2 Notifications</a></li>
+    <li><a href="#designspace-scripting">Scripting with the current designspace</a></li>
+    <li><a href="#ufooperator-methods">Useful methods of the UFOOperator</a></li>
+    <li><a href="#acknowledgements">Acknowledgements</a></li>
 </ul>
-
-
-
-
-
 
 
 <h3>Goals</h3>
@@ -55,7 +52,7 @@
 <li>You can edit all sorts of axis labels, location labels and localisations.</li>
 <li>You can quickly open the UFOs listed as sources.</li>
 <li>You can generate UFOs for defined instances.</li>
-<li>You can preview and <a href="#toc_4">add instances</a>.</li>
+<li>You can preview and <a href="#instances">add instances</a>.</li>
 <li>You can validate designspaces and find compatibility and structural issues.</li>
 <li>DSE2 collects and sends designspace-related notifications about changes to the designspace, and also changes in the source font data. Other tools in RF can request interpolated glyphs, kerning and font info at specific locations, using MutatorMath as well as Varlib interpolation models. </li>
 <li>You can experiment with <b>extrapolation</b> and <b>anisotropic interpolations</b> and see previews for such exotic things. <b>Even if these are not supported as Variable fonts, you can export them as UFO.</b></li>
@@ -63,54 +60,54 @@
 </ul>
 
 
-<h2 id="toc_1b">Toolbar <a href="#toc">↑</a></h2>
+<h2 id="toolbar">Toolbar <a href="#toc">↑</a></h2>
 
 <table>
     <tr>
         <td class="smallicon">
-            <a href="#toc_2"><img src="toolbar_500_500_icon_axes.png"></a>
+            <a href="#axes"><img src="toolbar_500_500_icon_axes.png"></a>
         </td>
         <td class="smallicon">
-            <a href="#toc_3"><img src="toolbar_500_500_icon_sources.png"></a>
+            <a href="#sources"><img src="toolbar_500_500_icon_sources.png"></a>
         </td>
         <td class="smallicon">
-            <a href="#toc_4"><img src="toolbar_500_500_icon_instances.png"></a>
+            <a href="#instances"><img src="toolbar_500_500_icon_instances.png"></a>
         </td>
         <td class="smallicon">
-            <a href="#toc_5"><img src="toolbar_500_500_icon_rules.png"></a>
+            <a href="#rules"><img src="toolbar_500_500_icon_rules.png"></a>
         </td>
         <td class="smallicon">
-            <a href="#toc_6"><img src="toolbar_500_500_icon_location_labels.png"></a>
+            <a href="#location-labels"><img src="toolbar_500_500_icon_location_labels.png"></a>
         </td>
         <td class="smallicon">
-            <a href="#toc_8"><img src="toolbar_500_500_icon_variable_fonts.png"></a>
+            <a href="#variable-fonts"><img src="toolbar_500_500_icon_variable_fonts.png"></a>
         </td>
         <td class="smallicon">
-            <a href="#toc_9"><img src="toolbar_500_500_icon_problems.png"></a>
+            <a href="#problems"><img src="toolbar_500_500_icon_problems.png"></a>
         </td>
     </tr>
 
     <tr>
         <td class="smallicon">
-            <a href="#toc_2">Axes</a>
+            <a href="#axes">Axes</a>
         </td>
         <td class="smallicon">
-            <a href="#toc_3">Sources</a>
+            <a href="#sources">Sources</a>
         </td>
         <td class="smallicon">
-            <a href="#toc_4">Instances</a>
+            <a href="#instances">Instances</a>
         </td>
         <td class="smallicon">
-            <a href="#toc_5">Rules</a>
+            <a href="#rules">Rules</a>
         </td>
         <td class="smallicon">
-            <a href="#toc_6">Location Labels</a>
+            <a href="#location-labels">Location Labels</a>
         </td>
         <td class="smallicon">
-            <a href="#toc_8">Variable Fonts</a>
+            <a href="#variable-fonts">Variable Fonts</a>
         </td>
         <td class="smallicon">
-            <a href="#toc_9">Problems</a>
+            <a href="#problems">Problems</a>
         </td>
     </tr>
 
@@ -128,7 +125,7 @@
 
     <tr>
         <td class="smallicon">
-            <a href="#toc_10b">Location Preview Window</a>
+            <a href="#location-preview-window">Location Preview Window</a>
         </td>
         <td class="smallicon">
             Save Document
@@ -144,11 +141,11 @@
 
 
 
-<h2 id="toc_1">Designspace Editor Usage <a href="#toc">↑</a></h2>
+<h2 id="designspace-editor">Designspace Editor Usage <a href="#toc">↑</a></h2>
 
 <ol>
 <li>From the RF extensions menu, <b>open an existing designspace</b> or <b>create a new one.</b></li>
-<li>Add at least one axis in the <a href="#toc_2">Axes Tab</a>. Give it a useful name and make sure it has the appropriate tag, and make sure the minimum, default and maximum values make sense.</li>
+<li>Add at least one axis in the <a href="#axes">Axes Tab</a>. Give it a useful name and make sure it has the appropriate tag, and make sure the minimum, default and maximum values make sense.</li>
 <li>Add source UFOs
     <ul>
         <li>
@@ -158,18 +155,18 @@
             or use the <b>+</b> button to add the UFOs that are open in RF
         </li>
         <li>
-            or drag and drop into the DSE <a href="#toc_3">Sources Tab</a>
+            or drag and drop into the DSE <a href="#sources">Sources Tab</a>
         </li>
     </ul>
     Then add the axis values for each new source. Make sure there is at least 1 source on the default value of all axes.
 </li>
 <li>Save the designspace in <b>the same folder as your sources, or one level up.</b> It stores a relative path to the sources and instances, so it makes sense to keep them close together.</li>
-<li><a href="#toc_4">Add instances</a>, rules, axis labels, location labels and whatever else you need to do.</li>
+<li><a href="#instances">Add instances</a>, rules, axis labels, location labels and whatever else you need to do.</li>
 <li>Preview selected instances in text. </li>
 <li>Save early and often.</li>
 </ol>
 
-Note that DSE2 does not maintain formatting or comments in designspace it edits. We know some of you are very particular about the xml. 
+Note that DSE2 does not maintain formatting or comments in designspace it edits. We know some of you are very particular about the xml.
 
 
 
@@ -177,7 +174,7 @@ Note that DSE2 does not maintain formatting or comments in designspace it edits.
 
 <p><img class="bigicon" src="toolbar_500_500_icon_axes.png" alt="DSE2 axes icon"></p>
 
-<h2 id="toc_2">Axes Tab <a href="#toc">↑</a></h3>
+<h2 id="axes">Axes Tab <a href="#toc">↑</a></h3>
 
 <img alt="screenshot of DSE2 axes tab" src="screenshot_mutatorsans_axestab.png">
 
@@ -268,7 +265,7 @@ Quick buttons for easy axes. Obviously you can edit these values here.
 <h3>Axis Map editor syntax</h3>
 
 <div><pre><code class="language-none"># user space value
-#   (numbers exposed to the user in a UI) 
+#   (numbers exposed to the user in a UI)
 # maps to
 # designspace value
 #   (the internal values used to position sources and instances in the designspace)
@@ -287,7 +284,7 @@ Quick buttons for easy axes. Obviously you can edit these values here.
         href="https://fonttools.readthedocs.io/en/latest/designspaceLib/scripting.html#option-add-a-map"
         alt="link to documentation on the avar table">
             FontTools.designspaceLib documentation on how these values are stored in the designspace.
-    </a>    
+    </a>
     </li>
     <li>
     <a
@@ -335,7 +332,7 @@ Quick buttons for easy axes. Obviously you can edit these values here.
         href="https://learn.microsoft.com/en-us/typography/opentype/spec/languagetags"
         alt="link to documentation on the avar table">
             OpenType documentation for language codes.
-    </a>    
+    </a>
     </li>
 </ul>
 
@@ -343,7 +340,7 @@ Quick buttons for easy axes. Obviously you can edit these values here.
 
 <p><img class="bigicon" src="toolbar_500_500_icon_sources.png" alt="DSE2 sources icon"></p>
 
-<h2 id="toc_3">Sources Tab <a href="#toc">↑</a></h3>
+<h2 id="sources">Sources Tab <a href="#toc">↑</a></h3>
 
 <img alt="screenshot of DSE2 sources tab" src="screenshot_mutatorsans_sourcestab.jpg">
 
@@ -444,7 +441,7 @@ a b c d</code></pre></div>
 
 <p><img class="bigicon" src="toolbar_500_500_icon_instances.png" alt="DSE2 instances icon"></p>
 
-<h2 id="toc_4">Instances Tab <a href="#toc">↑</a></h3>
+<h2 id="instances">Instances Tab <a href="#toc">↑</a></h3>
 
 <img alt="screenshot of DSE2 tab for instances" src="screenshot_mutatorsans_instancestab.jpg">
 
@@ -556,7 +553,7 @@ The axis columns accepts two values separated by a space to indicate an anisotro
 
 <p><img class="bigicon" src="toolbar_500_500_icon_rules.png" alt="DSE2 rules icon"></p>
 
-<h2 id="toc_5">Rules Tab <a href="#toc">↑</a></h3>
+<h2 id="rules">Rules Tab <a href="#toc">↑</a></h3>
 
 <img alt="screenshot of DSE2 rules tab" src="screenshot_mutatorsans_rulestab.jpg">
 
@@ -587,7 +584,7 @@ switching a&#39;s
 
 <p><img class="bigicon" src="toolbar_500_500_icon_location_labels.png" alt="DSE2 location labels icon"></p>
 
-<h2 id="toc_6">Location Labels Tab <a href="#toc">↑</a></h3>
+<h2 id="location-labels">Location Labels Tab <a href="#toc">↑</a></h3>
 
 <p>The location labels tab is an editor for defining labels for specific points in the designspace. This data can be used to define parts of a STAT table.</p>
 
@@ -605,7 +602,7 @@ Neue Style Italic
     ?  fr  &quot;Un Style&quot;
     # optionally translation
     ?  fr  &quot;Un Style&quot;
-    
+
     # location name if the axis and value
     weight 300
     width 40
@@ -618,7 +615,7 @@ Neue Style Italic
 
 <p><img class="bigicon" src="toolbar_500_500_icon_variable_fonts.png" alt="DSE2 variable fonts icon"></p>
 
-<h2 id="toc_8">Variable Fonts Tab <a href="#toc">↑</a></h3>
+<h2 id="variable-fonts">Variable Fonts Tab <a href="#toc">↑</a></h3>
 
 <img alt="screenshot of DSE2 variable fonts tab" src="screenshot_mutatorsans_variablefontstab.jpg">
 
@@ -666,11 +663,11 @@ Neue Style Italic
 
 <p><img class="bigicon" src="toolbar_500_500_icon_problems.png" alt="DSE2 problems icon"></p>
 
-<h2 id="toc_9">Problems Tab <a href="#toc">↑</a></h3>
+<h2 id="problems">Problems Tab <a href="#toc">↑</a></h3>
 
 <img alt="screenshot of DSE2 problems tab" src="screenshot_mutatorsans_problemstab.jpg">
 
-<p>This tab lists some of the problems this designspace might have. From structural issues that block any further processing, to missing ufos, missing or duplicate values and glyphs with compatibility issues. 
+<p>This tab lists some of the problems this designspace might have. From structural issues that block any further processing, to missing ufos, missing or duplicate values and glyphs with compatibility issues.
 This uses <a
     href="https://github.com/LettError/DesignspaceProblems"
     >DesignspaceProblems.
@@ -681,7 +678,7 @@ This uses <a
 
 <p><img class="bigicon" src="toolbar_500_500_icon_notes.png" alt="DSE2 notes icon"></p>
 
-<h2 id="toc_10">Notes Tab <a href="#toc">↑</a></h3>
+<h2 id="notes">Notes Tab <a href="#toc">↑</a></h3>
 
 <p>This tab is for your notes and are stored in the Designspace. This can be any kind of note or remark. Notes are not processed in any way.</p>
 
@@ -693,10 +690,10 @@ This uses <a
 
 
 
-<h2 id="toc_10b">Location Preview Window<a href="#toc">↑</a></h3>
+<h2 id="location-preview-window">Location Preview Window<a href="#toc">↑</a></h3>
 
 <p>
-    The most requested feature for designspace editing tools: a preview for instance and source locations. 
+    The most requested feature for designspace editing tools: a preview for instance and source locations.
 </p>
 
 <ul>
@@ -712,7 +709,7 @@ This uses <a
             <li>Sort Line by area: rank the lines based on the total surface areas of all glyphs on the line. This is calculated without removing overlap, so there may be some edge cases.</li>
             <li>Sort Line by length: rank the lines by their total length.</li>
             <li>Sort Line by density: rank the lines by the black / white ratio</li>
-            
+
 
     </li>
 </ul>
@@ -725,14 +722,14 @@ This uses <a
 
 
 
-<h2 id="toc_11">Notifications<a href="#toc">↑</a></h3>
+<h2 id="designspace-notifications">Notifications<a href="#toc">↑</a></h3>
 
 <p>DesignspaceEditor2 sends notifications for events for the documents it has open. This means scripts and tools can subscribe to these and get access to live designspace data. With these notifications it will be easier to build new things that work with your designspaces.</p>
 
 <p>The source for these notifications at <a href="https://github.com/LettError/designSpaceRoboFontExtension/blob/5e0d700daedcac683bf00a5685e9cddef5b3aab1/DesignspaceEditor2.roboFontExt/lib/main.py#L55"> github.com/LettError/designSpaceRoboFontExtension</a>.
 </p>
 
-<h3 id="toc_12">Receiving and responding to notifications<a href="#toc">↑</a></h3>
+<h3 id="designspace-notification-subscriber">Receiving and responding to notifications<a href="#toc">↑</a></h3>
 
 This is a demo of Subscriber receiving designspace notifications.
 
@@ -740,18 +737,18 @@ This is a demo of Subscriber receiving designspace notifications.
 from mojo.subscriber import Subscriber, registerRoboFontSubscriber
 
 class DesignspaceEditorSubscriber(Subscriber):
-    
+
     debug = True
-    
+
     def designspaceEditorDidOpenDesignspace(self, info):
         print("opened a designspace:", info["designspace"])
-    
+
     def designspaceEditorDidCloseDesignspace(self, info):
         print("closed a designspace:", info["designspace"])
-    
+
     def designspaceEditorAxesDidAddAxis(self, info):
         print("created a new axis:", info["axis"], "for", info["designspace"])
-    
+
     def designspaceEditorRulesDidChange(self, info):
         print("rules did chagne for:", info["designspace"])
 
@@ -768,7 +765,7 @@ registerRoboFontSubscriber(DesignspaceEditorSubscriber)
 </ul>
 
 
-<h3 id="toc_12b">Overview of DSE2 Notifications<a href="#toc">↑</a></h3>
+<h3 id="designspace-notification-overview">Overview of DSE2 Notifications<a href="#toc">↑</a></h3>
 
 
 <table>
@@ -1143,7 +1140,7 @@ registerRoboFontSubscriber(DesignspaceEditorSubscriber)
 
 
 
-<!--     
+<!--
     ADD
     https://github.com/LettError/designSpaceRoboFontExtension/blob/dse2.0/DesignspaceEditor2.roboFontExt/lib/main.py#L114-L134
 
@@ -1177,9 +1174,9 @@ registerRoboFontSubscriber(DesignspaceEditorSubscriber)
 <p><img class="bigicon" src="toolbar_500_500_icon_notifications.png" alt="DSE2 notes icon"></p>
 
 
-<h2 id="toc_13">Scripting with the current designspace<a href="#toc">↑</a></h2>
+<h2 id="designspace-scripting">Scripting with the current designspace<a href="#toc">↑</a></h2>
 
-With a document open in DesignspaceEditor you can call <code>CurrentDesignspace()</code>, similar to <code>CurrentFont()</code> and <code>CurrentGlyph()</code>. This returns the designspace wrapped in a <code>UFOOperator</code> object that can calculate single glyphs, kerning and font info. 
+With a document open in DesignspaceEditor you can call <code>CurrentDesignspace()</code>, similar to <code>CurrentFont()</code> and <code>CurrentGlyph()</code>. This returns the designspace wrapped in a <code>UFOOperator</code> object that can calculate single glyphs, kerning and font info.
 
 <h3>Calculating a glyph</h3>
 The example below calculates a single glyph at the default location. It returns a mathGlyph.
@@ -1231,7 +1228,7 @@ print(info)
 
 <h3>Calculating an instance and drawing in Drawbot</h3>
 
-With the Drawbot extension in RoboFont, you can call <code>CurrentDesignspace()</code> and draw interpolated glyphs. 
+With the Drawbot extension in RoboFont, you can call <code>CurrentDesignspace()</code> and draw interpolated glyphs.
 
 <code>
     <pre>size(1000, 500)
@@ -1251,7 +1248,7 @@ with savedState():
 </pre>
 </code>
 
-<h2 id="toc_14">Useful methods of the UFOOperator<a href="#toc">↑</a></h2>
+<h2 id="ufooperator-methods">Useful methods of the UFOOperator<a href="#toc">↑</a></h2>
 
 <p>
 <code>CurrentDesignspace</code> returns a <code>UFOOperator</code> object representing the designspace. <code>UFOOperator</code> takes care of the loading the fonts, it builds interpolators for all the things, (in varlib and mutatormath flavors), it understands anisotropic interpolations, and it can handle extrapolation. <code>UFOOperator</code> also keeps a cache of results, so there is some efficiency. The object is pretty easy to script with as well. To see how UFOOperator works, please check the source on <a href="https://github.com/LettError/ufoProcessor/blob/master/Lib/ufoProcessor/ufoOperator.py">GitHub</a>.
@@ -1271,7 +1268,7 @@ print(d.axes)
     In general: <code>d.useVarlib=True</code> will appply the fonttools.varlib model interpolations. <code>d.useVarlib=False</code> will use the mutatorMath model for interpolations. The Varlib model is very close to how Variable Fonts work. MutatorMath is a bit more flexible: it can do anisotropic interpolation. Both models can extrapolate now, though their results might not be the same if there are unaligned, off-axis masters in the system.</p>
 
 <p>
-    UFOOperator will assume locations are in <b>designspace locations</b>. You can use the `bend` argument to indicate that a location has to be mapped. The competing coordinate systems can be a bit confusing, especially if you use userLocations in the instances. Often the axis mappings are added much later than the instances, so there will be a moment when you have to carefully look at where the instances are. The DSE has a menu for converting <b>User locations</b> to <b>Design locations</b> and back. So, before you assume the code is getting the wrong results, check your axis mappings and locations, and make sure you are passing the right type to UFOOperator. If you're sure the location is in designspace coordinates, leave `bend=False`. 
+    UFOOperator will assume locations are in <b>designspace locations</b>. You can use the `bend` argument to indicate that a location has to be mapped. The competing coordinate systems can be a bit confusing, especially if you use userLocations in the instances. Often the axis mappings are added much later than the instances, so there will be a moment when you have to carefully look at where the instances are. The DSE has a menu for converting <b>User locations</b> to <b>Design locations</b> and back. So, before you assume the code is getting the wrong results, check your axis mappings and locations, and make sure you are passing the right type to UFOOperator. If you're sure the location is in designspace coordinates, leave `bend=False`.
 </p>
 
 <p>
@@ -1342,10 +1339,10 @@ print(d.axes)
             </ul>
         </li>
         <li>
-            <code><b>makeInstance</b>(instanceDescriptor, glyphNames=None, decomposeComponents=False, pairs=None, bend=False)</code> this saves a single UFO instance to disk. 
+            <code><b>makeInstance</b>(instanceDescriptor, glyphNames=None, decomposeComponents=False, pairs=None, bend=False)</code> this saves a single UFO instance to disk.
             <ul>
                 <li>
-                    <code>glyphNames</code> is an optional list of glyph names to generate. Note this does not update any features. 
+                    <code>glyphNames</code> is an optional list of glyph names to generate. Note this does not update any features.
                 </li>
                 <li>
                     <code>decomposeComponents</code> can be True to decompose all glyphs. This is useful when generating small sets of outlines for a preview.
@@ -1461,7 +1458,7 @@ print(d.axes)
 </p>
 
 
-<h2 id="toc_20">Acknowledgements<a href="#toc">↑</a></h2>
+<h2 id="acknowledgements">Acknowledgements<a href="#toc">↑</a></h2>
 
 <ul>
     <li>
