@@ -1430,11 +1430,39 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 instanceDescriptor.userLocation.clear()
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
 
+        def menuSetPreviewToSelectionCallback(menuItem):
+            selectedObject = selectedItems[0]['object']
+            selectedDesignLocation = selectedObject.getFullDesignLocation(self.operator)
+            print('menuSetPreviewToSelectionCallback setting location to', selectedDesignLocation)
+            self.operator.setPreviewLocation(selectedDesignLocation)
+
         def newInstanceBetween(menuItem):
-            assert len(selectedItems) == 2
-            first = selectedItems[0]
-            second = selectedItems[1]
-            print(f"I can make a new instance between {first} and {second}")
+            # make a new instance at the average of all selected instances
+            first = selectedItems[0]['object']
+            firstLocation = first.getFullDesignLocation(self.operator)
+            firstContinuous, firstDiscrete = self.operator.splitLocation(firstLocation)
+            second = selectedItems[1]['object']
+            secondLocation = second.getFullDesignLocation(self.operator)
+            secondContinuous, secondDiscrete = self.operator.splitLocation(secondLocation)
+            # make sure both selected instances are in the same discrete space
+            if firstDiscrete != secondDiscrete:
+                self.showMessage("Can't make a new instance:", "Select instances in the same discrete spaces.")
+                return
+            location = self.operator.newDefaultLocation(discreteLocation=firstDiscrete)
+            for axisName in firstContinuous.keys():
+                newValue = .5*(firstContinuous.get(axisName) + secondContinuous.get(axisName))
+                location[axisName] = newValue
+            newFamilyName = first.familyName
+            newStyleName = f"{first.styleName}_{second.styleName}"
+            postScriptFontName = f"{newFamilyName}-{newStyleName}"
+            instanceUFOFileName = f"{newFamilyName}-{newStyleName}.ufo"
+            self.operator.addInstanceDescriptor(
+                familyName = first.familyName,
+                styleName = newStyleName,
+                designLocation = location,
+                filename = instanceUFOFileName,
+                postScriptFontName = postScriptFontName,
+                )
 
         def updateUFOFilenameFromFontNames(menuItem):
             for item in selectedItems:
@@ -1444,11 +1472,11 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
             self.setDocumentNeedSave(True, who="Instances")
 
-        def updatePostScriptFontNameFromFontNames(menuItem):
+        def updatePostScriptFontNameFromFontNamesCallback(menuItem):
             for item in selectedItems:
                 instanceDescriptor = item["object"]
                 psName = f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}"
-                psName = psName.replace(" ", "")
+                psName = psName.replace(" ", "")    # does this need to filter more?
                 instanceDescriptor.postScriptFontName = psName
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
             self.setDocumentNeedSave(True, who="Instances")
@@ -1493,6 +1521,8 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                     menu.append(dict(title="Reveal Source in Finder", callback=revealInFinderCallback))
                 menu.append("----")
                 menu.append(dict(title="Move to Default Location", callback=menuMakeDefaultCallback))
+                if len(selectedItems) == 1:
+                    menu.append(dict(title="Set Preview to Selection", callback=menuSetPreviewToSelectionCallback))
 
             menu.append("----")
             menu.append(dict(title="Force Refresh of All Sources", callback=forceSourcesChangeCallback))
@@ -1503,10 +1533,12 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             menu.append(dict(title="Reveal Instance in Finder", callback=revealInFinderCallback))
             menu.append("----")
             menu.append(dict(title="Update UFO Filename", callback=updateUFOFilenameFromFontNames))
-            menu.append(dict(title="Update PostScript Font Name", callback=updatePostScriptFontNameFromFontNames))
+            menu.append(dict(title="Update PostScript Font Name", callback=updatePostScriptFontNameFromFontNamesCallback))
             menu.append("----")
             menu.append(dict(title="Convert to User Location", callback=convertInstanceToUserLocation))
             menu.append(dict(title="Convert to Design Location", callback=convertInstanceToDesignLocation))
+            if len(selectedItems) == 1:
+                menu.append(dict(title="Set Preview to Selection", callback=menuSetPreviewToSelectionCallback))
             if len(selectedItems) == 2:
                 menu.append(dict(title="New instance inbetween", callback=newInstanceBetween))
 
