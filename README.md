@@ -13,7 +13,6 @@ Create and edit designspaces with Robofont 4.5+, with support for scripting.
 ## Goals
 
  * Open, edit and save existing [designspaces format 5](https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html) files.
-        >
  * You can create a new designspace and fill it with axes, sources and instances.
  * You can edit all sorts of axis labels, location labels and localisations.
  * You can quickly open the UFOs listed as sources.
