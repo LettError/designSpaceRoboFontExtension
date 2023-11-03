@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 import weakref
 import AppKit
 
@@ -16,15 +17,17 @@ from mojo.roboFont import AllFonts, OpenFont, RFont, internalFontClasses
 from lib.tools.debugTools import ClassNameIncrementer
 from lib.tools.misc import coalescingDecorator
 from lib.cells.doubleClickCell import RFDoubleClickCell
+from lib.formatters import PathFormatter
 
 from designspaceProblems import DesignSpaceChecker
 
 from designspaceEditor.designspaceLexer import DesignspaceLexer, TextLexer
 from designspaceEditor.parsers import mapParser, rulesParser, labelsParser, glyphNameParser, variableFontsParser
 from designspaceEditor.parsers.parserTools import numberToString
-from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges, symbolImage, NumberListFormatter, SendNotification
-from designspaceEditor.instancesPreview import InstancesPreview
+from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges, symbolImage, NumberListFormatter, SendNotification, notificationConductor
+from designspaceEditor.locationPreview import LocationPreview
 from designspaceEditor.designspaceSubscribers import registerOperator, unregisterOperator
+from designspaceEditor import extensionIdentifier
 
 
 designspaceBundle = ExtensionBundle("DesignspaceEditor2")
@@ -79,6 +82,163 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
         if fonts is None:
             fonts = AllFonts()
         super().udpateFonts([font.asDefcon() for font in fonts])
+
+    # axes
+
+    def addAxis(self, axisDescriptor):
+        with SendNotification("Axes", action="AddAxis", designspace=self) as notification:
+            super().addAxis(axisDescriptor)
+            notification["axis"] = axisDescriptor
+
+    def removeAxis(self, axisDescriptor):
+        with SendNotification("Axes", action="RemoveAxis", designspace=self, axis=axisDescriptor):
+            self.axes.remove(axisDescriptor)
+
+    def addAxisDescriptor(self, **kwargs):
+        with SendNotification("Axes", action="AddAxis", designspace=self) as notification:
+            axisDescriptor = super().addAxisDescriptor(**kwargs)
+            notification["axis"] = axisDescriptor
+        return axisDescriptor
+
+    # sources
+
+    def addSource(self, sourceDescriptor):
+        with SendNotification("Sources", action="AddSource", designspace=self) as notification:
+            super().addSource(sourceDescriptor)
+            notification["source"] = sourceDescriptor
+
+    def removeSource(self, sourceDescriptor):
+        with SendNotification("Sources", action="RemoveSource", designspace=self, source=sourceDescriptor):
+            self.sources.remove(sourceDescriptor)
+            if sourceDescriptor.name in self.fonts:
+                del self.fonts[sourceDescriptor.name]
+
+    def addSourceDescriptor(self, **kwargs):
+        with SendNotification("Sources", action="AddSource", designspace=self) as notification:
+            sourceDescriptor = super().addSourceDescriptor(**kwargs)
+            notification["source"] = sourceDescriptor
+        return sourceDescriptor
+
+    # instances
+
+    def addInstance(self, instanceDescriptor):
+        with SendNotification("Instances", action="AddInstance", designspace=self) as notification:
+            super().addInstance(instanceDescriptor)
+            notification["instance"] = instanceDescriptor
+
+    def removeInstance(self, instanceDescriptor):
+        with SendNotification("Instances", action="RemoveInstance", designspace=self, instance=instanceDescriptor):
+            self.instances.remove(instanceDescriptor)
+
+    def addInstanceDescriptor(self, **kwargs):
+        if "familyName" not in kwargs:
+            if self.instances:
+                familyName = self.instances[0].familyName
+            elif self.sources:
+                familyName = self.sources[0].familyName
+            else:
+                familyName = "NewFamily"
+            kwargs["familyName"] = familyName
+        if "styleName" not in kwargs:
+            kwargs["styleName"] = f"Style_{len(self.instances)}"
+        if "filename" not in kwargs:
+            kwargs["filename"] = os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{kwargs['familyName'] }-{kwargs['styleName']}.ufo")
+
+        with SendNotification("Instances", action="AddInstance", designspace=self) as notification:
+            instanceDescriptor = super().addInstanceDescriptor(**kwargs)
+            notification["instance"] = instanceDescriptor
+        return instanceDescriptor
+
+    def openInterface(self):
+        for controller in AllDesignspaceWindows():
+            if controller.operator == self:
+                controller.w.show()
+                return
+        controller = DesignspaceEditorController()
+        controller.loadOperator(self)
+
+    def close(self):
+        for controller in AllDesignspaceWindows():
+            if controller.operator == self:
+                controller.w.close()
+                return
+
+    # send notifications
+
+    def changed(self, clearCaches=True, **kwargs):
+        if clearCaches:
+            super().changed()
+        SendNotification.single(designspace=self, **kwargs)
+
+    def axesChanged(self, **kwargs):
+        self.changed(
+            clearCaches=kwargs.pop("clearCaches", False),
+            who="Axes",
+            **kwargs
+        )
+
+    def sourcesChanged(self, **kwargs):
+        self.changed(
+            clearCaches=kwargs.pop("clearCaches", False),
+            who="Sources",
+            **kwargs
+        )
+
+    def instancesChanged(self, **kwargs):
+        self.changed(
+            clearCaches=kwargs.pop("clearCaches", False),
+            who="Instances",
+            **kwargs
+        )
+
+    def rulesChanged(self, **kwargs):
+        self.changed(
+            clearCaches=kwargs.pop("clearCaches", False),
+            who="Rules",
+            **kwargs
+        )
+
+    def locationLabelsChanged(self, **kwargs):
+        self.changed(
+            clearCaches=kwargs.pop("clearCaches", False),
+            who="LocationLabels",
+            **kwargs
+        )
+
+    def variableFontsChanged(self, **kwargs):
+        self.changed(
+            clearCaches=kwargs.pop("clearCaches", False),
+            who="VariableFonts",
+            **kwargs
+        )
+
+    def notesChanged(self, **kwargs):
+        self.changed(
+            clearCaches=kwargs.pop("clearCaches", False),
+            who="Notes",
+            **kwargs
+        )
+
+    previewLocationLibKey = f"{extensionIdentifier}.previewLocation"
+
+    def previewLocationChanged(self, location=None, **kwargs):
+        self.changed(
+            clearCaches=kwargs.pop("clearCaches", False),
+            who="PreviewLocation",
+            location=location,
+            **kwargs
+        )
+
+    def getPreviewLocation(self):
+        return self.lib.get(self.previewLocationLibKey)
+
+    def setPreviewLocation(self, location):
+        if location is None:
+            if self.previewLocationLibKey in self.lib:
+                del self.lib[self.previewLocationLibKey]
+        else:
+            self.lib[self.previewLocationLibKey] = location
+        self.previewLocationChanged(location=location)
 
 
 class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
@@ -450,7 +610,7 @@ class LocationLabelsPreview(Subscriber, WindowController):
         self.update()
 
 
-class DesignspaceEditorController(WindowController, BaseNotificationObserver):
+class DesignspaceEditorController(Subscriber, WindowController, BaseNotificationObserver):
 
     notifications = [
         ("fontDidOpen", "roboFontFontDidOpen"),
@@ -458,6 +618,13 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
     ]
 
     def __init__(self, path=None):
+        if path is not None:
+            # search for already open designspace files
+            for controller in AllDesignspaceWindows():
+                if controller.operator.path == path:
+                    controller.w.show()
+                    return
+
         self.holdChanges = HoldChanges()
         with self.holdChanges:
             super().__init__()
@@ -488,10 +655,18 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             callback=self.toolbarSelectTab,
             imageObject=designspaceBundle.getResourceImage(f"toolbar_30_30_icon_{tabItem.lower().replace(' ', '_')}"),
             selectable=True,
+            visibleByDefault=tabItem not in ["Notes"],
         ) for tabItem in self.tabItems]
 
         toolbarItems.extend([
             dict(itemIdentifier=AppKit.NSToolbarSpaceItemIdentifier),
+
+            dict(
+                itemIdentifier="preview",
+                label="Preview",
+                callback=self.toolbarPreview,
+                imageObject=symbolImage("chart.bar.doc.horizontal", (1, 0, 1, 1))  # doc.plaintext
+            ),
             dict(
                 itemIdentifier="save",
                 label="Save",
@@ -587,13 +762,12 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         )
 
         sourcesEditorToolsSsegmentDescriptions = [
-            dict(title="Open UFO"),
             dict(title="Add Open UFOs to Designspace"),
             # dict(title="Load Names"),
             dict(title="Replace UFO"),
         ]
         self.sources.editorTools = vanilla.SegmentedButton(
-            (72, 5, 400, 22),
+            (72, 5, 300, 22),
             selectionStyle="momentary",
             callback=self.sourcesEditorToolsCallback,
             segmentDescriptions=sourcesEditorToolsSsegmentDescriptions
@@ -607,7 +781,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             dict(title="", key="genericInfoButton", width=20, editable=False, cell=sourcesDoubleClickCell),
             dict(title="💾", key="sourceHasPath", width=20, editable=False),
             dict(title="📍", key="sourceIsDefault", width=20, editable=False),
-            dict(title="UFO", key="sourceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False),
+            dict(title="UFO", key="sourceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False, formatter=PathFormatter.alloc().init()),
             dict(title="Famiy Name", key="sourceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="Style Name", key="sourceStyleName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="Layer Name", key="sourceLayerName", editable=True, width=130, minWidth=130, maxWidth=250),
@@ -667,21 +841,13 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             segmentDescriptions=instancesEditorGenerateToolsSsegmentDescriptions
         )
 
-        self.instances.previewTools = vanilla.SegmentedButton(
-            (660, 5, 130, 22),
-            selectionStyle="momentary",
-            callback=self.instancesEditorPreviewToolsCallback,
-            segmentDescriptions=[dict(title="Instances Preview")]
-        )
-
-
         # instancesDoubleClickCell = RFDoubleClickCell.alloc().init()
         # instancesDoubleClickCell.setDoubleClickCallback_(self.instancesListDoubleClickCallback)
         # instancesDoubleClickCell.setImage_(infoImage)
 
         instancesColumnDescriptions = [
             # dict(title="", key="genericInfoButton", width=20, editable=False, cell=instancesDoubleClickCell),
-            dict(title="UFO", key="instanceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False),
+            dict(title="UFO", key="instanceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False, formatter=PathFormatter.alloc().init()),
             dict(title="Famiy Name", key="instanceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="Style Name", key="instanceStyleName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="PostScript Name", key="instancePostscriptFontName", editable=True, width=130, minWidth=130, maxWidth=250),
@@ -715,6 +881,15 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         self.locationLabels.editor = CodeEditor((0, 30, 0, 0), lexer=DesignspaceLexer(), showLineNumbers=False, callback=self.locationLabelsEditorCallback)
 
         # VARIABLE FONTS
+        variableFontsEditorToolsSsegmentDescriptions = [
+            dict(title="Add All Possible Variable Fonts"),
+        ]
+        self.variableFonts.editorTools = vanilla.SegmentedButton(
+            (10, 5, 200, 22),
+            selectionStyle="momentary",
+            callback=self.variableFontsEditorToolsCallback,
+            segmentDescriptions=variableFontsEditorToolsSsegmentDescriptions
+        )
         self.variableFonts.editor = CodeEditor((0, 30, 0, 0), lexer=DesignspaceLexer(), showLineNumbers=False, callback=self.variableFontsEditorCallback)
 
         # PROBLEMS
@@ -746,14 +921,14 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         registerOperator(self.operator)
 
     def destroy(self):
-        for controller in [self.locationLabelsPreview, self.instancesPreview]:
+        for controller in [self.locationLabelsPreview, self.locationPreview]:
             try:
                 controller.w.close()
             except Exception:
                 pass
         SendNotification.single(action="CloseDesignspace", designspace=self.operator)
         unregisterOperator(self.operator)
-        del self.operator
+        self.operator = None
         self.removeObserverNotifications()
 
     def load(self, path):
@@ -770,6 +945,12 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             self.loadObjects()
             self.setWindowTitleFromPath(path)
 
+    def loadOperator(self, operator):
+        self.operator = operator
+        self.operator.loadFonts()
+        self.loadObjects()
+        self.setWindowTitleFromPath(operator.path)
+
     def loadObjects(self):
         with self.holdChanges:
             self.axes.list.set([AxisListItem(axisDescriptor, self) for axisDescriptor in self.operator.axes])
@@ -784,23 +965,20 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
     # AXES
 
     def axisToolsCallback(self, sender):
-        with self.holdChanges:
-            value = sender.get()
-            if value == 1:
-                # remove
-                for index in reversed(self.axes.list.getSelection()):
-                    item = self.axes.list[index]
-                    with SendNotification("Axes", action="RemoveAxis", designspace=self.operator):
-                        self.operator.axes.remove(item.axisDescriptor)
-                    self.axes.list.remove(item)
-            else:
-                # add
-                name = f"newAxis{len(self.operator.axes) + 1}"
-                tag = f"nwx{len(self.operator.axes) + 1}"
-                minimum = 0
-                maximum = 1000
-                default = 0
-                self._addAxis(name, tag, minimum, maximum, default)
+        value = sender.get()
+        if value == 1:
+            # remove
+            for index in reversed(self.axes.list.getSelection()):
+                item = self.axes.list[index]
+                self.operator.removeAxis(item.axisDescriptor)
+        else:
+            # add
+            name = f"newAxis{len(self.operator.axes) + 1}"
+            tag = f"nwx{len(self.operator.axes) + 1}"
+            minimum = 0
+            maximum = 1000
+            default = 0
+            self._addAxis(name, tag, minimum, maximum, default)
 
         self.setDocumentNeedSave(True, who="Axes")
         self.updateColumnHeadersFromAxes()
@@ -815,16 +993,13 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
 
     def _addAxis(self, name, tag, minimum, maximum, default):
         if self.validateAxisName(name) and self.validateAxisTag(tag):
-            with SendNotification("Axes", action="AddAxis", designspace=self.operator) as notification:
-                axisDescriptor = self.operator.addAxisDescriptor(
-                    name=name,
-                    tag=tag,
-                    minimum=minimum,
-                    maximum=maximum,
-                    default=default
-                )
-                notification["axis"] = axisDescriptor
-            self.axes.list.append(AxisListItem(axisDescriptor, self))
+            self.operator.addAxisDescriptor(
+                name=name,
+                tag=tag,
+                minimum=minimum,
+                maximum=maximum,
+                default=default
+            )
         else:
             print(f"Duplicate axis: '{name}'")
 
@@ -838,8 +1013,6 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         self.setDocumentNeedSave(True, who="Axes")
 
     def axesListSelectionCallback(self, sender):
-        if self.holdChanges:
-            return
         selectedItems = [sender[index]["object"] for index in sender.getSelection()]
         SendNotification.single("Axes", action="ChangeSelection", selectedItems=selectedItems, designspace=self.operator)
 
@@ -850,8 +1023,6 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         def addSourceCallback(paths):
             for path in paths:
                 self.addSourceFromPath(path)
-            # TODO self.enableInstanceList()
-            # TODO  self.updatePaths()
 
         with self.holdChanges:
             value = sender.get()
@@ -868,26 +1039,19 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
                 # remove
                 for index in reversed(self.sources.list.getSelection()):
                     item = self.sources.list[index]
-                    with SendNotification("Sources", action="RemoveSource", designspace=self.operator):
-                        sourceDescriptor = item["object"]
-                        self.operator.sources.remove(sourceDescriptor)
-                        if sourceDescriptor.name in self.operator.fonts:
-                            del self.operator.fonts[sourceDescriptor.name]
-                    self.sources.list.remove(item)
+                    self.operator.removeSource(item["object"])
+
         self.setDocumentNeedSave(True, who="Sources")
 
     def sourcesEditorToolsCallback(self, sender):
         value = sender.get()
         if value == 0:
-            # Open UFO
-            self.openSelectedItem(self.sources.list)
-        elif value == 1:
             # Add Open UFOs
             existingSourcePaths = [sourceDescriptor.path for sourceDescriptor in self.operator.sources]
             for font in AllFonts():
                 if font.path not in existingSourcePaths:
                     self.addSourceFromFont(font)
-        elif value == 2:
+        elif value == 1:
             # Replace UFO
             selection = self.sources.list.getSelection()
             if len(selection) == 1:
@@ -907,7 +1071,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
                             sourceDescriptor.filename = font.path
                         self.operator.fonts[sourceDescriptor.name] = font.asDefcon()
                         item.update(self.wrapSourceDescriptor(sourceDescriptor))
-                        self.setDocumentNeedSave(True)
+                        self.setDocumentNeedSave(True, who="Sources")
 
                 self.showGetFile(
                     messageText=f"New UFO for {os.path.basename(sourceDescriptor.path)}",
@@ -931,33 +1095,20 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             filename = os.path.relpath(font.path, os.path.dirname(self.operator.path))
         else:
             filename = font.path
-        with SendNotification("Sources", action="AddSource", designspace=self.operator) as notification:
-            sourceDescriptor = self.operator.addSourceDescriptor(
-                path=font.path,
-                filename=filename,
-                familyName=font.info.familyName,
-                styleName=font.info.styleName,
-                location=defaultLocation
-            )
-            notification["source"] = sourceDescriptor
+
+        sourceDescriptor = self.operator.addSourceDescriptor(
+            path=font.path,
+            filename=filename,
+            name=f"source.{len(self.operator.sources) + 1}",
+            familyName=font.info.familyName,
+            styleName=font.info.styleName,
+            location=defaultLocation
+        )
         self.operator.fonts[sourceDescriptor.name] = font.asDefcon()
-        self.sources.list.append(self.wrapSourceDescriptor(sourceDescriptor))
         self.setDocumentNeedSave(True)
 
-    def findAllDefaults(self):
-        # collect all default sourcedescriptors for all discrete locations
-        # this method is also added to ufooperator
-        defaults = []
-        discreteSpaces = self.operator.getDiscreteLocations()
-        if not discreteSpaces:
-            discreteSpaces = [None]
-        for discreteLocation in discreteSpaces:
-            defaultSourceDescriptor = self.operator.findDefault(discreteLocation=discreteLocation)
-            defaults.append(defaultSourceDescriptor)
-        return defaults
-
     def wrapSourceDescriptor(self, sourceDescriptor):
-        allDefaults = self.findAllDefaults()
+        allDefaults = self.operator.findAllDefaults()
         wrapped = dict(
             sourceHasPath=checkSymbol if sourceDescriptor.path and os.path.exists(sourceDescriptor.path) else "",
             sourceIsDefault=defaultSymbol if sourceDescriptor in allDefaults else "",
@@ -973,26 +1124,26 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             wrapped[f"axis_{axis}"] = value
         return wrapped
 
-
     def unwrapSourceDescriptor(self, wrappedSourceDescriptor):
         sourceDescriptor = wrappedSourceDescriptor["object"]
-        sourceDescriptor.familyName = wrappedSourceDescriptor["sourceFamilyName"] if wrappedSourceDescriptor["sourceFamilyName"] else None
-        sourceDescriptor.styleName = wrappedSourceDescriptor["sourceStyleName"] if wrappedSourceDescriptor["sourceStyleName"] else None
-        sourceDescriptor.layerName = wrappedSourceDescriptor["sourceLayerName"] if wrappedSourceDescriptor["sourceLayerName"] else None
+        sourceDescriptor.familyName = wrappedSourceDescriptor["sourceFamilyName"] if wrappedSourceDescriptor.get("sourceFamilyName") else None
+        sourceDescriptor.styleName = wrappedSourceDescriptor["sourceStyleName"] if wrappedSourceDescriptor.get("sourceStyleName") else None
+        sourceDescriptor.layerName = wrappedSourceDescriptor["sourceLayerName"] if wrappedSourceDescriptor.get("sourceLayerName") else None
         for axis in self.operator.axes:
             sourceDescriptor.location[axis.name] = wrappedSourceDescriptor.get(f"axis_{axis.name}", axis.default)
         return sourceDescriptor
 
     def sourcesListDoubleClickCallback(self, sender):
-        self.sourcePopover = SourceAttributesPopover(self.sources.list, self.operator, closeCallback=[self.updateSources, self.setDocumentNeedSave])
+        self.sourcePopover = SourceAttributesPopover(self.sources.list, self.operator, closeCallback=self.sourcesChangedCallback)
 
-    def sourcesListEditCallback(self, sender):
+    def sourcesChangedCallback(self):
         self.updateSources()
         self.setDocumentNeedSave(True, who="Sources")
 
+    def sourcesListEditCallback(self, sender):
+        self.sourcesChangedCallback()
+
     def sourceListSelectionCallback(self, sender):
-        if self.holdChanges:
-            return
         selectedItems = [sender[index]["object"] for index in sender.getSelection()]
         SendNotification.single("Sources", action="ChangeSelection", selectedItems=selectedItems, designspace=self.operator)
 
@@ -1026,30 +1177,15 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             value = sender.get()
             if value == 0:
                 # add
-                if self.operator.instances:
-                    familyName = self.operator.instances[0].familyName
-                elif self.operator.sources:
-                    familyName = self.operator.sources[0].familyName
-                else:
-                    familyName = "NewFamily"
-                styleName = f"Style_{len(self.operator.instances)}"
-                with SendNotification("Instances", action="AddInstance", designspace=self.operator) as notification:
-                    instanceDescriptor = self.operator.addInstanceDescriptor(
-                        familyName=familyName,
-                        designLocation=self.operator.newDefaultLocation(),
-                        styleName=styleName,
-                        filename=os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{familyName}-{styleName}.ufo")
-                    )
-                    notification["instance"] = instanceDescriptor
-
-                    self.instances.list.append(self.wrapInstanceDescriptor(instanceDescriptor))
+                self.operator.addInstanceDescriptor(
+                    designLocation=self.operator.newDefaultLocation()
+                )
             elif value == 1:
                 # remove
                 for index in reversed(self.instances.list.getSelection()):
                     item = self.instances.list[index]
-                    with SendNotification("Instances", action="RemoveInstance", designspace=self.operator):
-                        self.operator.instances.remove(item["object"])
-                    self.instances.list.remove(item)
+                    self.operator.removeInstance(item["object"])
+
         self.setDocumentNeedSave(True, who="Instances")
 
     def wrapInstanceDescriptor(self, instanceDescriptor):
@@ -1057,7 +1193,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             instanceUFOFileName=instanceDescriptor.filename if instanceDescriptor.filename is not None else os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}.ufo"),
             instanceFamilyName=instanceDescriptor.familyName or "",
             instanceStyleName=instanceDescriptor.styleName or "",
-            instancePostscriptFontName = instanceDescriptor.postScriptFontName or "",
+            instancePostscriptFontName=instanceDescriptor.postScriptFontName or "",
             instanceLocation="✏️" if instanceDescriptor.designLocation else "👤",
             object=instanceDescriptor
         )
@@ -1068,12 +1204,9 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
 
     def unwrapInstanceDescriptor(self, wrappedInstanceDescriptor):
         instanceDescriptor = wrappedInstanceDescriptor["object"]
-        instanceDescriptor.familyName = wrappedInstanceDescriptor["instanceFamilyName"]
-        instanceDescriptor.styleName = wrappedInstanceDescriptor["instanceStyleName"]
-        psName = wrappedInstanceDescriptor.get("instancePostscriptFontName")
-        if psName == "":
-            psName = None
-        instanceDescriptor.postScriptFontName = psName
+        instanceDescriptor.familyName = wrappedInstanceDescriptor["instanceFamilyName"] if wrappedInstanceDescriptor.get("instanceFamilyName") else None
+        instanceDescriptor.styleName = wrappedInstanceDescriptor["instanceStyleName"] if wrappedInstanceDescriptor.get("instanceStyleName") else None
+        instanceDescriptor.postScriptFontName = wrappedInstanceDescriptor["instancePostscriptFontName"] if wrappedInstanceDescriptor.get("instancePostscriptFontName") else None
         location = instanceDescriptor.designLocation or instanceDescriptor.userLocation
         for axis in self.operator.axes:
             location[axis.name] = wrappedInstanceDescriptor.get(f"axis_{axis.name}", axis.default)
@@ -1089,26 +1222,21 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             for index in self.instances.list.getSelection():
                 item = self.instances.list[index]
                 instanceDescriptor = item["object"]
-                with SendNotification("Instances", action="AddInstance", designspace=self.operator) as notification:
-                    newInstanceDescriptor = self.operator.addInstanceDescriptor(**instanceDescriptor.asdict())
-                    notification["instance"] = newInstanceDescriptor
-                with self.holdChanges:
-                    self.instances.list.append(self.wrapInstanceDescriptor(newInstanceDescriptor))
+                self.operator.addInstanceDescriptor(
+                    **deepcopy(instanceDescriptor.asdict())
+                )
+
         elif value == 1:
             # Add Sources as Instances
             existingLocations = [instanceDescriptor.getFullDesignLocation(self.operator) for instanceDescriptor in self.operator.instances]
             for sourceDescriptor in self.operator.sources:
                 if sourceDescriptor.location not in existingLocations:
-                    with SendNotification("Instances", action="AddInstance", designspace=self.operator) as notification:
-                        newInstanceDescriptor = self.operator.addInstanceDescriptor(
-                            familyName=sourceDescriptor.familyName,
-                            styleName=sourceDescriptor.styleName,
-                            designLocation=sourceDescriptor.location,
-                            filename=os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{sourceDescriptor.familyName}-{sourceDescriptor.styleName}.ufo")
-                        )
-                        notification["instance"] = newInstanceDescriptor
-                    with self.holdChanges:
-                        self.instances.list.append(self.wrapInstanceDescriptor(newInstanceDescriptor))
+                    self.operator.addInstanceDescriptor(
+                        familyName=sourceDescriptor.familyName,
+                        styleName=sourceDescriptor.styleName,
+                        designLocation=sourceDescriptor.location,
+                        filename=os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{sourceDescriptor.familyName}-{sourceDescriptor.styleName}.ufo")
+                    )
 
     def instancesEditorGenerateToolsCallback(self, sender):
         if self.operator.path is None:
@@ -1134,25 +1262,14 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
                     os.makedirs(os.path.dirname(instanceDescriptor.path))
                 font.save(path=instanceDescriptor.path)
 
-    instancesPreview = None
-
-    def instancesEditorPreviewToolsCallback(self, sender):
-        try:
-            self.instancesPreview.w.show()
-        except Exception:
-            self.instancesPreview = InstancesPreview(
-                operator=self.operator,
-                selectedInstances=[self.instances.list[index]["object"] for index in self.instances.list.getSelection()],
-            )
-
     def instancesListEditCallback(self, sender):
+        if self.holdChanges:
+            return
         for wrappedInstanceDescriptor in sender:
             self.unwrapInstanceDescriptor(wrappedInstanceDescriptor)
         self.setDocumentNeedSave(True, who="Instances")
 
     def instancesListSelectionCallback(self, sender):
-        if self.holdChanges:
-            return
         selectedItems = [sender[index]["object"] for index in sender.getSelection()]
         SendNotification.single("Instances", action="ChangeSelection", selectedItems=selectedItems, designspace=self.operator)
 
@@ -1184,6 +1301,30 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
         self.operator.locationLabels.clear()
         self.operator.locationLabels.extend(locationLabels)
         self.setDocumentNeedSave(True, who="LocationLabels")
+
+    # variable fonts
+
+    def variableFontsEditorToolsCallback(self, sender):
+        value = sender.get()
+        if value == 0:
+            # Add All Possible Variable Fonts
+            def callback(result=True):
+                if result:
+                    # this does not check and compare with extising variable font entries
+                    self.operator.variableFonts.clear()
+                    self.operator.variableFonts.extend(self.operator.getVariableFonts())
+                    self.variableFonts.editor.set(variableFontsParser.dumpVariableFonts(self.operator.variableFonts))
+                    self.setDocumentNeedSave(True, who="VariableFonts")
+
+            if self.operator.variableFonts:
+                self.showAskYesNo(
+                    messageText="Add All Possible Variable Fonts will remove existing variable fonts.",
+                    informativeText="Do you want to replace them?",
+                    callback=callback
+                )
+            else:
+                callback()
+
 
     @coalescingDecorator(delay=0.2)
     def variableFontsEditorCallback(self, sender):
@@ -1261,8 +1402,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             workspace.selectFile_inFileViewerRootedAtPath_(item["object"].path, "")
 
         def forceSourcesChangeCallback(menuItem):
-            self.operator.changed()
-            SendNotification.single("Sources", designspace=self.operator)
+            self.operator.sourcesChanged(clearCaches=True)
 
         def sliderCallback(slider):
             item[columnIdentifier] = slider.get()
@@ -1281,6 +1421,40 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
                 instanceDescriptor.userLocation.clear()
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
 
+        def menuSetPreviewToSelectionCallback(menuItem):
+            selectedObject = selectedItems[0]['object']
+            selectedDesignLocation = selectedObject.getFullDesignLocation(self.operator)
+            print('menuSetPreviewToSelectionCallback setting location to', selectedDesignLocation)
+            self.operator.setPreviewLocation(selectedDesignLocation)
+
+        def newInstanceBetween(menuItem):
+            # make a new instance at the average of all selected instances
+            first = selectedItems[0]['object']
+            firstLocation = first.getFullDesignLocation(self.operator)
+            firstContinuous, firstDiscrete = self.operator.splitLocation(firstLocation)
+            second = selectedItems[1]['object']
+            secondLocation = second.getFullDesignLocation(self.operator)
+            secondContinuous, secondDiscrete = self.operator.splitLocation(secondLocation)
+            # make sure both selected instances are in the same discrete space
+            if firstDiscrete != secondDiscrete:
+                self.showMessage("Can't make a new instance:", "Select instances in the same discrete spaces.")
+                return
+            location = self.operator.newDefaultLocation(discreteLocation=firstDiscrete)
+            for axisName in firstContinuous.keys():
+                newValue = .5*(firstContinuous.get(axisName) + secondContinuous.get(axisName))
+                location[axisName] = newValue
+            newFamilyName = first.familyName
+            newStyleName = f"{first.styleName}_{second.styleName}"
+            postScriptFontName = f"{newFamilyName}-{newStyleName}"
+            instanceUFOFileName = f"{newFamilyName}-{newStyleName}.ufo"
+            self.operator.addInstanceDescriptor(
+                familyName = first.familyName,
+                styleName = newStyleName,
+                designLocation = location,
+                filename = instanceUFOFileName,
+                postScriptFontName = postScriptFontName,
+                )
+
         def updateUFOFilenameFromFontNames(menuItem):
             for item in selectedItems:
                 instanceDescriptor = item["object"]
@@ -1289,22 +1463,18 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
             self.setDocumentNeedSave(True, who="Instances")
 
-        def updatePostScriptFontNameFromFontNames(menuItem):
+        def updatePostScriptFontNameFromFontNamesCallback(menuItem):
             for item in selectedItems:
                 instanceDescriptor = item["object"]
                 psName = f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}"
-                psName = psName.replace(" ", "")
+                psName = psName.replace(" ", "")    # does this need to filter more?
                 instanceDescriptor.postScriptFontName = psName
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
             self.setDocumentNeedSave(True, who="Instances")
 
-        def openInstanceUFO(menuItem):
-            for item in selectedItems:
-                instanceDescriptor = item["object"]
-                path = item["object"].path
-                if path is not None:
-                    if os.path.exists(path):
-                        OpenFont(path)
+        def openUFO(menuItem):
+            self.openSelectedItem(sender)
+
 
         menu = []
         for axisDescriptor in self.operator.axes:
@@ -1334,25 +1504,34 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
                         menu.append(menuItem)
 
         if sender.designspaceContent == "sources":
-            menu.append("----")
-            menu.append(dict(title="Make Default", callback=menuMakeDefaultCallback))
-            if item["object"].path and os.path.exists(item["object"].path):
+            if selectedItems:
                 menu.append("----")
-                menu.append(dict(title="Reveal in Finder", callback=revealInFinderCallback))
+                if item["object"].path and os.path.exists(item["object"].path):
+                    menu.append("----")
+                    menu.append(dict(title="Open Source UFO", callback=openUFO))
+                    menu.append(dict(title="Reveal Source in Finder", callback=revealInFinderCallback))
+                menu.append("----")
+                menu.append(dict(title="Move to Default Location", callback=menuMakeDefaultCallback))
+                if len(selectedItems) == 1:
+                    menu.append(dict(title="Set Preview to Selection", callback=menuSetPreviewToSelectionCallback))
 
             menu.append("----")
-            menu.append(dict(title="Force Sources Change", callback=forceSourcesChangeCallback))
+            menu.append(dict(title="Force Refresh of All Sources", callback=forceSourcesChangeCallback))
 
         if selectedItems and sender.designspaceContent == "instances":
             menu.append("----")
-            menu.append(dict(title="Open Instance UFO", callback=openInstanceUFO))
+            menu.append(dict(title="Open Instance UFO", callback=openUFO))
             menu.append(dict(title="Reveal Instance in Finder", callback=revealInFinderCallback))
             menu.append("----")
             menu.append(dict(title="Update UFO Filename", callback=updateUFOFilenameFromFontNames))
-            menu.append(dict(title="Update PostScript Font Name", callback=updatePostScriptFontNameFromFontNames))
+            menu.append(dict(title="Update PostScript Font Name", callback=updatePostScriptFontNameFromFontNamesCallback))
             menu.append("----")
             menu.append(dict(title="Convert to User Location", callback=convertInstanceToUserLocation))
             menu.append(dict(title="Convert to Design Location", callback=convertInstanceToDesignLocation))
+            if len(selectedItems) == 1:
+                menu.append(dict(title="Set Preview to Selection", callback=menuSetPreviewToSelectionCallback))
+            if len(selectedItems) == 2:
+                menu.append(dict(title="New instance inbetween", callback=newInstanceBetween))
 
         return menu
 
@@ -1397,16 +1576,20 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
                 descriptor = item["object"]
                 if descriptor.path is None:
                     continue
-                name = descriptor.name
-                internalFontObject = self.operator.fonts.get(name)
-                if internalFontObject is None:
-                    continue
-                try:
-                    font = RFont(internalFontObject, showInterface=True)
-                    SendNotification.single("Sources", action="Open", font=font, designspace=self.operator)
-                except Exception as e:
-                    print(f"Bad UFO: {path}, {e}")
-                    pass
+                if descriptor.flavor == "instance":
+                    if os.path.exists(descriptor.path):
+                        OpenFont(descriptor.path)
+                elif descriptor.flavor == "source":
+                    name = descriptor.name
+                    internalFontObject = self.operator.fonts.get(name)
+                    if internalFontObject is None:
+                        continue
+                    try:
+                        font = RFont(internalFontObject, showInterface=True)
+                        SendNotification.single("Sources", action="Open", font=font, designspace=self.operator)
+                    except Exception as e:
+                        print(f"Bad UFO: {path}, {e}")
+                        pass
                 progress.update()
             progress.close()
 
@@ -1436,9 +1619,8 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             return
         if state:
             if notificationsKwargs:
-                SendNotification.single(designspace=self.operator, **notificationsKwargs)
-            SendNotification.single(designspace=self.operator)
-            self.w.getNSWindow().setDocumentEdited_(True)
+                self.operator.changed(**notificationsKwargs)
+            self.operator.changed()
         else:
             self.w.getNSWindow().setDocumentEdited_(False)
 
@@ -1530,6 +1712,18 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             self.updateSources()
         self.w.tabs.set(self.tabItems.index(selectedTab))
 
+    locationPreview = None
+
+    def toolbarPreview(self, sender):
+        try:
+            self.locationPreview.w.show()
+        except Exception:
+            self.locationPreview = LocationPreview(
+                operator=self.operator,
+                selectedSources=[self.sources.list[index]["object"] for index in self.sources.list.getSelection()],
+                selectedInstances=[self.instances.list[index]["object"] for index in self.instances.list.getSelection()],
+            )
+
     def toolbarSave(self, sender):
 
         def saveDesignspace(path):
@@ -1551,6 +1745,7 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
             self.updateSources()
             self.setWindowTitleFromPath(path)
             self.setDocumentNeedSave(False)
+            SendNotification.single(action="SaveDesignspace", designspace=self.operator)
 
         if len(self.operator.axes) == 0:
             self.showMessage(
@@ -1607,10 +1802,91 @@ class DesignspaceEditorController(WindowController, BaseNotificationObserver):
                 SendNotification.single("Sources", action="CloseUFO", designspace=self.operator, font=font)
                 break
 
+    # axes notifications
+
+    designspaceEditorAxesDidAddAxisDelay = 0
+
+    @notificationConductor
+    def designspaceEditorAxesDidAddAxis(self, notification):
+        axisDescriptor = notification["axis"]
+        self.axes.list.append(AxisListItem(axisDescriptor, self))
+
+    designspaceEditorAxesDidRemoveAxisDelay = 0
+
+    @notificationConductor
+    def designspaceEditorAxesDidRemoveAxis(self, notification):
+        axisDescriptor = notification["axis"]
+        for item in list(self.axes.list):
+            if item.axisDescriptor == axisDescriptor:
+                self.axes.list.remove(item)
+                return
+
+    # sources notifications
+
+    designspaceEditorDidChangeDelay = 0
+
+    @notificationConductor
+    def designspaceEditorDidChange(self, notification):
+        self.w.getNSWindow().setDocumentEdited_(True)
+
+    designspaceEditorSourcesDidAddSourceDelay = 0
+
+    @notificationConductor
+    def designspaceEditorSourcesDidAddSource(self, notification):
+        sourceDescriptor = notification["source"]
+        self.sources.list.append(self.wrapSourceDescriptor(sourceDescriptor))
+
+    designspaceEditorSourcesDidRemoveSourceDelay = 0
+
+    @notificationConductor
+    def designspaceEditorSourcesDidRemoveSource(self, notification):
+        sourceDescriptor = notification["source"]
+        for item in list(self.sources.list):
+            if item["object"] == sourceDescriptor:
+                self.sources.list.remove(item)
+                return
+
+    @notificationConductor
+    def designspaceEditorSourcesDidChanged(self, notification):
+        if len(self.operator.sources) == len(self.sources.list):
+            for item, sourceDescriptor in zip(self.sources.list, self.operator.sources):
+                item.update(self.wrapSourceDescriptor(sourceDescriptor))
+        else:
+            self.sources.list.set([self.wrapSourceDescriptor(sourceDescriptor) for sourceDescriptor in self.operator.instances])
+
+    # instances notifications
+
+    designspaceEditorInstancesDidAddInstanceDelay = 0
+
+    @notificationConductor
+    def designspaceEditorInstancesDidAddInstance(self, notification):
+        instanceDescriptor = notification["instance"]
+        self.instances.list.append(self.wrapInstanceDescriptor(instanceDescriptor))
+
+    designspaceEditorInstancesDidRemoveInstanceDelay = 0
+
+    @notificationConductor
+    def designspaceEditorInstancesDidRemoveInstance(self, notification):
+        instanceDescriptor = notification["instance"]
+        for item in list(self.instances.list):
+            if item["object"] == instanceDescriptor:
+                self.instances.list.remove(item)
+                return
+
+    @notificationConductor
+    def designspaceEditorInstancesDidChange(self, notification):
+        if len(self.operator.instances) == len(self.instances.list):
+            for item, instanceDescriptor in zip(self.instances.list, self.operator.instances):
+                item.update(self.wrapInstanceDescriptor(instanceDescriptor))
+        else:
+            self.instances.list.set([self.wrapInstanceDescriptor(instanceDescriptor) for instanceDescriptor in self.operator.instances])
+
+
 
 if __name__ == '__main__':
     pathForBundle = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     designspaceBundle = ExtensionBundle(path=pathForBundle)
 
     path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
+    #path = None
     DesignspaceEditorController(path)

@@ -17,6 +17,20 @@ def holdRecursionDecorator(func):
     return wrapper
 
 
+def notificationConductor(func):
+    """
+    A decorator checking if the controller is on hold and
+    if the designspace from the notification is the same as the operator
+    """
+    def wrapper(self, notification):
+        if self.holdChanges:
+            return
+        if notification["designspace"] == self.operator:
+            with self.holdChanges:
+                func(self, notification)
+    return wrapper
+
+
 def addToolTipForColumn(listObject, columnIdentifier, tooltip):
     """
     Add a tooltip in an nsColumn header
@@ -112,12 +126,15 @@ class UseVarLib:
         self.operator.useVarlib = self.previousModel
 
 
-def symbolImage(symbolName, color):
+def symbolImage(symbolName, color, flipped=False):
     image = AppKit.NSImage.imageWithSystemSymbolName_accessibilityDescription_(symbolName, "")
     configuration = AppKit.NSImageSymbolConfiguration.configurationWithHierarchicalColor_(
         AppKit.NSColor.colorWithCalibratedRed_green_blue_alpha_(*color)
     )
-    return image.imageWithSymbolConfiguration_(configuration)
+    image = image.imageWithSymbolConfiguration_(configuration)
+    if flipped:
+        image.setFlipped_(True)
+    return image
 
 
 class NumberListFormatter(AppKit.NSFormatter):

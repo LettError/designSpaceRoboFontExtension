@@ -1,0 +1,1 @@
+extensionIdentifier = "com.letterror.designspaceEditor"
