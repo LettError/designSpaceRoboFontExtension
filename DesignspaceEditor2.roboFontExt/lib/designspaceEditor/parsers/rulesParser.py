@@ -20,7 +20,7 @@ from fontTools import designspaceLib
 
 from .parserTools import getBlocks, getLines, stringToNumber, numberToString
 
-substitionRE = re.compile(r"([a-zA-Z0-9\.\*\+\-\:\^\|\~]+)\s+\>\s+([a-zA-Z0-9\.\*\+\-\:\^\|\~]+)")
+substitionRE = re.compile(r"([a-zA-Z0-9\.\*\+\-\:\^\|\~_]+)\s+\>\s+([a-zA-Z0-9\.\*\+\-\:\^\|\~_]+)")
 conditionsRE = re.compile(r"([a-zA-Z]+)\s+([0-9\.]+)-([0-9\.]+)")
 
 
