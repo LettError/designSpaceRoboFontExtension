@@ -241,6 +241,67 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
         self.previewLocationChanged(location=location)
 
 
+class GenerateInstanceSheet:
+
+    def __init__(self, parentWindow, operator, instances):
+        self.operator = operator
+        self.instances = instances
+        self.w = vanilla.Sheet((350, 140), parentWindow=parentWindow)
+
+        split = 100
+        self.w.mathModelText = vanilla.TextBox((10, 10, split, 22), "Math model:", alignment="right")
+        self.w.mathModel = vanilla.RadioGroup((split + 20, 10 - 2, 230, 22), ["Mutator Math", "VarLib"], isVertical=False)
+        self.w.mathModel.set(0)
+
+        self.w.roundCheckBox = vanilla.CheckBox((split + 20, 45, -10, 22), "Round Geometry")
+        self.w.mathModelSuffix = vanilla.CheckBox((split + 20, 70, -10, 22), "Add Math Model Suffix")
+
+        #self.w.instancesRootText = vanilla.TextBox((10, 105, split, 22), "Instances Folder:", alignment="right")
+        #self.w.instancesRoot = vanilla.EditText((split + 20, 105 - 2, -10, 22), "foo")
+
+        self.w.closeButton = vanilla.Button((-180, -30, -110, 20), "Cancel", callback=self.closeCallback)
+        self.w.closeButton.bind(".", ["command"])
+        self.w.closeButton.bind(chr(27), [])
+
+        self.w.okButton = vanilla.Button((-100, -30, -10, 20), "Generate", callback=self.okCallback)
+        self.w.open()
+
+    def okCallback(self, sender):
+        # generate
+        mathModel = self.w.mathModel.get()
+        shouldRound = self.w.roundCheckBox.get()
+        addMathModelSuffix = self.w.mathModelSuffix.get()
+
+        prereserveuseVarlib = self.operator.useVarlib
+        prereserveRoundGeometry = self.operator.roundGeometry
+
+        self.operator.useVarlib = mathModel == 1
+        self.operator.roundGeometry = bool(shouldRound)
+        self.operator.loadFonts()
+        self.operator.findDefault()
+
+        for item in self.instances:
+            instanceDescriptor = item["object"]
+            with TryExcept(self, "Generate Instance"):
+                font = self.operator.makeInstance(instanceDescriptor)
+                if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
+                    os.makedirs(os.path.dirname(instanceDescriptor.path))
+                fontPath = instanceDescriptor.path
+                if addMathModelSuffix:
+                    fileName, ext = os.path.splitext(fontPath)
+                    fontPath = f"{fileName}-{('mm', 'varLib')[mathModel]}{ext}"
+
+                font.save(path=fontPath)
+
+        self.operator.useVarlib = prereserveuseVarlib
+        self.operator.roundGeometry = prereserveRoundGeometry
+
+        self.w.close()
+
+    def closeCallback(self, sender):
+        self.w.close()
+
+
 class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
 
     def __new__(cls, *args, **kwargs):
@@ -381,7 +442,7 @@ class BaseAttributePopover:
 
     controlEdited = False
 
-    def controleEditCallback(self, sender=None):
+    def controlEditCallback(self, sender=None):
         self.controlEdited = True
 
     def build(self, item):
@@ -428,20 +489,20 @@ class AxisAttributesPopover(BaseAttributePopover):
         )
 
     def axisMapEditorCallback(self, sender):
-        SendNotification.single("AxisMap", designspace=self.operator)
-        self.controleEditCallback(sender)
+        self.controlEditCallback(sender)
 
     def axisLabelsEditorCallback(self, sender):
-        SendNotification.single("AxisLabels", designspace=self.operator)
-        self.controleEditCallback(sender)
+        self.controlEditCallback(sender)
 
     def close(self):
         if not self.isDiscreteAxis:
             self.axisDescriptor.map = mapParser.parseMap(self.axisMap.editor.get())
+            SendNotification.single("AxisMap", designspace=self.operator)
 
         labelNames, axisLabels = labelsParser.parseAxisLabels(self.axisLabels.editor.get())
         self.axisDescriptor.labelNames = labelNames
         self.axisDescriptor.axisLabels = axisLabels
+        SendNotification.single("AxisLabels", designspace=self.operator)
 
 
 class SourceAttributesPopover(BaseAttributePopover):
@@ -464,7 +525,7 @@ class SourceAttributesPopover(BaseAttributePopover):
             labelsParser.dumpAxisLabels(self.sourceDescriptor.localisedFamilyName, []),
             lexer=DesignspaceLexer(),
             showLineNumbers=False,
-            callback=self.controleEditCallback
+            callback=self.controlEditCallback
         )
 
         self.sourceMutedGlyphNames.editor = CodeEditor(
@@ -472,7 +533,7 @@ class SourceAttributesPopover(BaseAttributePopover):
             glyphNameParser.dumpGlyphNames(self.sourceDescriptor.mutedGlyphNames),
             lexer=TextLexer(),
             showLineNumbers=False,
-            callback=self.controleEditCallback
+            callback=self.controlEditCallback
         )
 
     def close(self):
@@ -831,11 +892,10 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             segmentDescriptions=instancesEditorToolsSsegmentDescriptions
         )
         instancesEditorGenerateToolsSsegmentDescriptions = [
-            dict(title="Generate with MutatorMath"),
-            dict(title="Generate with VarLib")
+            dict(title="Generate Instance"),
         ]
         self.instances.generateTools = vanilla.SegmentedButton(
-            (330, 5, 320, 22),
+            (330, 5, 150, 22),
             selectionStyle="momentary",
             callback=self.instancesEditorGenerateToolsCallback,
             segmentDescriptions=instancesEditorGenerateToolsSsegmentDescriptions
@@ -1010,6 +1070,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         self.axesChangedCallback()
 
     def axesChangedCallback(self):
+        self.axes.list.getNSTableView().reloadData()
         self.setDocumentNeedSave(True, who="Axes")
 
     def axesListSelectionCallback(self, sender):
@@ -1243,24 +1304,12 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             self.showMessage("Save the designspace first.", "Instances are generated in a relative path next to the designspace file.")
             return
 
-        value = sender.get()
-
-        self.operator.useVarlib = value == 1
-        self.operator.roundGeometry = True
-        self.operator.loadFonts()
-        self.operator.findDefault()
         selection = self.instances.list.getSelection()
         if selection:
-            items = [self.instances.list[index] for index in selection]
+            instances = [self.instances.list[index] for index in selection]
         else:
-            items = self.instances.list
-        for item in items:
-            instanceDescriptor = item["object"]
-            with TryExcept(self, "Generate Instance"):
-                font = self.operator.makeInstance(instanceDescriptor)
-                if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
-                    os.makedirs(os.path.dirname(instanceDescriptor.path))
-                font.save(path=instanceDescriptor.path)
+            instances = self.instances.list
+        GenerateInstanceSheet(self.w, self.operator, instances)
 
     def instancesListEditCallback(self, sender):
         if self.holdChanges:
