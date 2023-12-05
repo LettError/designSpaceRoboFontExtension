@@ -572,7 +572,7 @@ class InstancesAttributesPopover(BaseAttributePopover):
             showLineNumbers=False,
             callback=self.controlEditCallback
         )
-    
+
     def close(self):
         familyNamelabels, _ = labelsParser.parseAxisLabels(self.instanceLocalisedFamilyName.editor.get())
         self.instancesDescriptor.localisedFamilyName = familyNamelabels
