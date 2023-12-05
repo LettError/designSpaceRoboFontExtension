@@ -542,6 +542,44 @@ class SourceAttributesPopover(BaseAttributePopover):
         self.sourceDescriptor.mutedGlyphNames = glyphNameParser.parseGlyphNames(self.sourceMutedGlyphNames.editor.get())
 
 
+class InstancesAttributesPopover(BaseAttributePopover):
+
+    def build(self, item):
+        """
+        support:
+            * localisedFamilyName
+            * localisedStyleName
+        """
+        self.instancesDescriptor = item["object"]
+
+        self.popover.tabs = vanilla.Tabs((0, 15, -0, -0), ["Localised Family Name", "Localised Style Name"])
+
+        self.instanceLocalisedFamilyName = self.popover.tabs[0]
+        self.instanceLocalisedStyleName = self.popover.tabs[1]
+
+        self.instanceLocalisedFamilyName.editor = CodeEditor(
+            (10, 10, -10, -10),
+            labelsParser.dumpAxisLabels(self.instancesDescriptor.localisedFamilyName, []),
+            lexer=DesignspaceLexer(),
+            showLineNumbers=False,
+            callback=self.controlEditCallback
+        )
+
+        self.instanceLocalisedStyleName.editor = CodeEditor(
+            (10, 10, -10, -10),
+            labelsParser.dumpAxisLabels(self.instancesDescriptor.localisedStyleName, []),
+            lexer=DesignspaceLexer(),
+            showLineNumbers=False,
+            callback=self.controlEditCallback
+        )
+    
+    def close(self):
+        familyNamelabels, _ = labelsParser.parseAxisLabels(self.instanceLocalisedFamilyName.editor.get())
+        self.instancesDescriptor.localisedFamilyName = familyNamelabels
+        styleNamelabels, _ = labelsParser.parseAxisLabels(self.instanceLocalisedStyleName.editor.get())
+        self.instancesDescriptor.localisedStyleName = styleNamelabels
+
+
 class BaseButtonPopover:
 
     def __init__(self, vanillaObject, closeCallback=None, **kwargs):
@@ -901,12 +939,12 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             segmentDescriptions=instancesEditorGenerateToolsSsegmentDescriptions
         )
 
-        # instancesDoubleClickCell = RFDoubleClickCell.alloc().init()
-        # instancesDoubleClickCell.setDoubleClickCallback_(self.instancesListDoubleClickCallback)
-        # instancesDoubleClickCell.setImage_(infoImage)
+        instancesDoubleClickCell = RFDoubleClickCell.alloc().init()
+        instancesDoubleClickCell.setDoubleClickCallback_(self.instancesListDoubleClickCallback)
+        instancesDoubleClickCell.setImage_(infoImage)
 
         instancesColumnDescriptions = [
-            # dict(title="", key="genericInfoButton", width=20, editable=False, cell=instancesDoubleClickCell),
+            dict(title="", key="genericInfoButton", width=20, editable=False, cell=instancesDoubleClickCell),
             dict(title="UFO", key="instanceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False, formatter=PathFormatter.alloc().init()),
             dict(title="Famiy Name", key="instanceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="Style Name", key="instanceStyleName", editable=True, width=130, minWidth=130, maxWidth=250),
@@ -1246,8 +1284,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 for index in reversed(self.instances.list.getSelection()):
                     item = self.instances.list[index]
                     self.operator.removeInstance(item["object"])
-
-        self.setDocumentNeedSave(True, who="Instances")
+        self.instancesChanged()
 
     def wrapInstanceDescriptor(self, instanceDescriptor):
         wrapped = dict(
@@ -1274,7 +1311,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         return instanceDescriptor
 
     def instancesListDoubleClickCallback(self, sender):
-        pass
+        self.instancesPopover = InstancesAttributesPopover(self.instances.list, self.operator, closeCallback=self.instancesChanged)
 
     def instancesEditorToolsCallback(self, sender):
         value = sender.get()
@@ -1316,11 +1353,14 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             return
         for wrappedInstanceDescriptor in sender:
             self.unwrapInstanceDescriptor(wrappedInstanceDescriptor)
-        self.setDocumentNeedSave(True, who="Instances")
+        self.instancesChanged()
 
     def instancesListSelectionCallback(self, sender):
         selectedItems = [sender[index]["object"] for index in sender.getSelection()]
         SendNotification.single("Instances", action="ChangeSelection", selectedItems=selectedItems, designspace=self.operator)
+
+    def instancesChanged(self):
+        self.setDocumentNeedSave(True, who="Instances")
 
     # rules
 
@@ -1510,7 +1550,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 # wrapInstanceDescriptor will create a new default filename
                 instanceDescriptor.filename = None
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
-            self.setDocumentNeedSave(True, who="Instances")
+            self.instancesChanged()
 
         def updatePostScriptFontNameFromFontNamesCallback(menuItem):
             for item in selectedItems:
@@ -1519,7 +1559,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 psName = psName.replace(" ", "")    # does this need to filter more?
                 instanceDescriptor.postScriptFontName = psName
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
-            self.setDocumentNeedSave(True, who="Instances")
+            self.instancesChanged()
 
         def openUFO(menuItem):
             self.openSelectedItem(sender)
