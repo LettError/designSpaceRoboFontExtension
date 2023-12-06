@@ -1,5 +1,5 @@
-
-size(1000, 500)
+#drawbot
+size(1000, 600)
 d = CurrentDesignspace()
 fill(None)
 stroke(0)
@@ -9,7 +9,7 @@ with savedState():
     scale(0.5)
     for i in range(20):
         loc = d.randomLocation()
-        g = d.makeOneGlyph("logo", location=loc)
+        g = d.makeOneGlyph("A", location=loc)
         bp = BezierPath()
         g.draw(bp)
         drawPath(bp)
