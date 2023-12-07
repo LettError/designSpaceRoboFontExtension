@@ -461,8 +461,10 @@ a b c d</code></pre>
     </li>
     <li><strong>Duplicate:</strong> duplicates the selected instances</li>
     <li><strong>Add Source as Instances:</strong> makes new instances at the designspace locations of the sources.</li>
-    <li><strong>Generate with MutatorMath:</strong> use the MutatorMath model to generate instances. For instance if you want to calculate instances at anisotropic locations, or if you want to extrapolate over axis extremes. MutatorMath is a bit more forgiving when it comes to the number of off-curves and missing sources.</li>
-    <li><strong>Generate with VarLib:</strong> use the fontTools VarLib model to generate instances, if you want to stay close to how the instances will appear as part of a variable font. This model wants all data to be present and correct.</li>
+    <li><strong>Generate Instance:</strong> this brings up a dialog with options for generating UFOs. Here you can choose between the MutatorMath and Varlib, and whether to round the geometry to integers.</li>
+    <li>Chooze the <b>MutatorMath</b> model to generate instances if you want to calculate instances at anisotropic locations, or if you want to extrapolate over axis extremes. MutatorMath is a bit more forgiving when it comes to the number of off-curves and missing sources.</li>
+    <li>Choose <strong>VarLib</strong> to use the fontTools VarLib model to generate instances. This stays close to how variable fonts will show the instances. Varlib is more picky and expects all data to be present and correct.</li>
+    <li>Why are there even two models? MutatorMath was written long before Variable fonts and it is geared toward exploration and discovery, to be used during the design phase. Varlib represents how Variable fonts work, optimised for speed and production.</li>
 </ul>
 
 <h3>Instances Menus</h3>
@@ -529,40 +531,40 @@ a b c d</code></pre>
     </tr>
     <tr>
         <td>column for each axis</td>
-        <td>Axis values can be in <strong>userspace</strong> or <strong>design coordinates</strong>. Anisotropic values are separated by a space (see Note 2 below)</td>
+        <td>Axis values can be in <strong>userspace</strong> or <strong>design coordinates</strong>. Anisotropic values are separated by a space. See <a href="#note2-about-anisotropic-instances">Note 2</a></td>
     </tr>
 </table>
 
 
 
-<h3>Note 1: About userspace and designspace locations</h3>
+<h3 id="note1-about-userspace-designspace-coordinates">Note 1: About userspace and designspace locations</h3>
 
 <ul>
     <li>
         Instances can have axis values in <b>userspace</b> coordinates.
     </li>
     <li>
-        Control-click on an instance to get the pop up menu with some options.
+        Control-click on an instance to get the pop up menu with some conversion options.
     </li>
     <li>
         The conversion between userspace and designspace values will be according to the axis mapping.
     </li>
     <li>
-        When converting an anisotropic location only the xvalue will be used
+        When converting an anisotropic location only the xvalue will be used.
     </li>
 </ul>
 
-<h3>Note 2: About anisotropic instances</h3>
+<h3 id="note2-about-anisotropic-instances">Note 2: About anisotropic instances</h3>
 
 <ul>
     <li>
-        The axis columns will two values separated by a space to indicate an anisotropic location. For instance: <code>900 800</code> means: <em>horizontal interpolation at value <code>900</code> and vertical interpolation at value <code>800</code></em>.
+        The axis columns in the Instances Tab accept <b>two values separated by a space to indicate an anisotropic location.</b> For instance: <code>900 800</code> means: <em>horizontal interpolation at value <code>900</code> and vertical interpolation at value <code>800</code></em>.
     </li>
     <li>
         <b>Please note: anisotropic locations are not supported in Variable Fonts.</b> Tools that generate fonts from designspaces may ignore the second value, or ignore the entire instance. Anisotropy is a useful tool during exploration and design and so designspaces can store them.
     </li>
     <li>
-        MutatorMath can calculate anisotropic instances. See UFOOperator
+        Select MutatorMath to generate instances with anisotropic locations.
     </li>
     <li>
         Note: it is not clear what to expect of interactions between an axis map and an anisotropic location. The authors advise to experiment with anisotropy <strong>before</strong> defining axis maps for anisotropic instance locations.
