@@ -32,11 +32,11 @@
     <li><a href="#problems">Problems Tab</a></li>
     <li><a href="#notes">Notes Tab</a></li>
     <li><a href="#location-preview-window">Location Preview Window</a></li>
+    <li><a href="#designspace-scripting">Scripting with the current designspace</a></li>
+    <li><a href="#ufooperator-methods">Useful methods of the UFOOperator</a></li>
     <li><a href="#designspace-notifications">Notifications</a></li>
     <li><a href="#designspace-notification-subscriber">Receiving and responding to notifications</a></li>
     <li><a href="#designspace-notification-overview">Overview of DSE2 Notifications</a></li>
-    <li><a href="#designspace-scripting">Scripting with the current designspace</a></li>
-    <li><a href="#ufooperator-methods">Useful methods of the UFOOperator</a></li>
     <li><a href="#acknowledgements">Acknowledgements</a></li>
 </ul>
 
@@ -385,7 +385,7 @@ Quick buttons for easy axes. Obviously you can edit these values here.
 
 <table>
     <tr>
-        <td>ℹ️</td>
+        <td><img src="toolbar_25_25_info.circle.fill.svg"></td>
         <td>button for the popover editor</td>
     </tr>
     <tr>
@@ -449,9 +449,9 @@ a b c d</code></pre>
 
 <h2 id="instances">Instances Tab <a href="#toc">↑</a></h3>
 
-<img alt="screenshot of DSE2 tab for instances" src="screenshot_mutatorsans_instancestab.jpg">
+<img alt="screenshot of DSE2 tab for instances" src="screenshot_mutatorsans_instancestab.png">
 
-<p>This tab shows the instances defined for this designspace. These instances can be different things in different contexts. Each instance can be compiled to separate UFO files. But it can also be interpreted as an named location in a variable font.</p>
+<p>This tab shows the instances defined for this designspace. These items can become different things depending on the context. For instance, each instance can be compiled to a separate UFO file. But they can also be interpreted as named locations in a variable font.</p>
 
 <h3>Instances Buttons</h3>
 
@@ -479,7 +479,7 @@ a b c d</code></pre>
             <b>Update UFO Filename</b>: make a new filename for this UFO instance, based on the family and stylename according this pattern: <code>instances/[familyName]-[styleName].ufo</code>
         </li>
         <li>
-            <b>Update PostScript Fontname</b>: make a new PostScript fontname for this UFO instance, based on the family and stylename according this pattern: <code>[familyName]-[styleName]</code>
+            <b>Update PostScript Fontname</b>: make a new PostScript fontname for this UFO instance, based on the family and stylename according this pattern: <code>[familyName]-[styleName]</code>. Note that some tools respond differently when the PostScript fontname is not defined, so if you want to be sure, define it here.
         </li>
         <li>
             <b>Convert to User Location</b>: convert this design coordinates to user coordinates, according to axis mapping.
@@ -500,6 +500,10 @@ a b c d</code></pre>
 
 <table>
     <tr>
+        <td><img src="toolbar_25_25_info.circle.fill.svg"></td>
+        <td>button for the popover editor for localised family and style names.</td>
+    </tr>
+    <tr>
         <td>UFO
         </td>
         <td>path and filename of destination UFO (if that is where you want to go obviously)
@@ -514,24 +518,24 @@ a b c d</code></pre>
     <tr>
         <td><strong>Style Name</strong>
         </td>
-        <td>Style name for the UFO
+        <td>Style name for the UFO and variable font.
         </td>
     </tr>
     <tr>
         <td><strong>📍</strong>
         </td>
-        <td>The icons in this column indicate if the location values are specified as 👤userspace, or ✏️designspace.
+        <td>The icons in this column indicate if the location values are specified as 👤userspace (a person icon, because user), or ✏️designspace (a pencil icon because design). See Note 1. 
         </td>
     </tr>
     <tr>
         <td>column for each axis</td>
-        <td>Axis values can be in <strong>userspace</strong> or <strong>design coordinates</strong>. Anisotropic values separated by space (see below)</td>
+        <td>Axis values can be in <strong>userspace</strong> or <strong>design coordinates</strong>. Anisotropic values are separated by a space (see Note 2 below)</td>
     </tr>
 </table>
 
 
 
-<h3>About userspace and designspace locations</h3>
+<h3>Note 1: About userspace and designspace locations</h3>
 
 <ul>
     <li>
@@ -548,7 +552,7 @@ a b c d</code></pre>
     </li>
 </ul>
 
-<h3>About anisotropic instances</h3>
+<h3>Note 2: About anisotropic instances</h3>
 
 <ul>
     <li>
@@ -729,6 +733,302 @@ This uses <a
 
     </li>
 </ul>
+
+
+
+
+<p><img class="bigicon" src="toolbar_500_500_icon_notifications.png" alt="DSE2 notes icon"></p>
+
+
+<h2 id="designspace-scripting">Scripting with the current designspace<a href="#toc">↑</a></h2>
+
+With a document open in DesignspaceEditor you can call <code>CurrentDesignspace()</code>, similar to <code>CurrentFont()</code> and <code>CurrentGlyph()</code>. This returns the designspace wrapped in a <code>UFOOperator</code> object that can calculate single glyphs, kerning and font info.
+
+<h3>Making a glyph</h3>
+This example calculates a single glyph at the default location. It returns a mathGlyph. 
+
+<pre><code>d = CurrentDesignspace()
+loc = d.newDefaultLocation()
+g = d.makeOneGlyph("A", location=loc)
+
+# matGlyph objects can easily be converted
+g2 = RGlyph()
+g2.fromMathGlyph(g)
+</code></pre>
+
+What is happening here? Step by step: <b>CurrentDesignspace</b> returns a UFOOperator object for the current designspace.
+<b>d.newDefaultLocation()</b> creates a dict representing the default location in design coordinates. For this example it is a quick way to get a valid location, but you will probably want to see more exotic locations. Then, <b>makeOneGlyph</b> creates a new glyph object for the given glyphName and a location dict. The result is a <b>MathGlyph</b> object that can be converted to a regular RoboFont glyph object. 
+
+<h3>Going through all designspaces</h3>
+
+You can use <code>AllDesignspaces()</code> to get a list of all open designspace documents. Optionally you can pass a font object with <code>usingFont</code> to get only the designspaces that use that font.
+
+<pre><code>import os
+d = AllDesignspaces()
+for i, doc in enumerate(AllDesignspaces()):
+    print(f"{i}: {os.path.basename(doc.path)}")
+f = CurrentFont()
+for doc in AllDesignspaces(usingFont=f):
+    print(f"\nOnly using {os.path.basename(f.path)}:", f"{os.path.basename(doc.path)}")</code></pre>
+
+<pre><code>0: Sans_wdth.designspace
+1: Experimental_serif.designspace
+
+Only using Test-Light.ufo: Experimental_serif.designspace</code></pre>
+
+<a href="robofont-script://drawBot_currentDesignspace_grid.py">Example of Scripting in Drawbot in RoboFont</a>
+
+<h3>Calculating kerning and info</h3>
+This example calculates a single kerning pair and a font info object. <code>makeOneKerning</code> accepts an optional list of pairs to calculate. This can be faster, for instance if you want to prepare a preview of just a handful of glyphs, but with proper kerning. If no pairs are given, all pairs will be calculated. This is still fast, but it all adds up,
+
+<code>
+    <pre>d = CurrentDesignspace()
+loc = d.newDefaultLocation()
+
+pairs = [('public.kern1.i', 'public.kern2.b')]
+kern = d.makeOneKerning(loc, pairs)
+print(kern.items())
+
+info = d.makeOneInfo(loc)
+print(info)
+    </pre>
+</code>
+
+
+<h3>Calculating an instance and drawing in Drawbot</h3>
+
+With the Drawbot extension in RoboFont, you can call <code>CurrentDesignspace()</code> and draw interpolated glyphs.
+
+<code>
+    <pre>#drawbot
+size(1000, 500)
+d = CurrentDesignspace()
+fill(None)
+stroke(0)
+strokeWidth(.5)
+with savedState():
+    translate(100, 100)
+    scale(0.5)
+    for i in range(20):
+        loc = d.randomLocation()
+        g = d.makeOneGlyph("A", location=loc)
+        bp = BezierPath()
+        g.draw(bp)
+        drawPath(bp)
+</pre>
+</code>
+
+<h2 id="ufooperator-methods">Useful methods of UFOOperator<a href="#toc">↑</a></h2>
+
+<p>
+<code>CurrentDesignspace</code> returns a <code>UFOOperator</code> object representing the designspace. <code>UFOOperator</code> takes care of the loading the fonts and it prepares interpolating objects for all the data, both in <b>varlib and mutatorMath</b> flavors. It understands <b>anisotropic</b> coordinates, and it can handle <b>extrapolation</b>. <code>UFOOperator</code> also caches its results, so there is some economy. The object is pretty easy to script with as well. To see how UFOOperator works, please check the source on <a href="https://github.com/LettError/ufoProcessor/blob/master/Lib/ufoProcessor/ufoOperator.py">GitHub</a>.
+</p>
+
+<code>UFOOperator</code> has the many of the attributes and methods as the fonttools designspace object, and then some additional ones. Building a new designspace with UFOOperator is very similar to what <a href="https://fonttools.readthedocs.io/en/latest/designspaceLib/scripting.html">is described here</a>.
+
+<code>
+    <pre>d = CurrentDesignspace()
+# source objects
+print(d.sources)
+# instance objects
+print(d.instances)
+# axes objects
+print(d.axes)
+</pre>
+</code>
+
+<p>
+    In general: <code>d.useVarlib=True</code> will appply the fonttools.varlib model interpolations. <code>d.useVarlib=False</code> will use the mutatorMath model for interpolations. The Varlib model is very close to how Variable Fonts work. MutatorMath is a bit more flexible: it can do anisotropic interpolation and it is much more flexible with incomplete sets of sources. Both models can extrapolate now, though their results might not be the same if there are unaligned, off-axis masters in the system.</p>
+
+<p>
+    UFOOperator will assume locations are in <b>designspace coordinates</b>. You can use the `bend` argument to indicate that a location has to be mapped from user coordinates to design coordinates. The competing coordinate systems can be a bit confusing, especially if you use userLocations in the instances. Often the axis mappings are added much later than the instances, so there will be a moment when you have to carefully look at where the instances are. The DSE has a menu for converting between <b>User coordinates</b> to <b>Design coordinates</b>. So, before you assume the code is getting the wrong results, check your axis mappings and locations, and make sure you are passing the right type to UFOOperator. If you're sure the location is in designspace coordinates, leave `bend=False`.
+</p>
+
+<p>
+    This is a selection of the methods available in UFOOperator that are probably must useful to the scripter. Check <a href="https://github.com/LettError/ufoProcessor/blob/master/Lib/ufoProcessor/ufoOperator.py">GitHub</a> for more.
+</p>
+
+
+
+
+<h4>Methods for making things</h4>
+<p>
+    <ul>
+        <li>
+            <code><b>makeOneGlyph</b>(glyphName, location, decomposeComponents=True, useVarlib=False, roundGeometry=False, clip=False)</code> make a glyph for this location.
+            <ul>
+                <li><code>location</code> is in design coordinates</li>
+                <li>
+                    <code>decomposeComponents</code> returns a glyph with outlines, useful if you want to draw a single glyph and you don't have a font to draw the components.
+                </li>
+                <li>
+                    <code>useVarlib</code> can be used to switch between varlib and mutatormath, just for this one glyph.
+                </li>
+                <li>
+                    <code>roundGeometry</code> will round all coordinates to full integers.
+                </li>
+                <li>
+                    <code>clip</code> prevents extrapolation in case the location axis values exceeds the axis extremes.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <code><b>makeOneInfo</b>(location, roundGeometry=False, clip=False)</code>: make an info object for this location.
+            <ul>
+                <li><code>location</code> is in design coordinates</li>
+                <li>
+                    <code>clip</code> prevents extrapolation in case the location axis values exceeds the axis extremes.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <code><b>makeOneKerning</b>(location, pairs=None)</code> make a kerning object for this location.
+            <ul>
+                <li><code>location</code> is in design coordinates</li>
+                <li><code>pairs</code> optional list of pairs to include. This can be faster, for instance if you want to prepare a preview of just a handful of glyphs, but with proper kerning. If no pairs are given, all kerning will be calculated.</li>
+            </ul>
+        </li>
+        <li>
+            <code><b>makeFontProportions</b>(location, bend=False, roundGeometry=True)</code> Calculate the basic font proportions for this location, to map out expectations for drawing.
+        </li>
+        <li>
+            <code><b>generateUFOs</b>(useVarlib=None)</code> generate <i>all</i> available instance descriptors as UFOs.
+            <ul>
+                <li>
+                    This will calculate all glyphs, kerning, and font info for each instance.
+                </li>
+                <li>
+                    UFOs are saved at the path is stored in the instanceDescriptors.
+                </li>
+                <li>
+                    If no instances are defined, nothing will generate.
+                </li>
+                <li>
+                    Any rules defined in this designspace are <i>not</i> executed for these UFOs. This was different for UFOProcessor that swapped glyphs according to the rules. Motivation: rule execution has become very sophisticated and can not always be emulated by swapping. So, it needs to happen, but not here.
+                </li>
+                <li>
+                    While pretty fast, this will take a bit of time.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <code><b>makeInstance</b>(instanceDescriptor, glyphNames=None, decomposeComponents=False, pairs=None, bend=False)</code> this saves a single UFO instance to disk.
+            <ul>
+                <li>
+                    <code>glyphNames</code> is an optional list of glyph names to generate. Note this does not update any features.
+                </li>
+                <li>
+                    <code>decomposeComponents</code> can be True to decompose all glyphs. This is useful when generating small sets of outlines for a preview.
+                </li>
+                <li>
+                    <code>pairs</code> is an optional list of kern pairs to make. If no pairs given, all kerning will be calculated.
+                </li>
+            </ul>
+        </li>
+    </ul>
+</p>
+
+<h4>Preparing a UFOOperator</h4>
+
+<p>
+    <ul>
+        <li>
+            <code><b>loadFonts</b>()</code>: this loads the fonts, needs to called before anything can be calculated. Note: the designspace returned from CurrentDesignspace already has the fonts loaded, but if you construct your own UFOOperatpr designspace object, you will have to load the fonts.
+        </li>
+        <li>
+            <code><b>updateFonts</b>(fontObjects)</code>: fontObjects is a list of RoboFont font objects that are to be used in the designspace. If you want to explicitly want to put new fonts in the machine.
+        </li>
+        <li>
+            <code><b>getFonts</b>()</code> returns a list of (font object, location) tuples. This is not necessarily the same list as your sources: the same font object can be used in multiple locations.
+        </li>
+    </ul>
+</p>
+
+<h4>Methods for locations</h4>
+
+<p>
+    <ul>
+        <li>
+            <code><b>findDefault</b>(discreteLocation=None)</code> returns the default location for the system or the discrete location.
+        </li>
+        <li>
+            <code><b>findAllDefaults</b>()</code> collect all default sourcedescriptors for all discrete locations. In a designspace with a discrete axis, every discrete location will have its own default. 
+        </li>
+        <li>
+            <code><b>findDefaultFont</b>(discreteLocation=None)</code>: returns the default fontObject for the system or the discrete location.
+        </li>
+        <li>
+            <code><b>splitLocation</b>(location)</code>: returns the design location split into a <b>continouous</b> and a <b>discrete</b> part.
+        </li>
+        <li>
+            <code><b>getFullDesignLocation</b>(location)</code>: returns the given location converted to designspace coordinates.
+        </li>
+        <li>
+            <code><b>getDiscreteLocations</b>()</code>: return a list of all possible discrete locations for this system.
+        </li>
+        <li>
+            <code><b>newDefaultLocation</b>(bend=False, discreteLocation=None)</code>: returns a new location that is on the default of all axes.
+            <ul>
+                <li>
+                    Use `bend=True` to get a default in user space coordinates.
+                </li>
+                <li>
+                    Use `bend=False` to get the default in designspace coordinates.</li>
+                <li>
+                    Pass a discreteLocation dict to obtain the default for that discrete location.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <code><b>isAnisotropic</b>(location)</code> returns True if this location is anisotropic.
+        </li>
+        <li>
+            <code><b>splitAnisotropic</b>(location)</code> returns the x and y components of this location as two separate location dicts.
+        </li>
+        <li>
+            <code><b>getLocationType</b>(location)</code> splits the location in its anisotropic components, a flag if this location is anisotropic, as well as continuous and discrete parts. Specifically returns: <code>isAnisotropic, continuousLocation, discreteLocation, locHorizontal, locVertical</code>.
+        </li>
+        <li>
+            <code><b>randomLocation</b>(extrapolate=0, anisotropic=False, roundValues=True, discreteLocation=None)</code> returns a good, reliably valid random location, for quick testing and entertainment.
+            <ul>
+                <li>
+                    <code>extrapolate=0</code> is a factor that determines the amount of extrapolation. The <code>(max-min)</code> distance. So <code>0 = no extrapolation</code>. And <code>0.1 = 0.1 * (max - min)</code>
+                </li>
+                <li>
+                    <code>anisotropic=True</code> <i>all</i> continuous axes get separate x, y values. This may not be very useful from a typographic viewpoint, but it can be good for testing.
+                </li>
+                <li>discrete axes get a random choice from the defined axis values</li>
+                <li>continuous axes get an interpolated value between axis.minimum and axis.maximum
+  * Note: this always returns a designspace location, not a userspace location.</li>
+            </ul>
+        </li>
+        <li>
+            <code><b>locationWillClip</b>(location</code> will return True is this designlocation will be clipped in one or more of the axes. Clipping can be an indication that the location is extrapolating. 
+        </li>
+        <li>
+            <code><b>clipDesignLocation</b>(location)</code> returns a clipped version of this designlocation
+        </li>
+        <li>
+            <code><b>getAxisExtremes</b>(axisRecord)</code> returns the <code>axisMinimum</code>, <code>axisDefault</code> and <code>axisMaximum</code> in design coordinates. Designspace axisDescriptors keep these axis values in userspace coordinates and that is not always practical.
+        </li>
+    </ul>
+</p>
+
+<h4>Miscellaneous</h4>
+
+<p>
+    <ul>
+        <li>
+            <code><b>glyphChanged</b>(glyphName, includeDependencies=False)</code>. This instructs the operator to clear any cached data related to this glyph. If you want to make sure the next time you calculate something with this glyph the results will be fresh. There are more specific cache-related methods.
+        </li>
+        <li>
+            <code><b>collectForegroundLayerNames</b>()</code> returns a list of the names of all the foreground layers used by all sources.
+        </li>
+        <li>
+            <code><b>getCharacterMapping</b>(discreteLocation=None)</code> returns a unicode -> glyphname map for the default of the whole system or discreteLocation. As the defaults at discrete locations can be quite different, UFOOperator makes no assumptions about what is available.
+        </li>
+    </ul>
+</p>
 
 
 
@@ -1185,285 +1485,6 @@ registerRoboFontSubscriber(DesignspaceEditorSubscriber)
 </table>
 
 
-
-<p><img class="bigicon" src="toolbar_500_500_icon_notifications.png" alt="DSE2 notes icon"></p>
-
-
-<h2 id="designspace-scripting">Scripting with the current designspace<a href="#toc">↑</a></h2>
-
-With a document open in DesignspaceEditor you can call <code>CurrentDesignspace()</code>, similar to <code>CurrentFont()</code> and <code>CurrentGlyph()</code>. This returns the designspace wrapped in a <code>UFOOperator</code> object that can calculate single glyphs, kerning and font info.
-
-<h3>Calculating a glyph</h3>
-The example below calculates a single glyph at the default location. It returns a mathGlyph.
-
-<pre><code>d = CurrentDesignspace()
-loc = d.newDefaultLocation()
-g = d.makeOneGlyph("A", location=loc)</code></pre>
-
-You can use <code>AllDesignspaces()</code> to get a list of all open designspace documents. Optionally you can pass a font object with <code>usingFont</code> to get only the designspaces that use that font.
-
-<pre><code>import os
-d = AllDesignspaces()
-for i, doc in enumerate(AllDesignspaces()):
-    print(f"{i}: {os.path.basename(doc.path)}")
-f = CurrentFont()
-for doc in AllDesignspaces(usingFont=f):
-    print(f"\nOnly using {os.path.basename(f.path)}:", f"{os.path.basename(doc.path)}")</code></pre>
-
-<pre><code>0: Sans_wdth.designspace
-1: Experimental_serif.designspace
-
-Only using Test-Light.ufo: Experimental_serif.designspace</code></pre>
-
-
-
-<h3>Calculating kerning and info</h3>
-This example calculates a single kerning pair and an info object. <code>makeOneKerning</code> accepts a list of pairs to calculate. This can be faster, for instance if you want to prepare a preview of just a handful of glyphs, but with proper kerning. If no pairs are given, all pairs will be calculated.
-
-<code>
-    <pre>d = CurrentDesignspace()
-loc = d.newDefaultLocation()
-
-pairs = [('public.kern1.i', 'public.kern2.b')]
-kern = d.makeOneKerning(loc, pairs)
-print(kern.items())
-
-info = d.makeOneInfo(loc)
-print(info)
-    </pre>
-</code>
-
-
-<h3>Calculating an instance and drawing in Drawbot</h3>
-
-With the Drawbot extension in RoboFont, you can call <code>CurrentDesignspace()</code> and draw interpolated glyphs.
-
-<code>
-    <pre>size(1000, 500)
-d = CurrentDesignspace()
-fill(None)
-stroke(0)
-strokeWidth(.5)
-with savedState():
-    translate(100, 100)
-    scale(0.5)
-    for i in range(20):
-        loc = d.randomLocation()
-        g = d.makeOneGlyph("A", location=loc)
-        bp = BezierPath()
-        g.draw(bp)
-        drawPath(bp)
-</pre>
-</code>
-
-<h2 id="ufooperator-methods">Useful methods of the UFOOperator<a href="#toc">↑</a></h2>
-
-<p>
-<code>CurrentDesignspace</code> returns a <code>UFOOperator</code> object representing the designspace. <code>UFOOperator</code> takes care of the loading the fonts, it builds interpolators for all the things, (in varlib and mutatormath flavors), it understands anisotropic interpolations, and it can handle extrapolation. <code>UFOOperator</code> also keeps a cache of results, so there is some efficiency. The object is pretty easy to script with as well. To see how UFOOperator works, please check the source on <a href="https://github.com/LettError/ufoProcessor/blob/master/Lib/ufoProcessor/ufoOperator.py">GitHub</a>.
-</p>
-
-<code>UFOOperator</code> has the many of the attributes and methods as the fonttools designspace object, and then some additional ones. Building a new designspace with UFOOperator is very similar to what <a href="https://fonttools.readthedocs.io/en/latest/designspaceLib/scripting.html">is described here</a>.
-
-<code>
-    <pre>d = CurrentDesignspace()
-print(d.sources)
-print(d.instances)
-print(d.axes)
-</pre>
-</code>
-
-<p>
-    In general: <code>d.useVarlib=True</code> will appply the fonttools.varlib model interpolations. <code>d.useVarlib=False</code> will use the mutatorMath model for interpolations. The Varlib model is very close to how Variable Fonts work. MutatorMath is a bit more flexible: it can do anisotropic interpolation. Both models can extrapolate now, though their results might not be the same if there are unaligned, off-axis masters in the system.</p>
-
-<p>
-    UFOOperator will assume locations are in <b>designspace locations</b>. You can use the `bend` argument to indicate that a location has to be mapped. The competing coordinate systems can be a bit confusing, especially if you use userLocations in the instances. Often the axis mappings are added much later than the instances, so there will be a moment when you have to carefully look at where the instances are. The DSE has a menu for converting <b>User locations</b> to <b>Design locations</b> and back. So, before you assume the code is getting the wrong results, check your axis mappings and locations, and make sure you are passing the right type to UFOOperator. If you're sure the location is in designspace coordinates, leave `bend=False`.
-</p>
-
-<p>
-    This is a selection of the methods available in UFOOperator that are probably must useful to the scripter. Check <a href="https://github.com/LettError/ufoProcessor/blob/master/Lib/ufoProcessor/ufoOperator.py">GitHub</a> for more.
-</p>
-
-
-
-
-<h4>Methods for making things</h4>
-<p>
-    <ul>
-        <li>
-            <code><b>makeOneGlyph</b>(glyphName, location, decomposeComponents=True, useVarlib=False, roundGeometry=False, clip=False)</code> make a glyph for this location.
-            <ul>
-                <li><code>location</code> is in design coordinates</li>
-                <li>
-                    <code>decomposeComponents</code> returns a glyph with outlines, useful if you want to draw a single glyph and you don't have a font to draw the components.
-                </li>
-                <li>
-                    <code>useVarlib</code> can be used to switch between varlib and mutatormath, just for this one glyph.
-                </li>
-                <li>
-                    <code>roundGeometry</code> will round all coordinates to full integers.
-                </li>
-                <li>
-                    <code>clip</code> prevents extrapolation in case the location axis values exceeds the axis extremes.
-                </li>
-            </ul>
-        </li>
-        <li>
-            <code><b>makeOneInfo</b>(location, roundGeometry=False, clip=False)</code>: make an info object for this location.
-            <ul>
-                <li><code>location</code> is in design coordinates</li>
-                <li>
-                    <code>clip</code> prevents extrapolation in case the location axis values exceeds the axis extremes.
-                </li>
-            </ul>
-        </li>
-        <li>
-            <code><b>makeOneKerning</b>(location, pairs=None)</code> make a kerning object for this location.
-            <ul>
-                <li><code>location</code> is in design coordinates</li>
-                <li><code>pairs</code> optional list of pairs to include. This can be faster, for instance if you want to prepare a preview of just a handful of glyphs, but with proper kerning. If no pairs are given, all kerning will be calculated.</li>
-            </ul>
-        </li>
-        <li>
-            <code><b>makeFontProportions</b>(location, bend=False, roundGeometry=True)</code> Calculate the basic font proportions for this location, to map out expectations for drawing.
-        </li>
-        <li>
-            <code><b>generateUFOs</b>(useVarlib=None)</code> generate <i>all</i> available instance descriptors as UFOs.
-            <ul>
-                <li>
-                    This will calculate all glyphs, kerning, and font info for each instance.
-                </li>
-                <li>
-                    UFOs are saved at the path is stored in the instanceDescriptors.
-                </li>
-                <li>
-                    If no instances are defined, nothing will generate.
-                </li>
-                <li>
-                    Any rules defined in this designspace are <i>not</i> executed for these UFOs. This was different for UFOProcessor that swapped glyphs according to the rules. Motivation: rule execution has become very sophisticated and can not always be emulated by swapping. So, it needs to happen, but not here.
-                </li>
-                <li>
-                    While pretty fast, this will take a bit of time.
-                </li>
-            </ul>
-        </li>
-        <li>
-            <code><b>makeInstance</b>(instanceDescriptor, glyphNames=None, decomposeComponents=False, pairs=None, bend=False)</code> this saves a single UFO instance to disk.
-            <ul>
-                <li>
-                    <code>glyphNames</code> is an optional list of glyph names to generate. Note this does not update any features.
-                </li>
-                <li>
-                    <code>decomposeComponents</code> can be True to decompose all glyphs. This is useful when generating small sets of outlines for a preview.
-                </li>
-                <li>
-                    <code>pairs</code> is an optional list of kern pairs to make. If no pairs given, all kerning will be calculated.
-                </li>
-            </ul>
-        </li>
-    </ul>
-</p>
-
-<h4>Preparing a UFOOperator</h4>
-
-<p>
-    <ul>
-        <li>
-            <code><b>loadFonts</b>()</code>: this loads the fonts, needs to called before anything can be calculated. Note: the designspace you get from CurrentDesignspace already has the fonts loaded.
-        </li>
-        <li>
-            <code><b>updateFonts</b>(fontObjects)</code>: fontObjects is a list of RoboFont font objects that are to be used in the designspace. If you want to explicitly want to put new fonts in the machine.
-        </li>
-        <li>
-            <code><b>getFonts</b>()</code> returns a list of (font object, location) tuples. Note: the same font object can be used in multiple locations.
-        </li>
-    </ul>
-</p>
-
-<h4>Methods for locations</h4>
-
-<p>
-    <ul>
-        <li>
-            <code><b>findDefault</b>(discreteLocation=None)</code> returns the default location for the system or the discrete location.
-        </li>
-        <li>
-            <code><b>findAllDefaults</b>()</code> collect all default sourcedescriptors for all discrete locations.
-        </li>
-        <li>
-            <code><b>findDefaultFont</b>(discreteLocation=None)</code>: returns the default fontObject for the system or the discrete location.
-        </li>
-        <li>
-            <code><b>splitLocation</b>(location)</code>: returns the design location split into a <b>continouous</b> and a <b>discrete</b> part
-        </li>
-        <li>
-            <code><b>getFullDesignLocation</b>(location)</code>: returns the given location converted to designspace coordinates.
-        </li>
-        <li>
-            <code><b>getDiscreteLocations</b>()</code>: return a list of all possible discrete locations for this system.
-        </li>
-        <li>
-            <code><b>newDefaultLocation</b>(bend=False, discreteLocation=None)</code>: returns a new location that is on the default of all axes.
-            <ul>
-                <li>
-                    Use `bend=True` to get a default in user space coordinates.
-                </li>
-                <li>
-                    Use `bend=False` to get the default in designspace coordinates.</li>
-                <li>
-                    Pass a discreteLocation dict to obtain the default for that discrete location.
-                </li>
-            </ul>
-        </li>
-        <li>
-            <code><b>isAnisotropic</b>(location)</code> returns True if this location is anisotropic.
-        </li>
-        <li>
-            <code><b>splitAnisotropic</b>(location)</code> returns the x and y components of this location as two separate location dicts.
-        </li>
-        <li>
-            <code><b>getLocationType</b>(location)</code> splits the location in its anisotropic components, as well as continuous and discrete parts. Specifically returns: <code>anisotropic, continuousLocation, discreteLocation, locHorizontal, locVertical</code>.
-        </li>
-        <li>
-            <code><b>randomLocation</b>(extrapolate=0, anisotropic=False, roundValues=True, discreteLocation=None)</code> returns a good, reliable random location, for quick testing and entertainment. This is more complicated than you might think.
-            <ul>
-                <li>
-                    <code>extrapolate=0</code> is a factor that determines the amount of extrapolation. The <code>(max-min)</code> distance. So <code>0 = no extrapolation</code>. And <code>0.1 = 0.1 * (max - min)</code>
-                </li>
-                <li>
-                    <code>anisotropic=True</code> <i>all</i> continuous axes get separate x, y values
-                </li>
-                <li>for discrete axes a random choice from the defined values is return</li>
-                <li>for continuous axes an interpolated value between axis.minimum and axis.maximum
-  * Note: this returns a designspace location, not a userspace location.</li>
-            </ul>
-        </li>
-        <li>
-            <code><b>locationWillClip</b>(location</code> will return True is this designlocation will be clipped in one or more of the axes.
-        </li>
-        <li>
-            <code><b>clipDesignLocation</b>(location)</code> returns a clipped version of this designlocation
-        </li>
-        <li>
-            <code><b>getAxisExtremes</b>(axisRecord)</code> returns the <code>axisMinimum</code>, <code>axisDefault</code> and <code>axisMaximum</code> in design coordinates. Designspace axisDescriptors keep these axis values in userspace coordinates and that is not always practical.
-        </li>
-    </ul>
-</p>
-
-<h4>Miscellaneous</h4>
-
-<p>
-    <ul>
-        <li>
-            <code><b>glyphChanged</b>(glyphName, includeDependencies=False)</code>. This instructs the operator to clear any cached data related to this glyph. If you want to make sure the next time you calculate something with this glyph the results will be fresh. There are more specific cache-related methods.
-        </li>
-        <li>
-            <code><b>collectForegroundLayerNames</b>()</code> returns a list of the names of all the foreground layers used by all sources.
-        </li>
-        <li>
-            <code><b>getCharacterMapping</b>(discreteLocation=None)</code> returns a unicode -> glyphname map for the default of the whole system or discreteLocation. As the defaults at discrete locations can be quite different, UFOOperator makes no assumptions about what is available.
-        </li>
-    </ul>
-</p>
 
 
 <h2 id="acknowledgements">Acknowledgements<a href="#toc">↑</a></h2>
