@@ -126,10 +126,20 @@ class UseVarLib:
         self.operator.useVarlib = self.previousModel
 
 
+symbolColorMap = dict(
+    primary=AppKit.NSColor.labelColor,
+    secondary=AppKit.NSColor.secondaryLabelColor
+)
+
+
 def symbolImage(symbolName, color, flipped=False):
     image = AppKit.NSImage.imageWithSystemSymbolName_accessibilityDescription_(symbolName, "")
+    if isinstance(color, tuple):
+        color = AppKit.NSColor.colorWithCalibratedRed_green_blue_alpha_(*color)
+    else:
+        color = symbolColorMap[color]()
     configuration = AppKit.NSImageSymbolConfiguration.configurationWithHierarchicalColor_(
-        AppKit.NSColor.colorWithCalibratedRed_green_blue_alpha_(*color)
+        color
     )
     image = image.imageWithSymbolConfiguration_(configuration)
     if flipped:

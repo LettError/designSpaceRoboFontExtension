@@ -29,7 +29,7 @@ showInstancesDefaultKey = f"{extensionIdentifier}.showInstances"
 shouldSortByDefaultKey = f"{extensionIdentifier}.shouldSortBy"
 
 
-previewLocationButtonImage = symbolImage("mappin.and.ellipse", (0, 0, 0, 1))
+previewLocationButtonImage = symbolImage("mappin.and.ellipse", "primary")
 
 indicatorImageMap = dict(
     source=symbolImage("smallcircle.filled.circle.fill", (1, .5, 0, 1)),
