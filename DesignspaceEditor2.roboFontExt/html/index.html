@@ -15,13 +15,13 @@
 </h1>
 
 
-<p>Create and edit designspaces with Robofont 4.5+, with support for scripting.
+<p>Create and edit designspaces with Robofont 4.5+, with support for scripting and notifications.
     <br>By TypeMyType and LettError.
 </p>
 
 <h3 id="toc">Contents</h3>
 <ul>
-    <li><a href="#designspace-editor">Designspace Editor 2 Usage</a></li>
+    <li><a href="#designspace-editor">Getting Started</a></li>
     <li><a href="#toolbar">Toolbar</a></li>
     <li><a href="#axes">Axes Tab</a></li>
     <li><a href="#sources">Sources Tab</a></li>
@@ -31,7 +31,7 @@
     <li><a href="#variable-fonts">Variable Fonts Tab</a></li>
     <li><a href="#problems">Problems Tab</a></li>
     <li><a href="#notes">Notes Tab</a></li>
-    <li><a href="#location-preview-window">Location Preview Window</a></li>
+    <li><a href="#location-preview-window">Preview Window</a></li>
     <li><a href="#designspace-scripting">Scripting with the current designspace</a></li>
     <li><a href="#ufooperator-methods">Useful methods of the UFOOperator</a></li>
     <li><a href="#designspace-notifications">Notifications</a></li>
@@ -44,12 +44,12 @@
 <h3>Goals</h3>
 
 <ul>
-<li>Open, edit and save existing <a
+<li>Create, open, edit and save existing <a
         href="https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html"
         >
         designspaces format 5</a> files.</li>
-<li>You can create a new designspace and fill it with axes, sources and instances.</li>
-<li>You can edit all sorts of axis labels, location labels and localisations.</li>
+<li>You can create a new designspace and populate it with axes, sources and instances.</li>
+<li>You can edit all sorts of axis labels, location labels and add localisations.</li>
 <li>You can quickly open the UFOs listed as sources.</li>
 <li>You can generate UFOs for defined instances.</li>
 <li>You can preview and <a href="#instances">add instances</a>.</li>
@@ -89,25 +89,25 @@
 
     <tr>
         <td class="smallicon">
-            <a href="#axes">Axes</a>
+            <a href="#axes">Axes Tab</a>
         </td>
         <td class="smallicon">
-            <a href="#sources">Sources</a>
+            <a href="#sources">Sources Tab</a>
         </td>
         <td class="smallicon">
-            <a href="#instances">Instances</a>
+            <a href="#instances">Instances Tab</a>
         </td>
         <td class="smallicon">
-            <a href="#rules">Rules</a>
+            <a href="#rules">Rules Editor</a>
         </td>
         <td class="smallicon">
-            <a href="#location-labels">Location Labels</a>
+            <a href="#location-labels">Location Labels Editor</a>
         </td>
         <td class="smallicon">
-            <a href="#variable-fonts">Variable Fonts</a>
+            <a href="#variable-fonts">Variable Fonts Editor</a>
         </td>
         <td class="smallicon">
-            <a href="#problems">Problems</a>
+            <a href="#problems">Problems Tab</a>
         </td>
     </tr>
 
@@ -125,13 +125,13 @@
 
     <tr>
         <td class="smallicon">
-            <a href="#location-preview-window">Location Preview Window</a>
+            <a href="#location-preview-window">Open Preview Window</a>
         </td>
         <td class="smallicon">
-            Save Document
+            Save the Designspace
         </td>
         <td class="smallicon">
-            Help
+            Open Documentation
         </td>
     </tr>
 
@@ -141,12 +141,12 @@
 
 
 
-<h2 id="designspace-editor">Designspace Editor Usage <a href="#toc">↑</a></h2>
+<h2 id="designspace-editor">Getting Started <a href="#toc">↑</a></h2>
 
 <ol>
-<li>From the RF extensions menu, <b>open an existing designspace</b> or <b>create a new one.</b></li>
-<li>Add at least one axis in the <a href="#axes">Axes Tab</a>. Give it a useful name and make sure it has the appropriate tag, and make sure the minimum, default and maximum values make sense.</li>
-<li>Add source UFOs
+<li>Look for DSE2 in the RF File menu: <b>New Designspace, Open Designspace</b> or <b>Open Recent Designspace</b></li>
+<li>If you're starting from scratch: add the first axis in the <a href="#axes">Axes Tab</a>. Give it a useful name, and make sure it has the appropriate 4 letter axis tag. You know, <code>wght</code>, <code>wdth</code>, <code>slnt</code>, <code>ital</code> and <code>opsz</code>. Or if you're inventing a new axis, make the tag in all-caps like <code>TIME</code> or <code>GRAD</code>. Make sure the minimum, default and maximum values make sense.</li>
+<li>Then add at least two source UFOs
     <ul>
         <li>
             with the file dialog
@@ -372,7 +372,7 @@ Quick buttons for easy axes. Obviously you can edit these values here.
             <b>Move to Default Location</b>: this puts the source at the default location of the continuous axes. Values will be in design coordinates.
         </li>
         <li>
-            <b>Set preview to Location</b>: If you have a Location Preview window open, it will show this location.
+            <b>Set preview to Location</b>: If you have a Preview window open, it will show this location.
         </li>
         <li>
             <b>Force Refresh of All Sources</b>: bug clunky debugging reset.
@@ -490,7 +490,7 @@ a b c d</code></pre>
             <b>Convert to Design Location</b>: convert this user coordinates to design coordinates, according to axis mapping.
         </li>
         <li>
-            <b>Set Preview to Selection</b>: If you have a Location Preview window open, it will show this location.
+            <b>Set Preview to Selection</b>: If you have a Preview window open, it will show this location.
         </li>
         <li>
             <b>New instance inbetween</b>: with two instances selected in the same discrete location, this creates a new instance between the two.
@@ -611,7 +611,7 @@ switching a&#39;s
 
 <p>The location labels tab is an editor for defining labels for specific points in the designspace. This data can be used to define parts of a STAT table.</p>
 
-<a href="https://fonttools.readthedocs.io/en/latest/designspaceLib/xml.html#labels-element-top-level">See also fonttools documentation</a>
+<a href="https://fonttools.readthedocs.io/en/latest/designspaceLib/xml.html#labels-element-top-level">See fontTools documentation on the top-level <code>labels</code> element.</a>
 
 <h3>Location Labels syntax</h3>
 
@@ -645,7 +645,7 @@ Neue Style Italic
 
 <p>This describes different subset variable fonts that can be generated from the current designspace file. For instance this could mean a smaller number of axes, or a specific range of an axis. You can also specify different filenames for these variable fonts.</p>
 
-<a href="https://fonttools.readthedocs.io/en/latest/designspaceLib/xml.html#variable-fonts-element">See also fonttools documentation</a>
+<a href="https://fonttools.readthedocs.io/en/latest/designspaceLib/xml.html#variable-fonts-element">See fontTools documentation on the <code>variable-font</code> element.</a>
 
 <h3>Variable Fonts syntax</h3>
 
@@ -708,10 +708,10 @@ This uses <a
 <p>This tab is for your notes and are stored in the Designspace. This can be any kind of note or remark. Notes are not processed in any way.</p>
 
 
-<h2 id="location-preview-window">Location Preview Window<a href="#toc">↑</a></h3>
+<h2 id="location-preview-window">Preview Window<a href="#toc">↑</a></h3>
 
 <p>
-    <img alt="screenshot of DSE2 location preview window" src="screenshot_mutatorsans_previewwindow1.jpg">
+    <img alt="screenshot of DSE2 preview window" src="screenshot_mutatorsans_previewwindow1.jpg">
 </p>
 
 <p>
@@ -719,20 +719,28 @@ This uses <a
 </p>
 
 <ul>
-    <li><img alt="icon for the location preview window" src="chart.bar.doc.horizontal2x.png"> </li>
+    <li><img alt="icon for the preview window" src="chart.bar.doc.horizontal2x.png"> Preview Window icon. </li>
     <li>Type text and /glyphnames in the text box at the top.</li>
-    <li>Some options available in the two menus at the top right:
+    <li>Options available in the left menu at the top right:
         <ul>
             <li>
-                Single Line / Multiline: see all selected locations on separate lines, or on a single line.
+                <b>Single Line / Multiline:</b> see all selected locations on separate lines, or on a single line.
             </li>
-            <li>Invert: white on black, or black on white</li>
-            <li>Show Sources / Show Instances: if checked, show the selected items from each tab.</li>
-            <li>Sort Line by area: rank the lines based on the total surface areas of all glyphs on the line. This is calculated without removing overlap, so there may be some edge cases.</li>
-            <li>Sort Line by length: rank the lines by their total length.</li>
-            <li>Sort Line by density: rank the lines by the black / white ratio</li>
-
-
+            <li>
+                <b>Invert:</b> white on black, or black on white</li>
+            <li>
+                <b>Show Sources / Show Instances:</b> show the selected items from the sources tab, or from the instances tab, or both.</li>
+            <li>
+                <b>Sort Line by area:</b> rank the preview lines based on the total surface areas of all glyphs on the line. This is calculated without removing overlap, so there may be some errors.</li>
+            <li>
+                <b>Sort Line by length:</b> rank the lines by their total length.</li>
+            <li>
+                <b>Sort Line by density:</b> rank the lines by the black / white ratio</li>
+            </li>
+        </ul>
+    </li>
+    <li>A basic axis location panel is available from the <b>pin-on-ellipse</b> icon at the top right. A preview line is shown, marked with a red pin.
+<img src="previewWindow_options2.png">
     </li>
 </ul>
 
