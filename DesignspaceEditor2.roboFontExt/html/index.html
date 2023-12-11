@@ -22,7 +22,7 @@
 <h3 id="toc">Contents</h3>
 <ul>
     <li><a href="#designspace-editor">Getting Started</a></li>
-    <li><a href="#toolbar">Toolbar</a></li>
+    <li><a href="#toolbar">DSE2 Toolbar</a></li>
     <li><a href="#axes">Axes Tab</a></li>
     <li><a href="#sources">Sources Tab</a></li>
     <li><a href="#instances">Instances Tab</a></li>
@@ -60,7 +60,7 @@
 </ul>
 
 
-<h2 id="toolbar">Toolbar <a href="#toc">↑</a></h2>
+<h2 id="toolbar">DSE2 Toolbar <a href="#toc">↑</a></h2>
 
 <table>
     <tr>
@@ -141,12 +141,24 @@
 
 
 
-<h2 id="designspace-editor">Getting Started <a href="#toc">↑</a></h2>
+<h2 id="designspace-editor">Getting Started<a href="#toc">↑</a></h2>
 
+This is 
 <ol>
-<li>Look for DSE2 in the RF File menu: <b>New Designspace, Open Designspace</b> or <b>Open Recent Designspace</b></li>
-<li>If you're starting from scratch: add the first axis in the <a href="#axes">Axes Tab</a>. Give it a useful name, and make sure it has the appropriate 4 letter axis tag. You know, <code>wght</code>, <code>wdth</code>, <code>slnt</code>, <code>ital</code> and <code>opsz</code>. Or if you're inventing a new axis, make the tag in all-caps like <code>TIME</code> or <code>GRAD</code>. Make sure the minimum, default and maximum values make sense.</li>
-<li>Then add at least two source UFOs
+<li>Look for DSE2 in the RoboFont File menu: <b>New Designspace, Open Designspace</b> or <b>Open Recent Designspace</b></li>
+<li>If you're starting from scratch: add the first axis in the <a href="#axes">Axes Tab</a>.
+    <ul>
+        <li>
+            There are buttons to quickly make a new <b>Weight, Width</b> or <b>Optical</b> axes with reasonable default values.</li>
+        <li>
+            Or click the <b>+</b> button to create a new axis.</li>
+        <li>
+            Give it a useful name (no spaces), and make sure it has the appropriate 4 letter axis tag. You know, <code>wght</code>, <code>wdth</code>, <code>slnt</code>, <code>ital</code> and <code>opsz</code>.</li>
+        <li>
+            Or if you're inventing a new axis, make the tag in all-caps like <code>TIME</code> or <code>GRAD</code>. Make sure the minimum, default and maximum values make sense.</li>
+    </ul>
+</li>
+<li>Go to the <a href="#sources">Sources Tab</a> and at least two source UFOs
     <ul>
         <li>
             with the file dialog
@@ -158,15 +170,22 @@
             or drag and drop into the DSE <a href="#sources">Sources Tab</a>
         </li>
     </ul>
-    Then add the axis values for each new source. Make sure there is at least 1 source on the default value of all axes.
+    Then edit the axis values for each new source. Make sure there is at least 1 source on the default value of all axes. Make sure there aren't multiple sources on one location.
 </li>
-<li>Save the designspace in <b>the same folder as your sources, or one level up.</b> It stores a relative path to the sources and instances, so it makes sense to keep them close together.</li>
-<li><a href="#instances">Add instances</a>, rules, axis labels, location labels and whatever else you need to do.</li>
-<li>Preview selected instances in text. </li>
+<li>Save the designspace in <b>the same folder as your sources, or one level up.</b> The designspace format stores a <b>relative path to the sources and instances,</b> so keep them close together.</li>
+<li><a href="#instances">Add instances</a>, <a href="#rules">rules</a>, <a href="#axis-label-editor">axis labels</a>, <a href="#location-labels">location labels</a> and whatever else you need to do.</li>
+<li>Check the Problems Tab to see if there are no immediate issues with your setup.</li>
+<li>Preview selected instances in text, and create new instances</li>
 <li>Save early and often.</li>
 </ol>
 
 Note that DSE2 does not maintain formatting or comments in designspace it edits. We know some of you are very particular about the xml.
+
+
+
+
+
+
 
 
 
@@ -296,7 +315,7 @@ Quick buttons for easy axes. Obviously you can edit these values here.
     </li>
 </ul>
 
-<h3>Axis Label editor syntax</h3>
+<h3 id="axis-label-editor">Axis Label editor syntax</h3>
 
 <div><pre><code class="language-none"># Axis Labels syntax
 
@@ -410,7 +429,7 @@ Quick buttons for easy axes. Obviously you can edit these values here.
     </tr>
     <tr>
         <td><strong>Layer Name</strong></td>
-        <td>name of the layer to be used as a source. Leave blank for default, &quot;foreground&quot;. <em>Optional</em></td>
+        <td>name of the layer to be used as a source. Leave blank for default, &quot;foreground&quot;. <em>Optional</em> See <a href="#note-on-support-layers">Note on Support Layers.</a></td>
     </tr>
     <tr>
         <td>🌐</td>
@@ -436,13 +455,56 @@ Quick buttons for easy axes. Obviously you can edit these values here.
 ? ja &#39;モンセラート&#39;</code></pre>
 </div>
 
-<h3>Muted Glyph editor syntax</h3>
+<h3>Note on Muted Glyph editor syntax</h3>
 
 <div><pre><code class="language-none"># a space separated list of glyph names
 a b c d</code></pre>
 </div>
 
 
+<h3 id="note-on-support-layers">Support layer, sparse master, brace layer</h3>
+
+The <b>Layer Name</b> column can point to an optional layer name from the source UFO. If this field is empty, DSE2 will use the foreground layer. It can be useful, in some interpolations, to have an additional source for a glyph in a specific place. Perhaps the diagonals are getting a bit thin. Maybe a counter needs to be opened up a bit.
+
+The idea is that you can add a source only for that specific glyph at a very specific point in the designspace.
+
+<ul>
+    <li>Skateboard calls this construction a <b>Support Layer</b></li>
+    <li>FontTools / FontMake calls this construction a <b>Sparse Master</b></li>
+    <li>Glyphs calls this construction a <b>Brace Layer</b></li>
+</ul>
+
+The idea is the same, the names differ and the expectations and implementation also differ. MutatorMath designspaces always had this flexibility. Skateboard explored ways to make it easier to add such layers. And FontMake has implemented some support. But it is important to understand the limitations of this construction.
+
+<ul>
+    <li>You can put glyphs in their own UFO, or in a layer in one of the other sources.</li>
+    <li>In general, <b>supports aren't expected to have kerning or features.</b> If the changes in the support shape are such that it also needs an adjustment in kerning, you probably have to make this a full source. Check the fontmake documentation</li>
+    <li>The layer name field is just a string, make sure you copy the layer name correctly.</li>
+    <li>Each support layer you add fractures the designspace a little bit. The new source changes the reach of the existing sources. Meaning: effects of existing sources may become more limited and cause previous work to become invisible.</li>
+    <li><b>Adding support layers requires caution.</b></li>
+</ul>
+
+
+<h3>How are support layers interpreted?</h3>
+
+<ul>
+    <li>This <a href="https://github.com/googlefonts/fontmake/issues/607">discussion on GitHub</a> gives an impression of the issues you can run into with support layers.
+    </li>
+
+    <li>
+        When making previews or instance UFOs with <b>MutatorMath,</b> the interpolations are setup with the available sources for each glyph. And these can be different per glyph. MutatorMath will interpolate or extrapolate if sources are missing. Problem is: none of the other tools work like this.
+    </li>
+    <li>
+        The <b>Varlib</b> interpolation model is not as forgiving and may complain that glyphs are empty.
+    </li>
+    <li>
+        Building variable fonts with support layers: some tools like Batch, will use MutatorMath to calculate all the missing data for the support layer and essentially make it complete before continuing. This can have consequences for file size (for isntance)</li>
+    <li><b>FontGoggles</b> shows support layers without problems</li>
+    <li><b>DSE2's own Preview window</b> shows support layers, in context, inbetween other lines!</li>
+</ul>
+
+<img alt="screenshot of DSE2 showing a sparse master in the Mutator Sans demo font." src="sparse_master.png">
+<p class="caption">DSE2 Preview window showing an absurdly wide S from a support layer in MutatorSans.</p>
 
 
 <p><img class="bigicon" src="toolbar_500_500_icon_instances.png" alt="DSE2 instances icon"></p>
@@ -786,8 +848,6 @@ for doc in AllDesignspaces(usingFont=f):
 
 Only using Test-Light.ufo: Experimental_serif.designspace</code></pre>
 
-<a href="robofont-script://drawBot_currentDesignspace_grid.py">Example of Scripting in Drawbot in RoboFont</a>
-
 <h3>Calculating kerning and info</h3>
 This example calculates a single kerning pair and a font info object. <code>makeOneKerning</code> accepts an optional list of pairs to calculate. This can be faster, for instance if you want to prepare a preview of just a handful of glyphs, but with proper kerning. If no pairs are given, all pairs will be calculated. This is still fast, but it all adds up,
 
@@ -827,6 +887,8 @@ with savedState():
         drawPath(bp)
 </pre>
 </code>
+
+<a href="https://github.com/LettError/designSpaceRoboFontExtension/tree/master/Scripting%20examples">More scripting examples in the GitHub designSpaceRoboFontExtension repository.</a>
 
 <h2 id="ufooperator-methods">Useful methods of UFOOperator<a href="#toc">↑</a></h2>
 
