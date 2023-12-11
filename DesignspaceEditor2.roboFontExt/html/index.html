@@ -25,6 +25,7 @@
     <li><a href="#toolbar">DSE2 Toolbar</a></li>
     <li><a href="#axes">Axes Tab</a></li>
     <li><a href="#sources">Sources Tab</a></li>
+    <li><a href="#note-on-support-layers">Notes on support layer, sparse master, brace layer</a></li>
     <li><a href="#instances">Instances Tab</a></li>
     <li><a href="#rules">Rules Tab</a></li>
     <li><a href="#location-labels">Location Labels Tab</a></li>
@@ -455,18 +456,18 @@ Quick buttons for easy axes. Obviously you can edit these values here.
 ? ja &#39;モンセラート&#39;</code></pre>
 </div>
 
-<h3>Note on Muted Glyph editor syntax</h3>
+<h3>Muted Glyph editor syntax</h3>
 
 <div><pre><code class="language-none"># a space separated list of glyph names
 a b c d</code></pre>
 </div>
 
 
-<h3 id="note-on-support-layers">Support layer, sparse master, brace layer</h3>
+<h3 id="note-on-support-layers">Notes on the Layer Name column and support layers</h3>
 
-The <b>Layer Name</b> column can point to an optional layer name from the source UFO. If this field is empty, DSE2 will use the foreground layer. It can be useful, in some interpolations, to have an additional source for a glyph in a specific place. Perhaps the diagonals are getting a bit thin. Maybe a counter needs to be opened up a bit.
+In the DSE Sources Tab, the <b>Layer Name</b> column can point to an optional layer name from the source UFO. If this field is empty, DSE2 will use the foreground layer. It can be useful, in some interpolations, to have an additional source for a glyph in a specific place. Perhaps the diagonals are getting a bit thin. Maybe a counter needs to be opened up a bit.
 
-The idea is that you can add a source only for that specific glyph at a very specific point in the designspace.
+The idea is that you can add a source only for that specific glyph at a very specific point in the designspace. Check out <a href="https://github.com/LettError/mutatorSans">Mutator Sans</a> for some examples of a Support Layer.
 
 <ul>
     <li>Skateboard calls this construction a <b>Support Layer</b></li>
@@ -478,10 +479,19 @@ The idea is the same, the names differ and the expectations and implementation a
 
 <ul>
     <li>You can put glyphs in their own UFO, or in a layer in one of the other sources.</li>
-    <li>In general, <b>supports aren't expected to have kerning or features.</b> If the changes in the support shape are such that it also needs an adjustment in kerning, you probably have to make this a full source. Check the fontmake documentation</li>
+    <li>In general, <b>supports aren't expected to have kerning or features.</b> If the changes in the support shape are such that it also needs an adjustment in kerning, you probably have to make this a full source.</li>
     <li>The layer name field is just a string, make sure you copy the layer name correctly.</li>
     <li>Each support layer you add fractures the designspace a little bit. The new source changes the reach of the existing sources. Meaning: effects of existing sources may become more limited and cause previous work to become invisible.</li>
-    <li><b>Adding support layers requires caution.</b></li>
+    <li>So if you want to fix kinking issues (for example) you're probably in a part of the designspace that is the combination of two or more axes. In MutatorMath nomenclature the location is "non-aligned off-axis". And then you add a fix for another issue for a different glyph at a different location. Each new off-axis fix will have an influence on the visibility of the preceeding one and it can become messy</li>
+</ul>
+
+<h3>Support layer recommendations</h3>
+<ul>
+    <li><b>Adding support layers requires caution!</b></li>
+    <li><b>Try to solve the issue in the existing on-axis and aligned sources before adding support layers.</b></li>
+    <li><b>Try to avoid multiple support layers at different locations.</b></li>
+    <li><b>If you must, try to combine fixes at a single support layer at a single location.</b></li>
+    <li><b>Try to reduce the number of support layers.</b></li>
 </ul>
 
 
@@ -498,7 +508,7 @@ The idea is the same, the names differ and the expectations and implementation a
         The <b>Varlib</b> interpolation model is not as forgiving and may complain that glyphs are empty.
     </li>
     <li>
-        Building variable fonts with support layers: some tools like Batch, will use MutatorMath to calculate all the missing data for the support layer and essentially make it complete before continuing. This can have consequences for file size (for isntance)</li>
+        Building variable fonts with support layers: some tools like Batch, will use MutatorMath to calculate all the missing data for the support layer and essentially make it complete before continuing. This can have consequences for file size (for instance)</li>
     <li><b>FontGoggles</b> shows support layers without problems</li>
     <li><b>DSE2's own Preview window</b> shows support layers, in context, inbetween other lines!</li>
 </ul>
