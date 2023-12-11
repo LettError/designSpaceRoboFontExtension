@@ -992,10 +992,10 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
         # PROBLEMS
         self.problems.tools = vanilla.SegmentedButton(
-            (10, 5, 90, 22),
+            (10, 5, 120, 22),
             selectionStyle="momentary",
             callback=self.problemsToolsCallback,
-            segmentDescriptions=[dict(title="Validate")]
+            segmentDescriptions=[dict(title="Check for problems")]
         )
 
         problemsColumnDescriptions = [
