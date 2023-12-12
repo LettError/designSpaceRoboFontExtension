@@ -40,7 +40,6 @@ sp = CurrentSpaceCenter()
 if sp is None:
     sp = OpenSpaceCenter(previewFont)
 
-#
 sp.setFont(previewFont)
 sp.setRaw(f'HHOHOO \n {defaultFont.info.styleName}')
 
