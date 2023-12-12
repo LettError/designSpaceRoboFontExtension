@@ -332,6 +332,11 @@ def designspaceEventExtractor(subscriber, info):
             info[attribute] = data[attribute]
 
 
+
+eventEligibilityFunctionMap = dict(
+
+)
+
 for event in designspaceEvents:
     documentation = "".join([" " + c if c.isupper() else c for c in event.replace("designspaceEditor", "")]).lower().strip()
     registerSubscriberEvent(
@@ -341,6 +346,7 @@ for event in designspaceEvents:
         dispatcher="roboFont",
         documentation=f"Send when a Designspace Editor {documentation}.",
         eventInfoExtractionFunction=designspaceEventExtractor,
+        eventEligibilityFunction=eventEligibilityFunctionMap.get(event, None),
         delay=.2,
         debug=True
     )

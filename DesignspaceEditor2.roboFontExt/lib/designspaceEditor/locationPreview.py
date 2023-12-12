@@ -436,19 +436,16 @@ class LocationPreview(Subscriber, WindowController):
     designspaceEditorPreviewLocationDidChangeDelay = 0.01
 
     def designspaceEditorPreviewLocationDidChange(self, notification):
-        if self.operator == notification["designspace"]:
-            self.shouldShowPreviewLocation = notification["location"]
-            self.updatePreview()
+        self.shouldShowPreviewLocation = notification["location"]
+        self.updatePreview()
 
     def designspaceEditorInstancesDidChangeSelection(self, notification):
-        if self.operator == notification["designspace"]:
-            self.selectedInstances = notification["selectedItems"]
-            self.updatePreview()
+        self.selectedInstances = notification["selectedItems"]
+        self.updatePreview()
 
     def designspaceEditorSourcesDidChangeSelection(self, notification):
-        if self.operator == notification["designspace"]:
-            self.selectedSources = notification["selectedItems"]
-            self.updatePreview()
+        self.selectedSources = notification["selectedItems"]
+        self.updatePreview()
 
 
 if __name__ == '__main__':
