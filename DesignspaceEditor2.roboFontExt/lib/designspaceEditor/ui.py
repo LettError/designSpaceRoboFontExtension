@@ -1978,5 +1978,6 @@ if __name__ == '__main__':
     designspaceBundle = ExtensionBundle(path=pathForBundle)
 
     path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
-    #path = None
+    # path = "/Users/frederik/Documents/fontsGit/RoboType/RF.designspace"
+    # path = None
     DesignspaceEditorController(path)

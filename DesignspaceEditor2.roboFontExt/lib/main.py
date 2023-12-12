@@ -332,10 +332,13 @@ def designspaceEventExtractor(subscriber, info):
             info[attribute] = data[attribute]
 
 
+def designspaceEditorEventEligibility(subscriber, notification):
+    if not hasattr(subscriber, "operator"):
+        return True
+    elif "designspace" not in notification:
+        return True
+    return notification["designspace"] == subscriber.operator
 
-eventEligibilityFunctionMap = dict(
-
-)
 
 for event in designspaceEvents:
     documentation = "".join([" " + c if c.isupper() else c for c in event.replace("designspaceEditor", "")]).lower().strip()
@@ -346,7 +349,7 @@ for event in designspaceEvents:
         dispatcher="roboFont",
         documentation=f"Send when a Designspace Editor {documentation}.",
         eventInfoExtractionFunction=designspaceEventExtractor,
-        eventEligibilityFunction=eventEligibilityFunctionMap.get(event, None),
+        eventEligibilityFunction=designspaceEditorEventEligibility,
         delay=.2,
         debug=True
     )
