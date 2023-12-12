@@ -1105,10 +1105,11 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         self.axisPopover = AxisAttributesPopover(self.axes.list, self.operator, closeCallback=self.axesChangedCallback)
 
     def axesListEditCallback(self, sender):
-        self.axesChangedCallback()
+        self.axesChangedCallback(shouldReload=False)
 
-    def axesChangedCallback(self):
-        self.axes.list.getNSTableView().reloadData()
+    def axesChangedCallback(self, shouldReload=True):
+        if shouldReload:
+            self.axes.list.getNSTableView().reloadData()
         self.setDocumentNeedSave(True, who="Axes")
 
     def axesListSelectionCallback(self, sender):
