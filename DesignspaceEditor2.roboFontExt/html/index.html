@@ -144,7 +144,7 @@
 
 <h2 id="designspace-editor">Getting Started<a href="#toc">↑</a></h2>
 
-This is 
+This is
 <ol>
 <li>Look for DSE2 in the RoboFont File menu: <b>New Designspace, Open Designspace</b> or <b>Open Recent Designspace</b></li>
 <li>If you're starting from scratch: add the first axis in the <a href="#axes">Axes Tab</a>.
@@ -598,7 +598,7 @@ The idea is the same, the names differ and the expectations and implementation a
     <tr>
         <td><strong>📍</strong>
         </td>
-        <td>The icons in this column indicate if the location values are specified as 👤userspace (a person icon, because user), or ✏️designspace (a pencil icon because design). See Note 1. 
+        <td>The icons in this column indicate if the location values are specified as 👤userspace (a person icon, because user), or ✏️designspace (a pencil icon because design). See Note 1.
         </td>
     </tr>
     <tr>
@@ -827,7 +827,7 @@ This uses <a
 With a document open in DesignspaceEditor you can call <code>CurrentDesignspace()</code>, similar to <code>CurrentFont()</code> and <code>CurrentGlyph()</code>. This returns the designspace wrapped in a <code>UFOOperator</code> object that can calculate single glyphs, kerning and font info.
 
 <h3>Making a glyph</h3>
-This example calculates a single glyph at the default location. It returns a mathGlyph. 
+This example calculates a single glyph at the default location. It returns a mathGlyph.
 
 <pre><code>d = CurrentDesignspace()
 loc = d.newDefaultLocation()
@@ -839,11 +839,11 @@ g2.fromMathGlyph(g)
 </code></pre>
 
 What is happening here? Step by step: <b>CurrentDesignspace</b> returns a UFOOperator object for the current designspace.
-<b>d.newDefaultLocation()</b> creates a dict representing the default location in design coordinates. For this example it is a quick way to get a valid location, but you will probably want to see more exotic locations. Then, <b>makeOneGlyph</b> creates a new glyph object for the given glyphName and a location dict. The result is a <b>MathGlyph</b> object that can be converted to a regular RoboFont glyph object. 
+<b>d.newDefaultLocation()</b> creates a dict representing the default location in design coordinates. For this example it is a quick way to get a valid location, but you will probably want to see more exotic locations. Then, <b>makeOneGlyph</b> creates a new glyph object for the given glyphName and a location dict. The result is a <b>MathGlyph</b> object that can be converted to a regular RoboFont glyph object.
 
 <h3>Setting the preview location</h3>
 
-DSE2 keeps track of the "current preview location". You can set this location with the UI and axis sliders in the Preview Window. But you can also set it with a script. 
+DSE2 keeps track of the "current preview location". You can set this location with the UI and axis sliders in the Preview Window. But you can also set it with a script.
 
 <pre><code>
 d = CurrentDesignspace()
@@ -1044,7 +1044,7 @@ print(d.axes)
             <code><b>findDefault</b>(discreteLocation=None)</code> returns the default location for the system or the discrete location.
         </li>
         <li>
-            <code><b>findAllDefaults</b>()</code> collect all default sourcedescriptors for all discrete locations. In a designspace with a discrete axis, every discrete location will have its own default. 
+            <code><b>findAllDefaults</b>()</code> collect all default sourcedescriptors for all discrete locations. In a designspace with a discrete axis, every discrete location will have its own default.
         </li>
         <li>
             <code><b>findDefaultFont</b>(discreteLocation=None)</code>: returns the default fontObject for the system or the discrete location.
@@ -1095,7 +1095,7 @@ print(d.axes)
             </ul>
         </li>
         <li>
-            <code><b>locationWillClip</b>(location</code> will return True is this designlocation will be clipped in one or more of the axes. Clipping can be an indication that the location is extrapolating. 
+            <code><b>locationWillClip</b>(location</code> will return True is this designlocation will be clipped in one or more of the axes. Clipping can be an indication that the location is extrapolating.
         </li>
         <li>
             <code><b>clipDesignLocation</b>(location)</code> returns a clipped version of this designlocation
@@ -1526,6 +1526,14 @@ registerRoboFontSubscriber(DesignspaceEditorSubscriber)
         </td>
         <td>DSE reports every change.</td>
         <td>Be careful, this will call a lot and might cause performance issues.</td>
+    </tr>
+
+    <tr>
+        <td>
+            <code>designspaceEditorPreviewLocationDidChange</code>
+        </td>
+        <td>DSE report changes to the preview location.</td>
+        <td></td>
     </tr>
 
     <tr>
