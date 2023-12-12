@@ -1714,8 +1714,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             self.w.getNSWindow().setDocumentEdited_(False)
 
     def setWindowTitleFromPath(self, path):
-        self.w.getNSWindow().setRepresentedURL_(AppKit.NSURL.fileURLWithPath_(path))
-        self.w.setTitle(os.path.basename(path))
+        if path is not None:
+            self.w.getNSWindow().setRepresentedURL_(AppKit.NSURL.fileURLWithPath_(path))
+            self.w.setTitle(os.path.basename(path))
 
     def updateColumnHeadersFromAxes(self):
         updateLists = [
