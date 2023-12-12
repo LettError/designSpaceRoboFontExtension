@@ -15,7 +15,8 @@ from mojo.extensions import getExtensionDefault, ExtensionBundle
 from mojo.roboFont import AllFonts, OpenFont, RFont, internalFontClasses
 
 from lib.tools.debugTools import ClassNameIncrementer
-from lib.tools.misc import coalescingDecorator
+from lib.tools.misc import coalescingDecorator, tryExceptDecorator
+
 from lib.cells.doubleClickCell import RFDoubleClickCell
 from lib.formatters import PathFormatter
 
@@ -40,12 +41,11 @@ registeredAxisTags = [
     ("weight", "wght"),
 ]
 
+
 preferredAxes = [
-    ("weight", "wght", 400, 700, 400),
-    ("width", "wdth", 50, 100, 100),
-    ("optical", "opsz", 10, 16, 10),
-    # ("italic", "ital", 0, 0, 0),  # must be a discrete axis
-    # ("slant", "slnt", -90, 0, 90),
+    ("weight", "wght", 400, 700, 400, dict(en="Weight")),
+    ("width", "wdth", 50, 100, 100, dict(en="Width")),
+    ("optical", "opsz", 10, 16, 10, dict(en="Optical Size")),
 ]
 
 designspacenotesLibKey = "designspaceEdit.notes"
@@ -354,6 +354,7 @@ class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
             return None
         return self.axisDescriptor.minimum
 
+    #@tryExceptDecorator
     def setAxisMinimum_(self, value):
         if self.axisIsDescrete():
             # convert to a continuous axis
@@ -373,6 +374,7 @@ class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
             return None
         return self.axisDescriptor.maximum
 
+    #@tryExceptDecorator
     def setAxisMaximum_(self, value):
         if self.axisIsDescrete():
             # convert to a continuous axis
@@ -388,6 +390,7 @@ class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
             return " ".join([numberToString(value) for value in self.axisDescriptor.values])
         return ""
 
+    #@tryExceptDecorator
     def setAxisDiscreteValues_(self, value):
         if not self.axisIsDescrete():
             # convert to a discrete axis
@@ -810,7 +813,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             (72, 5, 370, 22),
             selectionStyle="momentary",
             callback=self.axisEditorToolsCallback,
-            segmentDescriptions=[dict(title=f"Add {preferredAxis[0].title()} Axis") for preferredAxis in preferredAxes]
+            segmentDescriptions=[dict(title=f"Add {preferredAxis[-1]['en']} Axis") for preferredAxis in preferredAxes]
         )
 
         axisDoubleClickCell = RFDoubleClickCell.alloc().init()
@@ -1082,21 +1085,22 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         self.updateColumnHeadersFromAxes()
 
     def axisEditorToolsCallback(self, sender):
-        value = sender.get()
-        name, tag, minimum, maximum, default = preferredAxes[value]
-        self._addAxis(name, tag, minimum, maximum, default)
+        index = sender.get()
+        name, tag, minimum, maximum, default, labelNames = preferredAxes[index]
+        self._addAxis(name, tag, minimum, maximum, default, labelNames)
 
         self.setDocumentNeedSave(True, who="Axes")
         self.updateColumnHeadersFromAxes()
 
-    def _addAxis(self, name, tag, minimum, maximum, default):
+    def _addAxis(self, name, tag, minimum, maximum, default, labelNames=None):
         if self.validateAxisName(name) and self.validateAxisTag(tag):
             self.operator.addAxisDescriptor(
                 name=name,
                 tag=tag,
                 minimum=minimum,
                 maximum=maximum,
-                default=default
+                default=default,
+                labelNames=labelNames
             )
         else:
             print(f"Duplicate axis: '{name}'")
@@ -1980,5 +1984,5 @@ if __name__ == '__main__':
 
     path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
     # path = "/Users/frederik/Documents/fontsGit/RoboType/RF.designspace"
-    # path = None
+    path = None
     DesignspaceEditorController(path)
