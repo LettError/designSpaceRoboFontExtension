@@ -26,10 +26,10 @@ def grid(ds, glyphName, horizontalAxis, verticalAxis, columns, rows):
     return items
 
 # parameters 
-glyphName = "R"
+glyphName = "S"
 horizontalAxis = "width"
 verticalAxis = "weight"
-columns = 
+columns = 7
 
 rows = 9
 margin = 100

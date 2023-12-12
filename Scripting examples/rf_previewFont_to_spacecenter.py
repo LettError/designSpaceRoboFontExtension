@@ -1,8 +1,10 @@
 from fontTools.designspaceLib import InstanceDescriptor
-from mojo.UI import CurrentSpaceCenter, OpenSpaceCenter
+from mojo.UI import CurrentSpaceCenter, OpenSpaceCenter, splitText
 
 # Scripting with live designspaces
 # demo erik@letterror.com 12.12.2023
+
+proofText = "Designspace & UFOProcessor"
 
 # have a desigspace open in DSE2
 ds = CurrentDesignspace()
@@ -23,6 +25,8 @@ print("discrete part of the location:", discretePart)
 # get the default font
 # note we ask for the default of a specific discrete location here
 defaultFont = ds.findDefaultFont(discreteLocation=discretePart)
+glyphNames = splitText(proofText, defaultFont.asFontParts().getCharacterMapping())
+print("glyphNames", glyphNames)
 
 # make an "instance descriptor" object to specify what we want to see
 preview = InstanceDescriptor()
@@ -32,7 +36,7 @@ preview.familyName = defaultFont.info.familyName
 # now we're asking the designspace to make a font object with these specs
 # This makes the whole font. If you're just looking at a couple of characters
 # there are faster ways to do that. 
-previewFont = ds.makeInstance(preview).asFontParts()
+previewFont = ds.makeInstance(preview, glyphNames=glyphNames, decomposeComponents=True).asFontParts()
 
 # finally, we give the resulting font to the space center.
 # have a spacecenter open
@@ -41,7 +45,9 @@ if sp is None:
     sp = OpenSpaceCenter(previewFont)
 
 sp.setFont(previewFont)
-sp.setRaw(f'HHOHOO \n {defaultFont.info.styleName}')
+spString = "/" + "/".join(glyphNames)
+print('spString', spString)
+sp.setRaw(spString)
 
 # optionally, open the font window
 #previewFont.openInterface()
