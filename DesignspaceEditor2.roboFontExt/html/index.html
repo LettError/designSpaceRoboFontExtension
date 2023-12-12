@@ -841,6 +841,16 @@ g2.fromMathGlyph(g)
 What is happening here? Step by step: <b>CurrentDesignspace</b> returns a UFOOperator object for the current designspace.
 <b>d.newDefaultLocation()</b> creates a dict representing the default location in design coordinates. For this example it is a quick way to get a valid location, but you will probably want to see more exotic locations. Then, <b>makeOneGlyph</b> creates a new glyph object for the given glyphName and a location dict. The result is a <b>MathGlyph</b> object that can be converted to a regular RoboFont glyph object. 
 
+<h3>Setting the preview location</h3>
+
+DSE2 keeps track of the "current preview location". You can set this location with the UI and axis sliders in the Preview Window. But you can also set it with a script. 
+
+<pre><code>
+d = CurrentDesignspace()
+previewLoc = d.randomLocation()
+d.setPreviewLocation(previewLoc)</code></pre>
+
+
 <h3>Going through all designspaces</h3>
 
 You can use <code>AllDesignspaces()</code> to get a list of all open designspace documents. Optionally you can pass a font object with <code>usingFont</code> to get only the designspaces that use that font.

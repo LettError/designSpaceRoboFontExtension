@@ -1,33 +1,48 @@
 from fontTools.designspaceLib import InstanceDescriptor
-from mojo.UI import CurrentSpaceCenter
+from mojo.UI import CurrentSpaceCenter, OpenSpaceCenter
 
 # Scripting with live designspaces
-# demo erik@letterror.com 8.12.2023
+# demo erik@letterror.com 12.12.2023
 
 # have a desigspace open in DSE2
-d = CurrentDesignspace()
-
-# have a spacecenter open
-sp = CurrentSpaceCenter()
+ds = CurrentDesignspace()
 
 # you probably want more control over what axis values to look at
 # and maybe even a fancy interface
 # but that is beyond the scope of this demo
 # so for now, a random location
-loc = d.randomLocation()
+loc = ds.randomLocation()
+# the location is just a dict with axisName: axisValue pairs.
+print("location", loc)
 
-# see the location is just a dict with axisName: axisValue pairs,
-print(loc)
+# we can split this random location into its continuous and discrete parts
+continuousPart, discretePart = ds.splitLocation(loc)
+print("continuous part of the location:", continuousPart)
+print("discrete part of the location:", discretePart)
+
+# get the default font
+# note we ask for the default of a specific discrete location here
+defaultFont = ds.findDefaultFont(discreteLocation=discretePart)
 
 # make an "instance descriptor" object to specify what we want to see
 preview = InstanceDescriptor()
-#preview.familyName = "MyPreview"
-#preview.styleName = "MyStyle"
 preview.designLocation = loc
+preview.familyName = defaultFont.info.familyName
 
 # now we're asking the designspace to make a font object with these specs
-r = d.makeInstance(preview)
-print(r)
+# This makes the whole font. If you're just looking at a couple of characters
+# there are faster ways to do that. 
+previewFont = ds.makeInstance(preview).asFontParts()
 
 # finally, we give the resulting font to the space center.
-sp.setFont(r)
+# have a spacecenter open
+sp = CurrentSpaceCenter()
+if sp is None:
+    sp = OpenSpaceCenter(previewFont)
+
+#
+sp.setFont(previewFont)
+sp.setRaw(f'HHOHOO \n {defaultFont.info.styleName}')
+
+# optionally, open the font window
+#previewFont.openInterface()
