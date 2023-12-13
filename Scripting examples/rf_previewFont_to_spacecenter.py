@@ -4,7 +4,7 @@ from mojo.UI import CurrentSpaceCenter, OpenSpaceCenter, splitText
 # Scripting with live designspaces
 # demo erik@letterror.com 12.12.2023
 
-proofText = "Designspace & UFOProcessor"
+proofText = "DS FIVE"
 
 # have a desigspace open in DSE2
 ds = CurrentDesignspace()
@@ -36,7 +36,10 @@ preview.familyName = defaultFont.info.familyName
 # now we're asking the designspace to make a font object with these specs
 # This makes the whole font. If you're just looking at a couple of characters
 # there are faster ways to do that. 
-previewFont = ds.makeInstance(preview, glyphNames=glyphNames, decomposeComponents=True).asFontParts()
+previewFont = ds.makeInstance(preview, 
+        glyphNames=set(glyphNames),
+        decomposeComponents=True)
+previewFont = previewFont.asFontParts()
 
 # finally, we give the resulting font to the space center.
 # have a spacecenter open
