@@ -75,9 +75,10 @@ class PreviewLocationFinder(ezui.WindowController):
                 : {axisDescriptor.name}:
                 ---X---         @{axisDescriptor.name}
                 """
+                minimum, default, maximum = operator.getAxisExtremes(axisDescriptor)
                 descriptionData[axisDescriptor.name] = dict(
-                    minValue=axisDescriptor.minimum,
-                    maxValue=axisDescriptor.maximum,
+                    minValue=minimum,
+                    maxValue=maximum,
                     value=value
                 )
 
