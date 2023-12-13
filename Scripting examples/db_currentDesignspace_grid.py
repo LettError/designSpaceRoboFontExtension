@@ -8,7 +8,7 @@ size(1159, 1070)
 
 def ip(a, b, f):
     return a+f*(b-a)
-    
+
 def grid(ds, glyphName, horizontalAxis, verticalAxis, columns, rows):
     items = []
     for x in range(columns):
@@ -25,7 +25,7 @@ def grid(ds, glyphName, horizontalAxis, verticalAxis, columns, rows):
             items.append(((x, y), loc, glyph))
     return items
 
-# parameters 
+# parameters
 glyphName = "S"
 horizontalAxis = "width"
 verticalAxis = "weight"
@@ -45,9 +45,7 @@ with savedState():
         with savedState():
             translate(x*xunit, y*yunit)
             scale(0.09)
-            bp = BezierPath()
-            glyph.draw(bp)
-            drawPath(bp)
+            drawGlyph(glyph)
 
 # save the image
 saveImage(f"grid_{horizontalAxis}_{columns}_{verticalAxis}_{rows}.png")

@@ -10,6 +10,4 @@ with savedState():
     for i in range(20):
         loc = d.randomLocation()
         g = d.makeOneGlyph("A", location=loc)
-        bp = BezierPath()
-        g.draw(bp)
-        drawPath(bp)
+        drawGlyph(g)
