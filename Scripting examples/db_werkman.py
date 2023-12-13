@@ -11,20 +11,17 @@ stroke(None)
 blendMode("multiply")
 names = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "arrowdown", "arrowleft", "arrowright", "arrowup"]
 
-clr = [(1,0,0), (0,0,1)]
+clr = [(1,0,0), (0,0,1), (1,.9,0)]
+
 with savedState():
     translate(0, 100)
-    for i, x in enumerate((.33*width(), .66*width())):
+    for c in clr:
         with savedState():
-            translate(x, 0)
+            translate(.5 * width(), 0)
             scale(0.5)
-            fill(*clr[i])
-    
-            # ask the designspace for a good random location
+            fill(*c)
             loc = d.randomLocation()    
             glyphName = choice(names)
-    
-            # make one glyph
             g = d.makeOneGlyph(glyphName, decomposeComponents=True, location=loc)
             if g is not None:
                 translate(-.5*g.width,0)
