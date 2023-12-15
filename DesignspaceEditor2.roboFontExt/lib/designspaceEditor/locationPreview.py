@@ -9,7 +9,7 @@ from mojo.UI import MultiLineView, splitText, GlyphRecord, StatusBar
 from mojo.extensions import getExtensionDefault, setExtensionDefault
 from mojo.subscriber import WindowController, Subscriber
 from mojo.events import addObserver, removeObserver
-from mojo.roboFont import RFont, internalFontClasses
+from mojo.roboFont import RFont, internalFontClasses, CurrentFont, CurrentGlyph
 
 from designspaceEditor.tools import UseVarLib, symbolImage
 from designspaceEditor.parsers.parserTools import numberToString
