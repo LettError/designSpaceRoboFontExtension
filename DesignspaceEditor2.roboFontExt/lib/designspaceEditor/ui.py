@@ -282,7 +282,7 @@ class GenerateInstanceSheet:
 
         for item in self.instances:
             instanceDescriptor = item["object"]
-            with TryExcept(self, "Generate Instance"):
+            try:
                 font = self.operator.makeInstance(instanceDescriptor)
                 if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
                     os.makedirs(os.path.dirname(instanceDescriptor.path))
@@ -292,6 +292,8 @@ class GenerateInstanceSheet:
                     fontPath = f"{fileName}-{('mm', 'varLib')[mathModel]}{ext}"
 
                 font.save(path=fontPath)
+            except Exception as e:
+                print(f"Failed to generate isntance: {e}")
 
         self.operator.useVarlib = prereserveuseVarlib
         self.operator.roundGeometry = prereserveRoundGeometry
