@@ -238,7 +238,19 @@ class LocationPreview(Subscriber, WindowController):
     def inputCallback(self, sender):
         previewString = sender.get()
         self.operator.lib[previewTextLibKey] = previewString
-        glyphNames = splitText(previewString, self.operator.getCharacterMapping())
+        glyphNames = []
+        for glyphName in splitText(previewString, self.operator.getCharacterMapping()):
+            if glyphName == "/?":
+                currentGlyph = CurrentGlyph()
+                if currentGlyph is not None:
+                    glyphNames.append(currentGlyph.name)
+            elif glyphName == "/!":
+                currentFont = CurrentFont()
+                if currentFont is not None:
+                    glyphNames.extend(currentFont.selectedGlyphNames)
+            else:
+                glyphNames.append(glyphName)
+
         possibleKerningPairs = ((side1, side2) for side1, side2 in zip(glyphNames[:-1], glyphNames[1:]))
         possibleKerningPairs = list(possibleKerningPairs)
 
@@ -446,6 +458,9 @@ class LocationPreview(Subscriber, WindowController):
 
     def designspaceEditorSourcesDidChangeSelection(self, notification):
         self.selectedSources = notification["selectedItems"]
+        self.updatePreview()
+
+    def roboFontDidSwitchCurrentGlyph(self, notification):
         self.updatePreview()
 
 
