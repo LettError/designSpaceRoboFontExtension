@@ -1877,7 +1877,16 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             saveDesignspace(self.operator.path)
 
     def toolbarHelp(self, sender):
-        designspaceBundle.openHelp()
+        designspaceBundle.developerURL = "https://letterror.github.io/designSpaceRoboFontExtension/"
+        designspaceBundle.developer = "Documentation"
+
+        helpWindow = designspaceBundle.openHelp()
+        helpWindow.visitButton.setTitle_(" Open on Browser ")
+        helpWindow.visitButton.sizeToFit()
+
+        visitButtonToolbarItem = helpWindow.w.getToolbarItems()["developerURL"]
+        visitButtonToolbarItem.setMinSize_(helpWindow.visitButton.frame().size)
+        visitButtonToolbarItem.setMaxSize_(helpWindow.visitButton.frame().size)
 
     def toolbarSettings(self, sender):
         pass
