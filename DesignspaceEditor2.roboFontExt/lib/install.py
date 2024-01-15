@@ -23,7 +23,7 @@ if oldBundle.bundleExists():
     )
 
 
-# opening a design space file by dropping on RF
+# opening a designspace file by dropping on RF
 
 class DesignspaceOpener(object):
 
@@ -59,20 +59,59 @@ def _allDesignspaceWindows(usingFont=None):
 
 
 def AllDesignspaceWindows(usingFont=None):
-    return list(_allDesignspaceWindows(usingFont=usingFont))
+    """
+    Return a tuple of all open Designspace windows.
+
+    optionally provide `usingFonts`.
+    """
+    return tuple(_allDesignspaceWindows(usingFont=usingFont))
 
 
 def AllDesignspaces(usingFont=None):
-    return [controller.operator for controller in _allDesignspaceWindows(usingFont=usingFont)]
+    """
+    Return a tuple of all open Designspace operators.
+
+    optionally provide `usingFonts`.
+    """
+    return tuple(controller.operator for controller in _allDesignspaceWindows(usingFont=usingFont))
+
+
+def RelevantDesignspaces(usingFont, layerName=None):
+    """
+    Return a tuple of all relevant Designspace operators for a given `usingFont`/
+
+    optionally provide a `layerName`.
+    """
+    layerNames = [layerName]
+    if layerName in None:
+        layerNames.append(usingFont.defaultLayerName)
+    relevantDesignspaces = []
+    for designspace in AllDesignspaces(usingFont):
+        for source in designspace.sources:
+            if source.path == usingFont.path and source.layerName in layerNames:
+                continuousLocation, discreteLocation = designspace.splitLocation(source.location)
+                if discreteLocation:
+                    relevantDesignspaces.append((designspace, discreteLocation))
+                elif continuousLocation is not None:
+                    relevantDesignspaces.append((designspace, None))
+    return tuple(relevantDesignspaces)
 
 
 def CurrentDesignspace():
+    """
+    Return the current Designspace operator.
+    """
     for controller in _allDesignspaceWindows():
         return controller.operator
     return None
 
 
 def OpenDesignspace(path, showInterface=True):
+    """
+    Opens and return a Designspace from path.
+
+    optionally provide `showInterface` (default True) to open the UI.
+    """
     if showInterface:
         controller = DesignspaceEditorController(path)
         return controller.operator
@@ -83,6 +122,11 @@ def OpenDesignspace(path, showInterface=True):
 
 
 def NewDesignspace(showInterface=True):
+    """
+    Create a new Designspace.
+
+    optionally provide `showInterface` (default True) to open the UI.
+    """
     if showInterface:
         controller = DesignspaceEditorController()
         return controller.operator
@@ -93,9 +137,11 @@ def NewDesignspace(showInterface=True):
 
 builtins.AllDesignspaceWindows = AllDesignspaceWindows
 builtins.AllDesignspaces = AllDesignspaces
+builtins.RelevantDesignspaces = RelevantDesignspaces
 builtins.CurrentDesignspace = CurrentDesignspace
 builtins.OpenDesignspace = OpenDesignspace
 builtins.NewDesignspace = NewDesignspace
+
 
 # menu
 
