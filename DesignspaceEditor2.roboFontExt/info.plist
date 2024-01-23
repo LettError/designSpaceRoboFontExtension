@@ -10,7 +10,7 @@
 	<key>developerURL</key>
 	<string>https://letterror.com</string>
 	<key>html</key>
-	<false/>
+	<true/>
 	<key>launchAtStartUp</key>
 	<integer>1</integer>
 	<key>mainScript</key>
