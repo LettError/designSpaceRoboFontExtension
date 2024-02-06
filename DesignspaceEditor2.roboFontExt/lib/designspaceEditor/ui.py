@@ -1130,22 +1130,22 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             for path in paths:
                 self.addSourceFromPath(path)
 
-        with self.holdChanges:
-            value = sender.get()
-            if value == 0:
-                # add
-                self.showGetFile(
-                    messageText="Add new UFO",
-                    allowsMultipleSelection=True,
-                    fileTypes=["ufo"],
-                    callback=addSourceCallback
-                )
+        #with self.holdChanges:
+        value = sender.get()
+        if value == 0:
+            # add
+            self.showGetFile(
+                messageText="Add new UFO",
+                allowsMultipleSelection=True,
+                fileTypes=["ufo"],
+                callback=addSourceCallback
+            )
 
-            elif value == 1:
-                # remove
-                for index in reversed(self.sources.list.getSelection()):
-                    item = self.sources.list[index]
-                    self.operator.removeSource(item["object"])
+        elif value == 1:
+            # remove
+            for index in reversed(self.sources.list.getSelection()):
+                item = self.sources.list[index]
+                self.operator.removeSource(item["object"])
 
         self.setDocumentNeedSave(True, who="Sources")
 
