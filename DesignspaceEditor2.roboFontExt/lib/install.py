@@ -106,6 +106,15 @@ def CurrentDesignspace():
     return None
 
 
+def CurrentDesignspaceWindow():
+    """
+    Return the current Dresignspace window.
+    """
+    for controller in _allDesignspaceWindows():
+        return controller
+    return None
+
+
 def OpenDesignspace(path, showInterface=True):
     """
     Opens and return a Designspace from path.
@@ -139,6 +148,7 @@ builtins.AllDesignspaceWindows = AllDesignspaceWindows
 builtins.AllDesignspaces = AllDesignspaces
 builtins.RelevantDesignspaces = RelevantDesignspaces
 builtins.CurrentDesignspace = CurrentDesignspace
+builtins.CurrentDesignspaceWindow = CurrentDesignspaceWindow
 builtins.OpenDesignspace = OpenDesignspace
 builtins.NewDesignspace = NewDesignspace
 
