@@ -1,5 +1,5 @@
 import AppKit
-from objc import python_method
+from objc import python_method, super
 
 from lib.tools.debugTools import ClassNameIncrementer
 
