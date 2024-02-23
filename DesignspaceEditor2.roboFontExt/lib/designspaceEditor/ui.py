@@ -2,6 +2,7 @@ import os
 from copy import deepcopy
 import weakref
 import AppKit
+from objc import super
 
 import vanilla
 
