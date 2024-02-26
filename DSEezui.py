@@ -110,7 +110,7 @@ class Controller(ezui.WindowController):
                     dict(title="💾", identifier="sourceHasPath", width=20, editable=False),
                     dict(title="📍", identifier="sourceIsDefault", width=20, editable=False),
                     dict(title="UFO", identifier="sourceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False),
-                    dict(title="Famiy Name", identifier="sourceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
+                    dict(title="Family Name", identifier="sourceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
                     dict(title="Style Name", identifier="sourceStyleName", editable=True, width=130, minWidth=130, maxWidth=250),
                     dict(title="Layer Name", identifier="sourceLayerName", editable=True, width=130, minWidth=130, maxWidth=250),
                     dict(title="🌐", identifier="sourceHasLocalisedFamilyNames", width=20, allowsSorting=False, editable=False),
@@ -135,7 +135,7 @@ class Controller(ezui.WindowController):
                 height="fill",
                 columnDescriptions=[
                     dict(title="UFO", identifier="instanceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False),
-                    dict(title="Famiy Name", identifier="instanceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
+                    dict(title="Family Name", identifier="instanceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
                     dict(title="Style Name", identifier="instanceStyleName", editable=True, width=130, minWidth=130, maxWidth=250),
                 ]
             ),

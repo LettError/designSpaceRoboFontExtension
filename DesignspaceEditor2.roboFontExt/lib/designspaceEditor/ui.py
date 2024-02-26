@@ -887,7 +887,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             dict(title="💾", key="sourceHasPath", width=20, editable=False),
             dict(title="📍", key="sourceIsDefault", width=20, editable=False),
             dict(title="UFO", key="sourceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False, formatter=PathFormatter.alloc().init()),
-            dict(title="Famiy Name", key="sourceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
+            dict(title="Family Name", key="sourceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="Style Name", key="sourceStyleName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="Layer Name", key="sourceLayerName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="🌐", key="sourceHasLocalisedFamilyNames", width=20, allowsSorting=False, editable=False),
@@ -952,7 +952,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         instancesColumnDescriptions = [
             dict(title="", key="genericInfoButton", width=20, editable=False, cell=instancesDoubleClickCell),
             dict(title="UFO", key="instanceUFOFileName", width=200, minWidth=100, maxWidth=350, editable=False, formatter=PathFormatter.alloc().init()),
-            dict(title="Famiy Name", key="instanceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
+            dict(title="Family Name", key="instanceFamilyName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="Style Name", key="instanceStyleName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="PostScript Name", key="instancePostscriptFontName", editable=True, width=130, minWidth=130, maxWidth=250),
             dict(title="📍", key="instanceLocation", editable=False, width=20)
