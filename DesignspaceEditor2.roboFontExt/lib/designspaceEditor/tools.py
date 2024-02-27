@@ -1,5 +1,7 @@
 import AppKit
 from contextlib import contextmanager
+from vanilla.vanillaBase import osVersionCurrent, osVersion12_0
+
 from mojo.events import postEvent
 
 
@@ -138,10 +140,12 @@ def symbolImage(symbolName, color, flipped=False):
         color = AppKit.NSColor.colorWithCalibratedRed_green_blue_alpha_(*color)
     else:
         color = symbolColorMap[color]()
-    configuration = AppKit.NSImageSymbolConfiguration.configurationWithHierarchicalColor_(
-        color
-    )
-    image = image.imageWithSymbolConfiguration_(configuration)
+
+    if osVersionCurrent >= osVersion12_0:
+        configuration = AppKit.NSImageSymbolConfiguration.configurationWithHierarchicalColor_(
+            color
+        )
+        image = image.imageWithSymbolConfiguration_(configuration)
     if flipped:
         image.setFlipped_(True)
     return image
