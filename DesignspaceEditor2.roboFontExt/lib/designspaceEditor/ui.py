@@ -1459,7 +1459,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             if problem.details:
                 data = problem.details
             elif problem.data:
-                data = ", ".join([f"{key}: {value}" for key, value in problem.data.items()])
+                data = ", ".join([f"{key}: {value}" for key, value in problem.data.items() if value])
             d = dict(problemIcon=icon, problemClass=cat, problemDescription=desc, problemData=data)
             report.append(d)
         self.problems.list.set(report)
