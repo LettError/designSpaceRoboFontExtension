@@ -461,7 +461,8 @@ class LocationPreview(Subscriber, WindowController):
         self.updatePreview()
 
     def roboFontDidSwitchCurrentGlyph(self, notification):
-        self.updatePreview()
+        if not self.w.getNSWindow().isKeyWindow():
+            self.updatePreview()
 
 
 if __name__ == '__main__':
