@@ -257,8 +257,8 @@ class GenerateInstanceSheet:
         self.w.roundCheckBox = vanilla.CheckBox((split + 20, 45, -10, 22), "Round Geometry")
         self.w.mathModelSuffix = vanilla.CheckBox((split + 20, 70, -10, 22), "Add Math Model Suffix")
 
-        #self.w.instancesRootText = vanilla.TextBox((10, 105, split, 22), "Instances Folder:", alignment="right")
-        #self.w.instancesRoot = vanilla.EditText((split + 20, 105 - 2, -10, 22), "foo")
+        # self.w.instancesRootText = vanilla.TextBox((10, 105, split, 22), "Instances Folder:", alignment="right")
+        # self.w.instancesRoot = vanilla.EditText((split + 20, 105 - 2, -10, 22), "foo")
 
         self.w.closeButton = vanilla.Button((-180, -30, -110, 20), "Cancel", callback=self.closeCallback)
         self.w.closeButton.bind(".", ["command"])
@@ -357,7 +357,7 @@ class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
             return None
         return self.axisDescriptor.minimum
 
-    #@tryExceptDecorator
+    # @tryExceptDecorator
     def setAxisMinimum_(self, value):
         if self.axisIsDescrete():
             # convert to a continuous axis
@@ -377,7 +377,7 @@ class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
             return None
         return self.axisDescriptor.maximum
 
-    #@tryExceptDecorator
+    # @tryExceptDecorator
     def setAxisMaximum_(self, value):
         if self.axisIsDescrete():
             # convert to a continuous axis
@@ -393,7 +393,7 @@ class AxisListItem(AppKit.NSObject, metaclass=ClassNameIncrementer):
             return " ".join([numberToString(value) for value in self.axisDescriptor.values])
         return ""
 
-    #@tryExceptDecorator
+    # @tryExceptDecorator
     def setAxisDiscreteValues_(self, value):
         if not self.axisIsDescrete():
             # convert to a discrete axis
@@ -1236,8 +1236,15 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         sourceDescriptor.familyName = wrappedSourceDescriptor["sourceFamilyName"] if wrappedSourceDescriptor.get("sourceFamilyName") else None
         sourceDescriptor.styleName = wrappedSourceDescriptor["sourceStyleName"] if wrappedSourceDescriptor.get("sourceStyleName") else None
         sourceDescriptor.layerName = wrappedSourceDescriptor["sourceLayerName"] if wrappedSourceDescriptor.get("sourceLayerName") else None
+        # update locations
         for axis in self.operator.axes:
             sourceDescriptor.location[axis.name] = wrappedSourceDescriptor.get(f"axis_{axis.name}", axis.default)
+        # remove non existing location axis names
+        existingAxisNames = [axis.name for axis in self.operator.axes]
+        for locationName in list(sourceDescriptor.location):
+            if locationName not in existingAxisNames:
+                del sourceDescriptor.location[locationName]
+
         return sourceDescriptor
 
     def sourcesListDoubleClickCallback(self, sender):
@@ -1313,9 +1320,15 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         instanceDescriptor.familyName = wrappedInstanceDescriptor["instanceFamilyName"] if wrappedInstanceDescriptor.get("instanceFamilyName") else None
         instanceDescriptor.styleName = wrappedInstanceDescriptor["instanceStyleName"] if wrappedInstanceDescriptor.get("instanceStyleName") else None
         instanceDescriptor.postScriptFontName = wrappedInstanceDescriptor["instancePostscriptFontName"] if wrappedInstanceDescriptor.get("instancePostscriptFontName") else None
+        # update locations
         location = instanceDescriptor.designLocation or instanceDescriptor.userLocation
         for axis in self.operator.axes:
             location[axis.name] = wrappedInstanceDescriptor.get(f"axis_{axis.name}", axis.default)
+        # remove non existing location axis names
+        existingAxisNames = [axis.name for axis in self.operator.axes]
+        for locationName in list(location):
+            if locationName not in existingAxisNames:
+                del location[locationName]
         return instanceDescriptor
 
     def instancesListDoubleClickCallback(self, sender):
@@ -1538,19 +1551,19 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 return
             location = self.operator.newDefaultLocation(discreteLocation=firstDiscrete)
             for axisName in firstContinuous.keys():
-                newValue = .5*(firstContinuous.get(axisName) + secondContinuous.get(axisName))
+                newValue = .5 * (firstContinuous.get(axisName) + secondContinuous.get(axisName))
                 location[axisName] = newValue
             newFamilyName = first.familyName
             newStyleName = f"{first.styleName}_{second.styleName}"
             postScriptFontName = f"{newFamilyName}-{newStyleName}"
             instanceUFOFileName = f"{newFamilyName}-{newStyleName}.ufo"
             self.operator.addInstanceDescriptor(
-                familyName = first.familyName,
-                styleName = newStyleName,
-                designLocation = location,
-                filename = instanceUFOFileName,
-                postScriptFontName = postScriptFontName,
-                )
+                familyName=first.familyName,
+                styleName=newStyleName,
+                designLocation=location,
+                filename=instanceUFOFileName,
+                postScriptFontName=postScriptFontName,
+            )
 
         def updateUFOFilenameFromFontNames(menuItem):
             for item in selectedItems:
@@ -1571,7 +1584,6 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
         def openUFO(menuItem):
             self.openSelectedItem(sender)
-
 
         menu = []
         for axisDescriptor in self.operator.axes:
