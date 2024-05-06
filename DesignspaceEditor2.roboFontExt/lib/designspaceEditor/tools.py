@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from vanilla.vanillaBase import osVersionCurrent, osVersion12_0
 
 from mojo.events import postEvent
+from mojo.extensions import ExtensionBundle
 
 
 def holdRecursionDecorator(func):
@@ -135,7 +136,12 @@ symbolColorMap = dict(
 
 
 def symbolImage(symbolName, color, flipped=False):
-    image = AppKit.NSImage.imageWithSystemSymbolName_accessibilityDescription_(symbolName, "")
+    try:
+        image = AppKit.NSImage.imageWithSystemSymbolName_accessibilityDescription_(symbolName, "")
+    except Exception:
+        # older systems
+        bundle = ExtensionBundle("DesignspaceEditor2")
+        return bundle.getResourceImage(f"toolbar_30_30_{symbolName}")
     if isinstance(color, tuple):
         color = AppKit.NSColor.colorWithCalibratedRed_green_blue_alpha_(*color)
     else:
