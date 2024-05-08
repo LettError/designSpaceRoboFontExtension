@@ -246,6 +246,11 @@ class GenerateInstanceSheet:
 
     def __init__(self, parentWindow, operator, instances):
         self.operator = operator
+        # update the path attribute in all given instanceDescriptors
+        for item in instances:
+            instanceDescriptor = item["object"]
+            instanceDescriptor.path = os.path.abspath(os.path.join(os.path.dirname(self.operator.path), instanceDescriptor.filename))
+
         self.instances = instances
         self.w = vanilla.Sheet((350, 140), parentWindow=parentWindow)
 
@@ -1435,7 +1440,6 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             else:
                 callback()
 
-
     @coalescingDecorator(delay=0.2)
     def variableFontsEditorCallback(self, sender):
         variableFonts = variableFontsParser.parseVariableFonts(sender.get(), self.operator.writerClass.variableFontDescriptorClass)
@@ -2000,13 +2004,11 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         else:
             self.instances.list.set([self.wrapInstanceDescriptor(instanceDescriptor) for instanceDescriptor in self.operator.instances])
 
-
-
 if __name__ == '__main__':
     pathForBundle = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     designspaceBundle = ExtensionBundle(path=pathForBundle)
 
     path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
     # path = "/Users/frederik/Documents/fontsGit/RoboType/RF.designspace"
-    path = None
+    # path = None
     DesignspaceEditorController(path)
