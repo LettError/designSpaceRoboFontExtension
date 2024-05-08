@@ -136,23 +136,22 @@ symbolColorMap = dict(
 
 
 def symbolImage(symbolName, color, flipped=False):
-    try:
-        image = AppKit.NSImage.imageWithSystemSymbolName_accessibilityDescription_(symbolName, "")
-    except Exception:
-        # older systems
-        bundle = ExtensionBundle("DesignspaceEditor2")
-        return bundle.getResourceImage(f"toolbar_30_30_{symbolName}")
-    if isinstance(color, tuple):
-        color = AppKit.NSColor.colorWithCalibratedRed_green_blue_alpha_(*color)
-    else:
-        color = symbolColorMap[color]()
-
     if osVersionCurrent >= osVersion12_0:
+        image = AppKit.NSImage.imageWithSystemSymbolName_accessibilityDescription_(symbolName, "")
+        if isinstance(color, tuple):
+            color = AppKit.NSColor.colorWithCalibratedRed_green_blue_alpha_(*color)
+        else:
+            color = symbolColorMap[color]()
+
         configuration = AppKit.NSImageSymbolConfiguration.configurationWithHierarchicalColor_(
             color
         )
         image = image.imageWithSymbolConfiguration_(configuration)
-    if flipped:
+    else:
+        # older systems
+        bundle = ExtensionBundle("DesignspaceEditor2")
+        image = bundle.getResourceImage(f"toolbar_30_30_{symbolName}")
+    if flipped and image:
         image.setFlipped_(True)
     return image
 
