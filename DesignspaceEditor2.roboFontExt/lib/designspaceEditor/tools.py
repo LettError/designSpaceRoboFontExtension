@@ -111,8 +111,8 @@ class SendNotification:
         self.kwargs[key] = value
 
     @classmethod
-    def single(self, who="", prefix="Did", action="Change", **kwargs):
-        postEvent(f"{self.notificationPrefix}{who}{prefix}{action}", **kwargs)
+    def single(cls, who="", prefix="Did", action="Change", **kwargs):
+        postEvent(f"{cls.notificationPrefix}{who}{prefix}{action}", **kwargs)
 
 
 class UseVarLib:
