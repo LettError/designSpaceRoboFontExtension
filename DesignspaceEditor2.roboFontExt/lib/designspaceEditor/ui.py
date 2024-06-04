@@ -558,15 +558,38 @@ class InstancesAttributesPopover(BaseAttributePopover):
     def build(self, item):
         """
         support:
+            * styleMapFamilyName
+            * styleMapStyleName
             * localisedFamilyName
             * localisedStyleName
         """
         self.instancesDescriptor = item["object"]
 
-        self.popover.tabs = vanilla.Tabs((0, 15, -0, -0), ["Localised Family Name", "Localised Style Name"])
+        self.popover.tabs = vanilla.Tabs((0, 15, -0, -0), ["Style Map", "Localised Family Name", "Localised Style Name"])
 
-        self.instanceLocalisedFamilyName = self.popover.tabs[0]
-        self.instanceLocalisedStyleName = self.popover.tabs[1]
+        self.instanceStyleMapNames = self.popover.tabs[0]
+        self.instanceLocalisedFamilyName = self.popover.tabs[1]
+        self.instanceLocalisedStyleName = self.popover.tabs[2]
+        
+        self.instanceStyleMapNames.container = vanilla.Box((10, 10, -10, -10))
+        self.styleMapStyleOptions = ["regular", "italic", "bold", "bold italic"]
+        col1 = 10
+        col2 = 180
+        padding = 24
+        y = 10
+        self.instanceStyleMapNames.container.textStyleMapFamilyName = vanilla.TextBox((col1, y, col2-padding, 22), "Style Map Family Name:", alignment="right")
+        self.instanceStyleMapNames.container.editorStyleMapFamilyName = vanilla.EditText((col2, y, -10, 22), "", callback=self.controlEditCallback)
+        y += 30
+        self.instanceStyleMapNames.container.textStyleMapStyleName = vanilla.TextBox((col1, y, col2-padding, 22), "Style Map Style Name:", alignment="right")
+        self.instanceStyleMapNames.container.editorStyleMapStyleName = vanilla.RadioGroup((col2, y, -10, 88), ["Regular", "Italic", "Bold", "Bold Italic"], callback=self.controlEditCallback)
+        
+        self.instanceStyleMapNames.container.editorStyleMapFamilyName.set(getattr(self.instancesDescriptor, "styleMapFamilyName", ""))
+        styleMapStyleName = getattr(self.instancesDescriptor, "styleMapStyleName", "")
+        if styleMapStyleName not in self.styleMapStyleOptions:
+            self.instanceStyleMapNames.container.editorStyleMapStyleName.set(-1)
+        else:
+            self.instanceStyleMapNames.container.editorStyleMapStyleName.set(self.styleMapStyleOptions.index(styleMapStyleName))
+            
 
         self.instanceLocalisedFamilyName.editor = CodeEditor(
             (10, 10, -10, -10),
@@ -589,6 +612,18 @@ class InstancesAttributesPopover(BaseAttributePopover):
         self.instancesDescriptor.localisedFamilyName = familyNamelabels
         styleNamelabels, _ = labelsParser.parseAxisLabels(self.instanceLocalisedStyleName.editor.get())
         self.instancesDescriptor.localisedStyleName = styleNamelabels
+        
+        if self.instanceStyleMapNames.container.editorStyleMapFamilyName.get():
+            self.instancesDescriptor.styleMapFamilyName = self.instanceStyleMapNames.container.editorStyleMapFamilyName.get()
+        else:
+            self.instancesDescriptor.styleMapFamilyName = None
+            
+        styleMapStyleNameIndex = self.instanceStyleMapNames.container.editorStyleMapStyleName.get()
+        if styleMapStyleNameIndex != -1:
+            self.instancesDescriptor.styleMapStyleName = self.styleMapStyleOptions[styleMapStyleNameIndex]
+        else:
+            self.instancesDescriptor.styleMapStyleName = None
+            
 
 
 class BaseButtonPopover:
