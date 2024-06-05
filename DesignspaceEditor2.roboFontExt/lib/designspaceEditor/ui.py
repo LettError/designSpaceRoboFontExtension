@@ -584,25 +584,24 @@ class InstancesAttributesPopover(BaseAttributePopover):
         padding = 24
         y = 10
 
+        wand = symbolImage("wand.and.stars", (0, 0, 0, 1))
+
         # Create the text box and edit box for identifier Name
         self.instanceStyleMapNames.container.identifierNameLabel = vanilla.TextBox((col1, y, col2-padding, 22), "Identifying Name:", alignment="right")
         self.instanceStyleMapNames.container.identifierNameTextBox = vanilla.EditText((col2, y, -40, 22), "", callback=self.controlEditCallback)
-        self.instanceStyleMapNames.container.identifierNameAutoBtn = vanilla.SquareButton((-32, y, -10, 22), "􀜍", callback=self.autoIdentifyingNameCallback)
-        self.instanceStyleMapNames.container.identifierNameAutoBtn.getNSButton().setBordered_(False)
+        self.instanceStyleMapNames.container.identifierNameAutoBtn = vanilla.ImageButton((-32, y, -10, 22), imageObject=wand, bordered=False, callback=self.autoIdentifyingNameCallback)
         y += 42
 
         # Create the text box and edit box for PostScript Font Name
         self.instanceStyleMapNames.container.postScriptFontNameLabel = vanilla.TextBox((col1, y, col2-padding, 22), "PostScript Name:", alignment="right")
         self.instanceStyleMapNames.container.postScriptFontNameTextBox = vanilla.EditText((col2, y, -40, 22), "", callback=self.controlEditCallback)
-        self.instanceStyleMapNames.container.postScriptFontNameAutoBtn = vanilla.SquareButton((-32, y, -10, 22), "􀜍", callback=self.autoPostScriptNameCallback)
-        self.instanceStyleMapNames.container.postScriptFontNameAutoBtn.getNSButton().setBordered_(False)
+        self.instanceStyleMapNames.container.postScriptFontNameAutoBtn = vanilla.ImageButton((-32, y, -10, 22), imageObject=wand, bordered=False, callback=self.autoPostScriptNameCallback)
         y += 42
         
         # Create the text box and edit box for Style Map Family Name
         self.instanceStyleMapNames.container.styleMapFamilyNameLabel = vanilla.TextBox((col1, y, col2-padding, 22), "Style Map Family Name:", alignment="right")
         self.instanceStyleMapNames.container.styleMapFamilyNameTextBox = vanilla.EditText((col2, y, -40, 22), "", callback=self.controlEditCallback)
-        self.instanceStyleMapNames.container.styleMapFamilyNameAutoBtn = vanilla.SquareButton((-32, y, -10, 22), "􀜍", callback=self.autoStyleMapNamesCallback)
-        self.instanceStyleMapNames.container.styleMapFamilyNameAutoBtn.getNSButton().setBordered_(False)
+        self.instanceStyleMapNames.container.styleMapFamilyNameAutoBtn = vanilla.ImageButton((-32, y, -10, 22), imageObject=wand, bordered=False, callback=self.autoStyleMapNamesCallback)
         y += 30
 
         # Create the text box and radio group for Style Map Style Name
