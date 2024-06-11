@@ -215,8 +215,21 @@ def postScriptNameTransformer(familyName, styleName):
 
         return filtered_name
     
-    # TODO: spec says max length is 63, but should we check this
-    return "-".join(filterPSName(name) for name in (familyName, styleName))
+    front = filterPSName(familyName)
+    back = filterPSName(styleName)
+    
+    # Check if the combined length of front and back exceeds 62 characters
+    if len(front) + len(back) >= 62:
+        # Reduce the length of front and back to meet the requirement, starting with the front
+        while len(front) + len(back) >= 62:
+            if len(front) > 31:
+                front = front[:-1]  # Remove the last character from front
+            elif len(back) > 31: # If the length of front is at least 31, reduce the length of back then
+                back = back[:-1]  # Remove the last character from back
+            else:
+                break
+    
+    return "-".join((front, back))
 
 def identifyingNameTransformer(familyName, styleName):
     return " ".join((familyName, styleName))
@@ -227,7 +240,7 @@ def styleMapNameTransformer(familyName, styleName):
     # Check if the styleName ends with any of the keyNames
     for keyName in reversed(keyNames):
         if styleName.endswith(keyName):
-            # Check if the preceding word is "Extra", "Semi", or "Demi"
+            # Check if the preceding word is "Extra", "Semi", or "Demi"... others could be added, but this is a start
             preceding_words = styleName[:-len(keyName)].strip().split()
             if preceding_words and preceding_words[-1] in ["Extra", "Semi", "Demi"]: #TODO: list not exhaustive
                 continue
