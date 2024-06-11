@@ -143,7 +143,8 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
         if "styleName" not in kwargs:
             kwargs["styleName"] = f"Style_{len(self.instances)}"
         if "filename" not in kwargs:
-            kwargs["filename"] = os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{kwargs['familyName'] }-{kwargs['styleName']}.ufo")
+            filename = postScriptNameTransformer(kwargs["familyName"], kwargs["styleName"])
+            kwargs["filename"] = os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{filename}.ufo")
 
         with SendNotification("Instances", action="AddInstance", designspace=self) as notification:
             instanceDescriptor = super().addInstanceDescriptor(**kwargs)
@@ -1086,6 +1087,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             dragSettings=dict(type="sourcesListDragAndDropType", callback=self.dragCallback),
             selfDropSettings=dict(type="sourcesListDragAndDropType", operation=AppKit.NSDragOperationMove, callback=self.dropCallback),
         )
+        addToolTipForColumn(self.sources.list, "genericInfoButton", "Double click to edit additional instance info")
         addToolTipForColumn(self.instances.list, "instanceHasAdditionalNames", "Instance has additional names")
         addToolTipForColumn(self.instances.list, "instanceHasLocalisedFamilyNames", "Instance has localised family and/or style names")
         addToolTipForColumn(self.instances.list, "instanceLocation", "Indicate if the location of the instance is a user location or a design location.")
@@ -1422,8 +1424,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         self.instancesChanged()
 
     def wrapInstanceDescriptor(self, instanceDescriptor):
+        filename = postScriptNameTransformer(instanceDescriptor.familyName, instanceDescriptor.styleName)
         wrapped = dict(
-            instanceUFOFileName=instanceDescriptor.filename if instanceDescriptor.filename is not None else os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}.ufo"),
+            instanceUFOFileName=instanceDescriptor.filename if instanceDescriptor.filename is not None else os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{filename}.ufo"),
             instanceFamilyName=instanceDescriptor.familyName or "",
             instanceStyleName=instanceDescriptor.styleName or "",
             # instancePostscriptFontName=instanceDescriptor.postScriptFontName or "",
@@ -1473,11 +1476,12 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             existingLocations = [instanceDescriptor.getFullDesignLocation(self.operator) for instanceDescriptor in self.operator.instances]
             for sourceDescriptor in self.operator.sources:
                 if sourceDescriptor.location not in existingLocations:
+                    fileName = postScriptNameTransformer(sourceDescriptor.familyName, sourceDescriptor.styleName)
                     self.operator.addInstanceDescriptor(
                         familyName=sourceDescriptor.familyName,
                         styleName=sourceDescriptor.styleName,
                         designLocation=sourceDescriptor.location,
-                        filename=os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{sourceDescriptor.familyName}-{sourceDescriptor.styleName}.ufo")
+                        filename=os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{fileName}.ufo")
                     )
 
     def instancesEditorGenerateToolsCallback(self, sender):
@@ -1678,7 +1682,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             newFamilyName = first.familyName
             newStyleName = f"{first.styleName}_{second.styleName}"
             # postScriptFontName = f"{newFamilyName}-{newStyleName}"
-            instanceUFOFileName = f"{newFamilyName}-{newStyleName}.ufo"
+            instanceUFOFileName = postScriptNameTransformer(newFamilyName, newStyleName) + ".ufo"
             self.operator.addInstanceDescriptor(
                 familyName=first.familyName,
                 styleName=newStyleName,
@@ -1969,7 +1973,8 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 instanceDescriptor = self.unwrapInstanceDescriptor(wrappedInstanceDescriptor)
                 if instanceDescriptor.filename is None:
                     # maybe DSE should always update the ufo name?
-                    instanceDescriptor.filename = os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}.ufo")
+                    filename = postScriptNameTransformer(instanceDescriptor.familyName, instanceDescriptor.styleName)
+                    instanceDescriptor.filename = os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{filename}.ufo")
                 instanceDescriptor.path = os.path.abspath(os.path.join(root, instanceDescriptor.filename))
 
             # TODO self.operator.lib[self.mathModelPrefKey] = self.mathModelPref
