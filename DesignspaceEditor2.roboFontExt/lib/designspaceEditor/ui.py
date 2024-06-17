@@ -585,7 +585,7 @@ class InstancesAttributesPopover(BaseAttributePopover):
         padding = 24
         y = 10
 
-        wand = symbolImage("wand.and.stars", (0, 0, 0, 1))
+        wand = symbolImage("wand.and.stars", "primary")
 
         # Create the text box and edit box for identifier Name
         self.instanceStyleMapNames.container.identifierNameLabel = vanilla.TextBox((col1, y, col2-padding, 22), "Identifying Name:", alignment="right")

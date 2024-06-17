@@ -12,6 +12,7 @@ names = [
     ("􀁜", "SFPro-Regular", "questionmark.circle"),
     ("􀅵", "SFPro-Regular", "info.circle.fill"),
     ("􁌵", "SFPro-Regular", "info.bubble.fill"),
+    ("􀜍", "SFPro-Regular", "wand.and.stars"),
     ]
 
 for sym, fontName, symbolName in names:
