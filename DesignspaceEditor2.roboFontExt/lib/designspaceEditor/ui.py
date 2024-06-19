@@ -26,7 +26,7 @@ from designspaceProblems import DesignSpaceChecker
 from designspaceEditor.designspaceLexer import DesignspaceLexer, TextLexer
 from designspaceEditor.parsers import mapParser, rulesParser, labelsParser, glyphNameParser, variableFontsParser
 from designspaceEditor.parsers.parserTools import numberToString
-from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges, symbolImage, NumberListFormatter, SendNotification, notificationConductor, postScriptNameTransformer, identifyingNameTransformer, styleMapNameTransformer
+from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges, symbolImage, NumberListFormatter, SendNotification, notificationConductor, postScriptNameTransformer, styleMapNameTransformer
 from designspaceEditor.locationPreview import LocationPreview
 from designspaceEditor.designspaceSubscribers import registerOperator, unregisterOperator
 from designspaceEditor import extensionIdentifier
@@ -145,6 +145,8 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
         if "filename" not in kwargs:
             filename = postScriptNameTransformer(kwargs["familyName"], kwargs["styleName"])
             kwargs["filename"] = os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{filename}.ufo")
+        if "name" not in kwargs:
+            kwargs["name"] = f"instance.{len(self.instances)}"
 
         with SendNotification("Instances", action="AddInstance", designspace=self) as notification:
             instanceDescriptor = super().addInstanceDescriptor(**kwargs)
@@ -588,10 +590,10 @@ class InstancesAttributesPopover(BaseAttributePopover):
         wand = symbolImage("wand.and.stars", "primary")
 
         # Create the text box and edit box for identifier Name
-        self.instanceStyleMapNames.container.identifierNameLabel = vanilla.TextBox((col1, y, col2-padding, 22), "Identifying Name:", alignment="right")
-        self.instanceStyleMapNames.container.identifierNameTextBox = vanilla.EditText((col2, y, -40, 22), "", callback=self.controlEditCallback)
-        self.instanceStyleMapNames.container.identifierNameAutoBtn = vanilla.ImageButton((-32, y, -10, 22), imageObject=wand, bordered=False, callback=self.autoIdentifyingNameCallback)
-        y += 42
+        # self.instanceStyleMapNames.container.identifierNameLabel = vanilla.TextBox((col1, y, col2-padding, 22), "Identifying Name:", alignment="right")
+        # self.instanceStyleMapNames.container.identifierNameTextBox = vanilla.EditText((col2, y, -40, 22), "", callback=self.controlEditCallback)
+        # self.instanceStyleMapNames.container.identifierNameAutoBtn = vanilla.ImageButton((-32, y, -10, 22), imageObject=wand, bordered=False, callback=self.autoIdentifyingNameCallback)
+        # y += 42
 
         # Create the text box and edit box for PostScript Font Name
         self.instanceStyleMapNames.container.postScriptFontNameLabel = vanilla.TextBox((col1, y, col2-padding, 22), "PostScript Name:", alignment="right")
@@ -610,7 +612,7 @@ class InstancesAttributesPopover(BaseAttributePopover):
         self.instanceStyleMapNames.container.styleMapStyleNameRadio = vanilla.RadioGroup((col2, y, -10, 88), ["Regular", "Italic", "Bold", "Bold Italic"], callback=self.controlEditCallback)
         self.instanceStyleMapNames.container.styleMapStyleNameRadio.getNSMatrix().setAllowsEmptySelection_(True)
 
-        self.instanceStyleMapNames.container.helpButton = vanilla.HelpButton((-32, -32, -10, 22), callback=self.instancesHelpCallback)
+        # self.instanceStyleMapNames.container.helpButton = vanilla.HelpButton((-32, -32, -10, 22), callback=self.instancesHelpCallback)
 
         # Create the CodeEditor for Localised Family Name
         self.instanceLocalisedFamilyName.editor = CodeEditor(
@@ -631,7 +633,7 @@ class InstancesAttributesPopover(BaseAttributePopover):
         )
         
         # Set the initial value for identifier name
-        self.instanceStyleMapNames.container.identifierNameTextBox.set(self.instancesDescriptor.name)
+        # self.instanceStyleMapNames.container.identifierNameTextBox.set(self.instancesDescriptor.name)
         
         # Set the initial value for PostScript Font Name
         self.instanceStyleMapNames.container.postScriptFontNameTextBox.set(self.instancesDescriptor.postScriptFontName)
@@ -648,7 +650,7 @@ class InstancesAttributesPopover(BaseAttributePopover):
 
     def close(self):
         # Update the name attribute based on the identifierNameTextBox value
-        self.instancesDescriptor.name = self.instanceStyleMapNames.container.identifierNameTextBox.get() or None
+        # self.instancesDescriptor.name = self.instanceStyleMapNames.container.identifierNameTextBox.get() or None
         
         # Update the postScriptFontName attribute based on the postScriptFontNameTextBox value
         self.instancesDescriptor.postScriptFontName = self.instanceStyleMapNames.container.postScriptFontNameTextBox.get() or None
@@ -668,23 +670,23 @@ class InstancesAttributesPopover(BaseAttributePopover):
         styleNamelabels, _ = labelsParser.parseAxisLabels(self.instanceLocalisedStyleName.editor.get())
         self.instancesDescriptor.localisedStyleName = styleNamelabels
         
-    def instancesHelpCallback(self, sender):
-        # TODO: Doesn't quite work 100% of the time? Crashes if you click it too much
-        designspaceBundle.developerURL = "https://fonttools.readthedocs.io/en/latest/designspaceLib/xml.html#instance-element"
-        designspaceBundle.developer = "Documentation"
+    # def instancesHelpCallback(self, sender):
+    #     # TODO: Doesn't quite work 100% of the time? Crashes if you click it too much
+    #     designspaceBundle.developerURL = "https://fonttools.readthedocs.io/en/latest/designspaceLib/xml.html#instance-element"
+    #     designspaceBundle.developer = "Documentation"
 
-        helpWindow = designspaceBundle.openHelp()
-        helpWindow.visitButton.setTitle_(" Open on Browser ")
-        helpWindow.visitButton.sizeToFit()
+    #     helpWindow = designspaceBundle.openHelp()
+    #     helpWindow.visitButton.setTitle_(" Open on Browser ")
+    #     helpWindow.visitButton.sizeToFit()
 
-        visitButtonToolbarItem = helpWindow.w.getToolbarItems()["developerURL"]
-        visitButtonToolbarItem.setMinSize_(helpWindow.visitButton.frame().size)
-        visitButtonToolbarItem.setMaxSize_(helpWindow.visitButton.frame().size)
+    #     visitButtonToolbarItem = helpWindow.w.getToolbarItems()["developerURL"]
+    #     visitButtonToolbarItem.setMinSize_(helpWindow.visitButton.frame().size)
+    #     visitButtonToolbarItem.setMaxSize_(helpWindow.visitButton.frame().size)
         
-    def autoIdentifyingNameCallback(self, sender):
-        # Set the identifierNameTextBox value to the name attribute
-        self.instancesDescriptor.name = identifyingNameTransformer(self.instancesDescriptor.familyName, self.instancesDescriptor.styleName)
-        self.instanceStyleMapNames.container.identifierNameTextBox.set(self.instancesDescriptor.name)
+    # def autoIdentifyingNameCallback(self, sender):
+    #     # Set the identifierNameTextBox value to the name attribute
+    #     self.instancesDescriptor.name = identifyingNameTransformer(self.instancesDescriptor.familyName, self.instancesDescriptor.styleName)
+    #     self.instanceStyleMapNames.container.identifierNameTextBox.set(self.instancesDescriptor.name)
         
     def autoPostScriptNameCallback(self, sender):
         # Set the postScriptFontNameTextBox value to the postScriptFontName attribute
@@ -1430,7 +1432,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             instanceFamilyName=instanceDescriptor.familyName or "",
             instanceStyleName=instanceDescriptor.styleName or "",
             # instancePostscriptFontName=instanceDescriptor.postScriptFontName or "",
-            instanceHasAdditionalNames=dotSymbol if any((instanceDescriptor.name, instanceDescriptor.postScriptFontName, instanceDescriptor.styleMapFamilyName, instanceDescriptor.styleMapStyleName)) else "",
+            instanceHasAdditionalNames=dotSymbol if any((instanceDescriptor.postScriptFontName, instanceDescriptor.styleMapFamilyName, instanceDescriptor.styleMapStyleName)) else "",
             instanceHasLocalisedFamilyNames=dotSymbol if any((instanceDescriptor.localisedFamilyName, instanceDescriptor.localisedStyleName)) else "",
 
             instanceLocation="✏️" if instanceDescriptor.designLocation else "👤",

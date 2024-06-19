@@ -231,8 +231,8 @@ def postScriptNameTransformer(familyName, styleName):
     
     return "-".join((front, back))
 
-def identifyingNameTransformer(familyName, styleName):
-    return " ".join((familyName, styleName))
+# def identifyingNameTransformer(familyName, styleName):
+#     return " ".join((familyName, styleName))
 
 def styleMapNameTransformer(familyName, styleName):
     keyNames = ["Regular", "Italic", "Bold", "Bold Italic"]
