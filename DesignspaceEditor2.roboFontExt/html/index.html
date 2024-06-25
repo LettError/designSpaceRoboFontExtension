@@ -535,9 +535,9 @@ The idea is the same, the names differ and the expectations and implementation a
     <li><strong>Duplicate:</strong> duplicates the selected instances</li>
     <li><strong>Add Source as Instances:</strong> makes new instances at the designspace locations of the sources.</li>
     <li><strong>Generate Instance:</strong> this brings up a dialog with options for generating UFOs. Here you can choose between the MutatorMath and Varlib, and whether to round the geometry to integers.</li>
-    <li>Choose the <b>MutatorMath</b> model to generate instances if you want to calculate instances at anisotropic locations, or if you want to extrapolate over axis extremes. MutatorMath is a bit more forgiving when it comes to the number of off-curves and missing sources.</li>
+    <!-- <li>Choose the <b>MutatorMath</b> model to generate instances if you want to calculate instances at anisotropic locations, or if you want to extrapolate over axis extremes. MutatorMath is a bit more forgiving when it comes to the number of off-curves and missing sources.</li>
     <li>Choose <strong>VarLib</strong> to use the fontTools VarLib model to generate instances. This stays close to how variable fonts will show the instances. Varlib is more picky and expects all data to be present and correct.</li>
-    <li>Why are there even two models? MutatorMath was written long before Variable fonts and it is geared toward exploration and discovery, to be used during the design phase. Varlib represents how Variable fonts work, optimised for speed and production.</li>
+    <li>Why are there even two models? MutatorMath was written long before Variable fonts and it is geared toward exploration and discovery, to be used during the design phase. Varlib represents how Variable fonts work, optimised for speed and production.</li> -->
 </ul>
 
 <h3>Instances Tab Menus</h3>
@@ -553,9 +553,9 @@ The idea is the same, the names differ and the expectations and implementation a
         <li>
             <b>Update UFO Filename</b>: make a new filename for this UFO instance, based on the family and stylename according this pattern: <code>instances/[familyName]-[styleName].ufo</code>
         </li>
-        <li>
+        <!-- <li>
             <b>Update PostScript Fontname</b>: make a new PostScript fontname for this UFO instance, based on the family and stylename according this pattern: <code>[familyName]-[styleName]</code>. Note that some tools respond differently when the PostScript fontname is not defined, so if you want to be sure, define it here.
-        </li>
+        </li> -->
         <li>
             <b>Convert to User Location</b>: convert this design coordinates to user coordinates, according to axis mapping.
         </li>
@@ -576,13 +576,11 @@ The idea is the same, the names differ and the expectations and implementation a
 <table>
     <tr>
         <td><img src="toolbar_25_25_info.circle.fill.svg"></td>
-        <td>button for the popover editor for localised family and style names.</td>
+        <td>button for the popover editor for additional names, as well as localised family and style names.</td>
     </tr>
     <tr>
-        <td>UFO
-        </td>
-        <td>path and filename of destination UFO (if that is where you want to go obviously)
-        </td>
+        <td>UFO</td>
+        <td>path and filename of destination UFO (if that is where you want to go obviously)</td>
     </tr>
     <tr>
         <td><strong>Family Name</strong>
@@ -597,18 +595,22 @@ The idea is the same, the names differ and the expectations and implementation a
         </td>
     </tr>
     <tr>
-        <td><strong>📍</strong>
-        </td>
-        <td>The icons in this column indicate if the location values are specified as 👤userspace (a person icon, because user), or ✏️designspace (a pencil icon because design). See Note 1.
-        </td>
+        <td>🏷️</td>
+        <td>Indicates if the instance has addtional names applied, like PostScript name (previously a column on the main table) or Style Map names. Click the <img src="toolbar_25_25_info.circle.fill.svg"> for the <b>Additional Names editor</b>.</td>
     </tr>
     <tr>
-        <td>column for each axis</td>
+        <td>🌐</td>
+        <td>Indicates if there are localised names for this source. Click the <img src="toolbar_25_25_info.circle.fill.svg"> for the <b>Localised Family Name & Style Name editors</b>.</td>
+    </tr>
+    <tr>
+        <td>📍</td>
+        <td>The icons in this column indicate if the location values are specified as 👤userspace (a person icon, because user), or ✏️designspace (a pencil icon because design). See <a href="#note1-about-userspace-designspace-coordinates">Note 1</a>.</td>
+    </tr>
+    <tr>
+        <td>Column for Each Axis</td>
         <td>Axis values can be in <strong>userspace</strong> or <strong>design coordinates</strong>. Anisotropic values are separated by a space. See <a href="#note2-about-anisotropic-instances">Note 2</a></td>
     </tr>
 </table>
-
-
 
 <h3 id="note1-about-userspace-designspace-coordinates">Note 1: About userspace and designspace locations</h3>
 
@@ -644,6 +646,29 @@ The idea is the same, the names differ and the expectations and implementation a
     </li>
 </ul>
 
+<h3>Additional Names editor</h3>
+<p><em>Click the magic wand next to each field to generate a guess at what the value should be based on the Family and Style name provided on the main table. The authors make no warranties or guarantees that they are correct! You should double-check their validity.</em></p>
+<table>
+    <tr>
+        <td>Identifying Name</td>
+        <td>A unique name that can be used to identify this font if it needs to be referenced elsewhere in the backend. If not provided it'll be made up.</td>
+    </tr>
+    <tr>
+        <td>PostScript Font Name</td>
+        <td>Corresponds with <code>font.info.postscriptFontName</code>. Should ideally follow the rules for PostScript names, found in the <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/name#nid6">OT Spec</a>.</td>
+    </tr>
+    <tr>
+        <td>Style Map Family & Style Map Style Names</td>
+        <td>Corresponds with <code>font.info.styleMapFamilyName</code> and <code>font.info.styleMapStyleName</code>. See some examples in the <a href="https://robofont.com/documentation/tutorials/setting-font-names/?highlight=style%20map#font-naming">RF Docs</a>.</td>
+    </tr>
+</table>
+
+<h3>Localised Family/Style Name editor syntax</h3>
+
+<div><pre><code class="language-none"># localised name starts with a ? &lt;language tag&gt; &lt;localised string&gt;
+? fr &#39;Montserrat&#39;
+? ja &#39;モンセラート&#39;</code></pre>
+</div>
 
 
 <p><img class="bigicon" src="toolbar_500_500_icon_rules.png" alt="DSE2 rules icon"></p>
