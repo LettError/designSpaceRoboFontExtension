@@ -24,7 +24,9 @@ substitionRE = re.compile(r"([a-zA-Z0-9\.\*\+\-\:\^\|\~_]+)\s+\>\s+([a-zA-Z0-9\.
 conditionsRE = re.compile(r"([a-zA-Z]+)\s+([0-9\.]+)-([0-9\.]+)")
 
 
-def parseRules(text, ruleDescriptorClass):
+def parseRules(text, ruleDescriptorClass=None):
+    if ruleDescriptorClass is None:
+        ruleDescriptorClass = designspaceLib.RuleDescriptor
     rules = []
     for name, lines in getBlocks(text).items():
         rule = ruleDescriptorClass()
