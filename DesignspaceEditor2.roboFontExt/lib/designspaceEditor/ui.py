@@ -26,7 +26,7 @@ from designspaceProblems import DesignSpaceChecker
 from designspaceEditor.designspaceLexer import DesignspaceLexer, TextLexer
 from designspaceEditor.parsers import mapParser, rulesParser, labelsParser, glyphNameParser, variableFontsParser
 from designspaceEditor.parsers.parserTools import numberToString
-from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges, symbolImage, NumberListFormatter, SendNotification, notificationConductor, postScriptNameTransformer, styleMapNameTransformer
+from designspaceEditor.tools import holdRecursionDecorator, addToolTipForColumn, TryExcept, HoldChanges, symbolImage, NumberListFormatter, SendNotification, notificationConductor, postScriptNameTransformer, styleMapNameTransformer, fileNameForInstance
 from designspaceEditor.locationPreview import LocationPreview
 from designspaceEditor.designspaceSubscribers import registerOperator, unregisterOperator
 from designspaceEditor import extensionIdentifier
@@ -1696,8 +1696,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         def updateUFOFilenameFromFontNames(menuItem):
             for item in selectedItems:
                 instanceDescriptor = item["object"]
-                # wrapInstanceDescriptor will create a new default filename
-                instanceDescriptor.filename = None
+                instanceDescriptor.filename = fileNameForInstance(instanceDescriptor)
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
             self.instancesChanged()
 
@@ -1975,8 +1974,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 instanceDescriptor = self.unwrapInstanceDescriptor(wrappedInstanceDescriptor)
                 if instanceDescriptor.filename is None:
                     # maybe DSE should always update the ufo name?
-                    filename = postScriptNameTransformer(instanceDescriptor.familyName, instanceDescriptor.styleName)
-                    instanceDescriptor.filename = os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{filename}.ufo")
+                    instanceDescriptor.filename = fileNameForInstance(instanceDescriptor)
                 instanceDescriptor.path = os.path.abspath(os.path.join(root, instanceDescriptor.filename))
 
             # TODO self.operator.lib[self.mathModelPrefKey] = self.mathModelPref
