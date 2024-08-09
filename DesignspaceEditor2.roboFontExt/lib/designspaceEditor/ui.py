@@ -600,7 +600,7 @@ class InstancesAttributesPopover(BaseAttributePopover):
         self.instanceStyleMapNames.container.postScriptFontNameTextBox = vanilla.EditText((col2, y, -40, 22), "", callback=self.controlEditCallback)
         self.instanceStyleMapNames.container.postScriptFontNameAutoBtn = vanilla.ImageButton((-32, y, -10, 22), imageObject=wand, bordered=False, callback=self.autoPostScriptNameCallback)
         y += 42
-        
+
         # Create the text box and edit box for Style Map Family Name
         self.instanceStyleMapNames.container.styleMapFamilyNameLabel = vanilla.TextBox((col1, y, col2-padding, 22), "Style Map Family Name:", alignment="right")
         self.instanceStyleMapNames.container.styleMapFamilyNameTextBox = vanilla.EditText((col2, y, -40, 22), "", callback=self.controlEditCallback)
@@ -631,10 +631,10 @@ class InstancesAttributesPopover(BaseAttributePopover):
             showLineNumbers=False,
             callback=self.controlEditCallback
         )
-        
+
         # Set the initial value for identifier name
         # self.instanceStyleMapNames.container.identifierNameTextBox.set(self.instancesDescriptor.name)
-        
+
         # Set the initial value for PostScript Font Name
         self.instanceStyleMapNames.container.postScriptFontNameTextBox.set(self.instancesDescriptor.postScriptFontName)
 
@@ -647,21 +647,20 @@ class InstancesAttributesPopover(BaseAttributePopover):
             styleMapStyleNameIndex = self.styleMapStyleOptions.index(self.instancesDescriptor.styleMapStyleName)
             self.instanceStyleMapNames.container.styleMapStyleNameRadio.set(styleMapStyleNameIndex)
 
-
     def close(self):
         # Update the name attribute based on the identifierNameTextBox value
         # self.instancesDescriptor.name = self.instanceStyleMapNames.container.identifierNameTextBox.get() or None
-        
+
         # Update the postScriptFontName attribute based on the postScriptFontNameTextBox value
         self.instancesDescriptor.postScriptFontName = self.instanceStyleMapNames.container.postScriptFontNameTextBox.get() or None
-        
+
         # Update the styleMapFamilyName attribute based on the styleMapFamilyNameTextBox value, or if it's not set, set to None
         self.instancesDescriptor.styleMapFamilyName = self.instanceStyleMapNames.container.styleMapFamilyNameTextBox.get() or None
 
         # Update the styleMapStyleName attribute based on the styleMapStyleNameRadio value, or if it's not set, set to None
         styleMapStyleNameIndex = self.instanceStyleMapNames.container.styleMapStyleNameRadio.get()
         self.instancesDescriptor.styleMapStyleName = self.styleMapStyleOptions[styleMapStyleNameIndex] if styleMapStyleNameIndex > -1 else None
-        
+
         # Parse the axis labels from the instanceLocalisedFamilyName editor and update the localisedFamilyName attribute
         familyNamelabels, _ = labelsParser.parseAxisLabels(self.instanceLocalisedFamilyName.editor.get())
         self.instancesDescriptor.localisedFamilyName = familyNamelabels
@@ -669,7 +668,7 @@ class InstancesAttributesPopover(BaseAttributePopover):
         # Parse the axis labels from the instanceLocalisedStyleName editor and update the localisedStyleName attribute
         styleNamelabels, _ = labelsParser.parseAxisLabels(self.instanceLocalisedStyleName.editor.get())
         self.instancesDescriptor.localisedStyleName = styleNamelabels
-        
+
     # def instancesHelpCallback(self, sender):
     #     # TODO: Doesn't quite work 100% of the time? Crashes if you click it too much
     #     designspaceBundle.developerURL = "https://fonttools.readthedocs.io/en/latest/designspaceLib/xml.html#instance-element"
@@ -682,12 +681,12 @@ class InstancesAttributesPopover(BaseAttributePopover):
     #     visitButtonToolbarItem = helpWindow.w.getToolbarItems()["developerURL"]
     #     visitButtonToolbarItem.setMinSize_(helpWindow.visitButton.frame().size)
     #     visitButtonToolbarItem.setMaxSize_(helpWindow.visitButton.frame().size)
-        
+
     # def autoIdentifyingNameCallback(self, sender):
     #     # Set the identifierNameTextBox value to the name attribute
     #     self.instancesDescriptor.name = identifyingNameTransformer(self.instancesDescriptor.familyName, self.instancesDescriptor.styleName)
     #     self.instanceStyleMapNames.container.identifierNameTextBox.set(self.instancesDescriptor.name)
-        
+
     def autoPostScriptNameCallback(self, sender):
         # Set the postScriptFontNameTextBox value to the postScriptFontName attribute
         self.instancesDescriptor.postScriptFontName = postScriptNameTransformer(self.instancesDescriptor.familyName, self.instancesDescriptor.styleName)
@@ -695,13 +694,12 @@ class InstancesAttributesPopover(BaseAttributePopover):
 
     def autoStyleMapNamesCallback(self, sender):
         # Set the styleMapFamilyNameTextBox value to the styleMapFamilyName attribute
-        
+
         self.instancesDescriptor.styleMapFamilyName, self.instancesDescriptor.styleMapStyleName = styleMapNameTransformer(self.instancesDescriptor.familyName, self.instancesDescriptor.styleName)
-        
+
         self.instanceStyleMapNames.container.styleMapFamilyNameTextBox.set(self.instancesDescriptor.styleMapFamilyName)
         styleMapStyleNameIndex = self.styleMapStyleOptions.index(self.instancesDescriptor.styleMapStyleName)
         self.instanceStyleMapNames.container.styleMapStyleNameRadio.set(styleMapStyleNameIndex)
-
 
 
 class BaseButtonPopover:
@@ -1662,7 +1660,6 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         def menuSetPreviewToSelectionCallback(menuItem):
             selectedObject = selectedItems[0]['object']
             selectedDesignLocation = selectedObject.getFullDesignLocation(self.operator)
-            print('menuSetPreviewToSelectionCallback setting location to', selectedDesignLocation)
             self.operator.setPreviewLocation(selectedDesignLocation)
 
         def newInstanceBetween(menuItem):
@@ -2126,6 +2123,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
         else:
             self.instances.list.set([self.wrapInstanceDescriptor(instanceDescriptor) for instanceDescriptor in self.operator.instances])
+
 
 if __name__ == '__main__':
     pathForBundle = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
