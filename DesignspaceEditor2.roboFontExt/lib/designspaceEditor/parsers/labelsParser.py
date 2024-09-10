@@ -45,6 +45,8 @@ userLocationRE = re.compile(r"([a-zA-Z\-\s]+)\s+([0-9\.]+)")
 
 defaultLabelNameLanguageTag = "en"
 
+locationLabelsLibKey = "com.letterror.designspaceEditor.locationLabels.text"
+
 
 def parseAxisLabels(text, axisLabelDescriptorClass=None):
     if axisLabelDescriptorClass is None:
@@ -123,7 +125,9 @@ def dumpAxisLabels(labelNames, axisLabels, indent="   "):
     return "\n".join(text)
 
 
-def parseLocationLabels(text, locationLabelDescriptorClass):
+def parseLocationLabels(text, locationLabelDescriptorClass=None):
+    if locationLabelDescriptorClass is None:
+        locationLabelDescriptorClass = designspaceLib.LocationLabelDescriptor
     locationLabels = []
     for labelName, lines in getBlocks(text).items():
         locationLabelDescriptor = locationLabelDescriptorClass(
@@ -158,6 +162,39 @@ def dumpLocationLabels(locationLabels, indent="   "):
     return "\n".join(text)
 
 
+def extractLocationLabels(operator, indent="    "):
+    """
+    Extract location labels to a string for a given operator:
+    check if location labels is stored as a string in the lib,
+    parse that stored string and compare with the internal location labels.
+
+    Compare with ignore the location labels order.
+
+    If there is no difference, use the string representation.
+
+    This will preseve comments and white space.
+    """
+    storedText = operator.lib.get(locationLabelsLibKey, "")
+    parsed = parseLocationLabels(storedText)
+
+    if sorted([list(item.asdict().items()) for item in parsed]) == sorted([list(item.asdict().items()) for item in operator.locationLabels]):
+        return storedText
+    return dumpLocationLabels(operator.locationLabels, indent=indent)
+
+
+def storeLocationLabels(text, operator):
+    """
+    Store location labels as objects from a string for a given operator and
+    store the location labels string representation in the operator lib.
+    """
+    parsed = parseLocationLabels(text, operator.writerClass.locationLabelDescriptorClass)
+    operator.lib[locationLabelsLibKey] = text
+    operator.locationLabels.clear()
+    operator.locationLabels.extend(parsed)
+
+
+# tests
+
 @pytest.mark.parametrize("text,expected", [
     ('"Bold" 200 200 250', {'userMinimum': 200, 'userValue': 200, 'userMaximum': 250, 'name': 'Bold', 'elidable': False, 'olderSibling': False, 'linkedUserValue': None, 'labelNames': {}}),
     ('"Extra Light" 200 200 250 (elidable) (olderSibling) [300]', {'userMinimum': 200, 'userValue': 200, 'userMaximum': 250, 'name': 'Extra Light', 'elidable': True, 'olderSibling': True, 'linkedUserValue': 300.0, 'labelNames': {}}),
@@ -170,56 +207,4 @@ def test_parseAxisLabels(text, expected):
 
 
 if __name__ == '__main__':
-
     pytest.main([__file__])
-
-# axisLabelText = """
-# "Weight"
-# ? de "Extraleicht"
-
-# # style name min value max
-# "Extra Light" 200 200 250
-# # optionally translations???
-# ? de "Extraleicht"
-# ? fr 'Extra léger'
-
-# 'Light' 250 300 350
-# 'Regular' 350 400 450 (elidable) (olderSibling)
-
-# "Condensed" 50 [700]
-# """
-
-
-# locationLableText = """
-# # style name (not a tag)
-# A style
-#     # optionally translation
-#     ?  fr  "Un Style"
-#     # location in user values
-#     weight 300
-#     width 40
-#     Italic 1
-#     boldness 30
-
-# A other style
-#     # optionally translation
-#     ?  fr  "Un Style"
-#     ? pr "bla bla"
-#     # location in user values
-#     weight 300
-#     width 40
-#     Italic 1
-#     boldness 30
-# """
-
-# document = designspaceLib.DesignSpaceDocument()
-# ln, al = parseAxisLabels(axisLabelText, document.writerClass.axisLabelDescriptorClass)
-# #print(dumpAxisLabels(ln, al))
-
-
-# l = parseLocationLabels(locationLableText, document.writerClass.locationLabelDescriptorClass)
-# print(l)
-# r = dumpLocationLabels(l)
-# print(r)
-
-

@@ -6,11 +6,11 @@ from pygments.token import *
 class DesignspaceLexer(RegexLexer):
     name = "Designspace"
     aliases = ['designspace']
-    filenames = ['*.Designspace']
+    filenames = ['*.designspace']
 
     tokens = {
         'root': [
-            (r'\n', Text),
+            (r'\n', Whitespace),
             (r'#.*$', Comment),
             (r'[\'|\"].*[\'|\"]', String),
             (r'(\?)\s+((?:[a-zA-Z0-9\-]+))\s+', bygroups(Name.Builtin, Name.Variable)),

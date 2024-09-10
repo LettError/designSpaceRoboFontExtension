@@ -7,7 +7,7 @@ from objc import super
 import vanilla
 
 from fontTools import designspaceLib
-from ufoProcessor import ufoOperator
+from ufoProcessor import InstanceDescriptor, ufoOperator
 
 from mojo.UI import CodeEditor, SliderEditStepper
 from mojo.events import addObserver, removeObserver
@@ -1182,9 +1182,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             self.axes.list.set([AxisListItem(axisDescriptor, self) for axisDescriptor in self.operator.axes])
             self.sources.list.set([self.wrapSourceDescriptor(sourceDescriptor) for sourceDescriptor in self.operator.sources])
             self.instances.list.set([self.wrapInstanceDescriptor(instanceDescriptor) for instanceDescriptor in self.operator.instances])
-            self.rules.editor.set(rulesParser.dumpRules(self.operator.rules))
-            self.locationLabels.editor.set(labelsParser.dumpLocationLabels(self.operator.locationLabels))
-            self.variableFonts.editor.set(variableFontsParser.dumpVariableFonts(self.operator.variableFonts))
+            self.rules.editor.set(rulesParser.extractRules(self.operator))
+            self.locationLabels.editor.set(labelsParser.extractLocationLabels(self.operator))
+            self.variableFonts.editor.set(variableFontsParser.extractVariableFonts(self.operator))
             self.notes.editor.set(self.operator.lib.get(designspacenotesLibKey, ""))
             self.updateColumnHeadersFromAxes()
 
@@ -1253,7 +1253,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             for path in paths:
                 self.addSourceFromPath(path)
 
-        #with self.holdChanges:
+        # with self.holdChanges:
         value = sender.get()
         if value == 0:
             # add
@@ -1501,6 +1501,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             return
         for wrappedInstanceDescriptor in sender:
             self.unwrapInstanceDescriptor(wrappedInstanceDescriptor)
+        self.operator.instances[:] = [item["object"] for item in sender]
         self.instancesChanged()
 
     def instancesListSelectionCallback(self, sender):
@@ -1510,13 +1511,17 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
     def instancesChanged(self):
         self.setDocumentNeedSave(True, who="Instances")
 
+    @holdRecursionDecorator
+    def updateInstances(self):
+        with self.holdChanges:
+            for item in self.instances.list:
+                instanceDescriptor = self.unwrapInstanceDescriptor(item)
+                item.update(self.wrapInstanceDescriptor(instanceDescriptor))
     # rules
 
     @coalescingDecorator(delay=0.2)
     def rulesEditorCallback(self, sender):
-        rules = rulesParser.parseRules(sender.get(), self.operator.writerClass.ruleDescriptorClass)
-        self.operator.rules.clear()
-        self.operator.rules.extend(rules)
+        rulesParser.storeRules(sender.get(), self.operator)
         self.setDocumentNeedSave(True, who="Rules")
 
     # labels
@@ -1534,9 +1539,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     @coalescingDecorator(delay=0.2)
     def locationLabelsEditorCallback(self, sender):
-        locationLabels = labelsParser.parseLocationLabels(sender.get(), self.operator.writerClass.locationLabelDescriptorClass)
-        self.operator.locationLabels.clear()
-        self.operator.locationLabels.extend(locationLabels)
+        labelsParser.storeLocationLabels(sender.get(), self.operator)
         self.setDocumentNeedSave(True, who="LocationLabels")
 
     # variable fonts
@@ -1564,9 +1567,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     @coalescingDecorator(delay=0.2)
     def variableFontsEditorCallback(self, sender):
-        variableFonts = variableFontsParser.parseVariableFonts(sender.get(), self.operator.writerClass.variableFontDescriptorClass)
-        self.operator.variableFonts.clear()
-        self.operator.variableFonts.extend(variableFonts)
+        variableFontsParser.storeVariableFonts(sender.get(), self.operator)
         self.setDocumentNeedSave(True, who="VariableFonts")
 
     # problems

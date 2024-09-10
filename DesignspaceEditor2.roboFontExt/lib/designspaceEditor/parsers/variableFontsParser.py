@@ -27,6 +27,8 @@ from .parserTools import getLines, getBlocks, stringToNumber, numberToString
 axisSubsetRE = re.compile(r"([a-zA-Z0-9\-]+)\s*([\-0-9\.]*)\s*([\-0-9\.]*)\s*([\-0-9\.]*)")
 filenameRE = re.compile(r"\>\s+[\"|\'](.*)[\"|\']")
 
+variableFontsLibKey = "com.letterror.designspaceEditor.variableFonts.text"
+
 
 def parseVariableFonts(text, variableFontDescriptorClass=None):
     if variableFontDescriptorClass is None:
@@ -86,38 +88,32 @@ def dumpVariableFonts(variableFonts, indent="   "):
     return "\n".join(text)
 
 
+def extractVariableFonts(operator, indent="    "):
+    """
+    Extract variable fonts to a string for a given operator:
+    check if variableFonts is stored as a string in the lib,
+    parse that stored string and compare with the internal variable fonts.
+
+    Compare with ignore the variableFonts order.
+
+    If there is no difference, use the string representation.
+
+    This will preseve comments and white space.
+    """
+    storedText = operator.lib.get(variableFontsLibKey, "")
+    parsed = parseVariableFonts(storedText)
+
+    if sorted([list(item.asdict().items()) for item in parsed]) == sorted([list(item.asdict().items()) for item in operator.variableFonts]):
+        return storedText
+    return dumpVariableFonts(operator.variableFonts, indent=indent)
 
 
-# t = """
-
-# # name of the var font
-
-# foo
-#     width 100
-#     weight 200
-
-# name
-#     # optional file name
-#     > "myFontFile.ttf"
-#     # complete weight axis
-#     weight
-#     # width axis clipped to 400 500 with a default of 400
-#     width 400 400 500
-#     italic 0
-
-
-# # name of the var font
-# otherVariableFont
-#     # complete weight axis
-#     weight
-#     # width fixed on 400
-#     width 400
-#     # italic fixed on 0
-#     italic 0
-
-# """
-
-# r = parseVariableFonts(t)
-# print(r)
-# t = dumpVariableFonts(r)
-# print(t)
+def storeVariableFonts(text, operator):
+    """
+    Store variable fonts as objects from a string for a given operator and
+    store the variable fonts string representation in the operator lib.
+    """
+    parsed = parseVariableFonts(text, operator.writerClass.variableFontDescriptorClas)
+    operator.lib[variableFontsLibKey] = text
+    operator.variableFonts.clear()
+    operator.variableFonts.extend(parsed)
