@@ -1882,7 +1882,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 column.setMinWidth_(70)
                 column.setMaxWidth_(1000)
                 column.setWidth_(70)
-                column.bind_toObject_withKeyPath_options_("value", listObject._arrayController, f"arrangedObjects.{identifier}", None)
+                column.bind_toObject_withKeyPath_options_("value", listObject._arrayController, f"arrangedObjects.{identifier}", {AppKit.NSCreatesSortDescriptorBindingOption: False})
                 cell = column.dataCell()
                 cell.setDrawsBackground_(False)
                 cell.setStringValue_("")
@@ -1917,10 +1917,19 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             for index in reversed(indexes):
                 del items[index]
             rowIndex -= len([index for index in indexes if index < rowIndex])
-            for font in toMove:
-                items.insert(rowIndex, font)
+            for item in toMove:
+                items.insert(rowIndex, item)
                 rowIndex += 1
-            sender.set(items)
+            with self.holdChanges:
+                sender.set(items)
+                # update internal operator objects
+                descriptors = [item["object"] for item in items]
+                if sender.designspaceContent == "axes":
+                    self.operator.axes[:] = descriptors
+                elif sender.designspaceContent == "sources":
+                    self.operator.sources[:] = descriptors
+                elif sender.designspaceContent == "instances":
+                    self.operator.instances[:] = descriptors
         return True
 
     # validation
