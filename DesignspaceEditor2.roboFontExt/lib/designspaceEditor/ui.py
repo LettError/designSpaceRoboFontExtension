@@ -132,7 +132,9 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
             self.instances.remove(instanceDescriptor)
 
     def addInstanceDescriptor(self, **kwargs):
-        if "familyName" not in kwargs:
+        familyName = kwargs.get("familyName")
+        styleName = kwargs.get("styleName")
+        if familyName is None:
             if self.instances:
                 familyName = self.instances[0].familyName
             elif self.sources:
@@ -140,8 +142,9 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
             else:
                 familyName = "NewFamily"
             kwargs["familyName"] = familyName
-        if "styleName" not in kwargs:
-            kwargs["styleName"] = f"Style_{len(self.instances)}"
+        if styleName is None:
+            styleName = kwargs["styleName"] = f"Style_{len(self.instances)}"
+
         if "filename" not in kwargs:
             filename = postScriptNameTransformer(kwargs["familyName"], kwargs["styleName"])
             kwargs["filename"] = os.path.join(getExtensionDefault('instanceFolderName', 'instances'), f"{filename}.ufo")
@@ -252,7 +255,11 @@ class GenerateInstanceSheet:
         # update the path attribute in all given instanceDescriptors
         for item in instances:
             instanceDescriptor = item["object"]
-            instanceDescriptor.path = os.path.abspath(os.path.join(os.path.dirname(self.operator.path), instanceDescriptor.filename))
+            # filename could be None
+            filename = instanceDescriptor.filename
+            if filename is None:
+                filename = fileNameForInstance(instanceDescriptor)
+            instanceDescriptor.path = os.path.abspath(os.path.join(os.path.dirname(self.operator.path), filename))
 
         self.instances = instances
         self.w = vanilla.Sheet((350, 140), parentWindow=parentWindow)
