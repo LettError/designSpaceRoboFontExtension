@@ -201,6 +201,10 @@ class NumberListFormatter(AppKit.NSFormatter):
 
 
 def postScriptNameTransformer(familyName, styleName):
+    if familyName is None:
+        familyName = ""
+    if styleName is None:
+        styleName = ""
     def filterPSName(name):
         # Define the set of forbidden characters
         forbidden_chars = set('-[](){}<>/%% ')
