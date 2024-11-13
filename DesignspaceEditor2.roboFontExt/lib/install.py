@@ -314,7 +314,7 @@ designspaceEvents = [
 
     "designspaceEditorSourcesDidCloseUFO",
     "designspaceEditorSourcesDidOpenUFO",
-    "designspaceEditorSourcesDidChanged",
+    "designspaceEditorSourcesDidChange",
 
     # instances
     "designspaceEditorInstancesWillRemoveInstance",

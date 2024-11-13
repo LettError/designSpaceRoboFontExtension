@@ -2107,7 +2107,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 return
 
     @notificationConductor
-    def designspaceEditorSourcesDidChanged(self, notification):
+    def designspaceEditorSourcesDidChange(self, notification):
         if len(self.operator.sources) == len(self.sources.list):
             for item, sourceDescriptor in zip(self.sources.list, self.operator.sources):
                 item.update(self.wrapSourceDescriptor(sourceDescriptor))
