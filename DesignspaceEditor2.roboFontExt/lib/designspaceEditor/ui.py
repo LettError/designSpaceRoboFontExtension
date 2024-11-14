@@ -237,7 +237,10 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
         )
 
     def getPreviewLocation(self):
-        return self.lib.get(self.previewLocationLibKey)
+        location = self.lib.get(self.previewLocationLibKey)
+        if location is None:
+            location = self.operator.newDefaultLocation(bend=True)
+        return location
 
     def setPreviewLocation(self, location):
         if location is None:
