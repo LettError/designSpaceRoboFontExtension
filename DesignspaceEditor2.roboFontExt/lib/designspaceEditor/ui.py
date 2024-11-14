@@ -2006,10 +2006,14 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 messageText="No axes defined!",
                 informativeText="The designspace needs at least one axis before saving."
             )
-
+        elif any([source.path is None for source in self.operator.sources]):
+            self.showMessage(
+                messageText="Save the sources first!",
+                informativeText="All sources must be saved to disk before saving the designspace."
+            )
         elif self.operator.path is None or AppKit.NSEvent.modifierFlags() & AppKit.NSAlternateKeyMask:
             if self.operator.path is None:
-                # check if w have defined any axes
+                # check if we have defined any axes
                 # can't save without axes
                 # get a filepath first
                 sourcePaths = set([os.path.dirname(source.path) for source in self.operator.sources if source.path])
