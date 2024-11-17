@@ -156,6 +156,57 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
             notification["instance"] = instanceDescriptor
         return instanceDescriptor
 
+    # rules
+
+    def addRule(self, ruleDescriptor):
+        with SendNotification("Rules", action="AddRule", designspace=self) as notification:
+            super().addRule(ruleDescriptor)
+            notification["rule"] = ruleDescriptor
+
+    def removeRule(self, ruleDescriptor):
+        with SendNotification("Rules", action="RemoveRule", designspace=self, instance=ruleDescriptor):
+            self.rules.remove(ruleDescriptor)
+
+    def addRuleDescriptor(self, **kwargs):
+        with SendNotification("Rules", action="AddRule", designspace=self) as notification:
+            ruleDescriptor = super().addRuleDescriptor(**kwargs)
+            notification["rule"] = ruleDescriptor
+        return ruleDescriptor
+
+    # location labels
+
+    def addLocationLabel(self, locationLabelDescriptor):
+        with SendNotification("LocationLabel", action="addLocationLabel", designspace=self) as notification:
+            super().addLocationLabel(locationLabelDescriptor)
+            notification["locationLabel"] = locationLabelDescriptor
+
+    def removeLocationLabel(self, locationLabelDescriptor):
+        with SendNotification("LocationLabel", action="removeLocationLabel", designspace=self, instance=locationLabelDescriptor):
+            self.locationLabels.remove(locationLabelDescriptor)
+
+    def addLocationLabelDescriptor(self, **kwargs):
+        with SendNotification("LocationLabel", action="addLocationLabel", designspace=self) as notification:
+            locationLabelDescriptor = super().addLocationLabelDescriptor(**kwargs)
+            notification["locationLabel"] = locationLabelDescriptor
+        return locationLabelDescriptor
+
+    # variable font
+
+    def addVariableFont(self, variableFontDescriptor):
+        with SendNotification("VariableFonts", action="AddVariableFont", designspace=self) as notification:
+            super().addVariableFont(variableFontDescriptor)
+            notification["variableFont"] = variableFontDescriptor
+
+    def removeVariableFont(self, variableFontDescriptor):
+        with SendNotification("VariableFonts", action="RemoveVariableFont", designspace=self, instance=variableFontDescriptor):
+            self.variableFonts.remove(variableFontDescriptor)
+
+    def addVariableFontDescriptor(self, **kwargs):
+        with SendNotification("VariableFonts", action="AddVariableFont", designspace=self) as notification:
+            variableFontDescriptor = super().addVariableFontDescriptor(**kwargs)
+            notification["variableFont"] = variableFontDescriptor
+        return variableFontDescriptor
+
     def openInterface(self):
         for controller in AllDesignspaceWindows():
             if controller.operator == self:
@@ -2121,6 +2172,8 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         else:
             self.sources.list.set([self.wrapSourceDescriptor(sourceDescriptor) for sourceDescriptor in self.operator.instances])
 
+        self.updateColumnHeadersFromAxes()
+
     # instances notifications
 
     designspaceEditorInstancesDidAddInstanceDelay = 0
@@ -2148,6 +2201,19 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         else:
             self.instances.list.set([self.wrapInstanceDescriptor(instanceDescriptor) for instanceDescriptor in self.operator.instances])
 
+    @notificationConductor
+    def designspaceEditorRulesDidChange(self, notification):
+        self.rules.editor.set(rulesParser.extractRules(self.operator))
+
+    @notificationConductor
+    def designspaceEditorLocationLabelsDidChange(self, notification):
+        print(self.locationLabels)
+        self.locationLabels.editor.set(labelsParser.extractLocationLabels(self.operator))
+
+    @notificationConductor
+    def designspaceEditorVariableFontsDidChange(self, notification):
+        self.variableFonts.editor.set(variableFontsParser.extractVariableFonts(self.operator))
+
 
 if __name__ == '__main__':
     pathForBundle = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -2155,5 +2221,5 @@ if __name__ == '__main__':
 
     path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
     # path = "/Users/frederik/Documents/fontsGit/RoboType/RF.designspace"
-    # path = None
+    path = None
     DesignspaceEditorController(path)
