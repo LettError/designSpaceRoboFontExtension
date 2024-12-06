@@ -363,7 +363,7 @@ class GenerateInstanceSheet:
 
                 font.save(path=fontPath)
             except Exception as e:
-                print(f"Failed to generate isntance: {e}")
+                print(f"Failed to generate instance: {e}")
 
         self.operator.useVarlib = prereserveuseVarlib
         self.operator.roundGeometry = prereserveRoundGeometry
