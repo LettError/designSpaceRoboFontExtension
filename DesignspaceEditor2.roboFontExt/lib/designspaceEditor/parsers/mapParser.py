@@ -13,7 +13,7 @@ import re
 from .parserTools import getLines, stringToNumber
 
 
-mapRE = re.compile(r"^([0-9\.]+)\s*\>\s*([0-9\.]+)\s*$")
+mapRE = re.compile(r"^(-?[0-9\.]+)\s*\>\s*(-?[0-9\.]+)\s*$")
 
 
 def parseMap(text):
@@ -36,6 +36,9 @@ def dumpMap(mapData):
     ("10 > 20", [(10, 20)]),
     ("10 > 20\n15 > 25", [(10, 20), (15, 25)]),
     ("10>20\n15>      25", [(10, 20), (15, 25)]),
+    ("-10>10", [(-10, 10)]),
+    ("-10>-10", [(-10, -10)]),
+    ("10>-10", [(10, -10)]),
 ])
 def test_parseMap(text, expected):
     result = parseMap(text)
