@@ -112,13 +112,19 @@ ruleName
     width 100-300
 """
     result = parseRules(expected, designspaceLib.RuleDescriptor)
+    assert len(result) == 1
+    descriptor = result[0]
+    assert descriptor.name == "ruleName"
+    assert descriptor.subs == [("a", "a.alt"), ("agrave", "agrave.alt"), ("b", "b.alt")]
 
 
-def test_dumpRules():
-    glyphNames = ["a", "b", "c", "agrave", "b.alt", "ccedilla"]
-    expected = "a b c agrave b.alt ccedilla"
-    result = dumpRules(glyphNames)
-    assert expected == result
+def test_Rules():
+    expected = [designspaceLib.RuleDescriptor(name="ruleName", subs=[("a", "a.alt")])]
+    result = dumpRules(expected)
+    rules = parseRules(result, designspaceLib.RuleDescriptor)
+    assert len(expected) == len(rules)
+    assert expected[0].name == rules[0].name
+    assert expected[0].subs == rules[0].subs
 
 
 if __name__ == '__main__':
