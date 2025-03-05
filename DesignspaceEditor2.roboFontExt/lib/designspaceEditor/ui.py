@@ -951,6 +951,10 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             visibleByDefault=tabItem not in ["Notes"],
         ) for tabItem in self.tabItems]
 
+        toolbarItems.append(
+            dict(itemIdentifier=AppKit.NSToolbarSpaceItemIdentifier),
+            )
+
         if has_prepolator:
             toolbarItems.append(
                 dict(
@@ -972,8 +976,6 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 )
 
         toolbarItems.extend([
-            dict(itemIdentifier=AppKit.NSToolbarSpaceItemIdentifier),
-
             dict(
                 itemIdentifier="preview",
                 label="Preview",
@@ -1008,6 +1010,13 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             # ),
         ])
         self.w.addToolbar("DesignSpaceToolbar", toolbarItems, addStandardItems=False)
+        
+        items = self.w.getToolbarItems()
+        if "batch" in items:
+            items["batch"].setVisibilityPriority_(AppKit.NSToolbarItemVisibilityPriorityLow)
+        if "prepolator" in items:
+            items["prepolator"].setVisibilityPriority_(AppKit.NSToolbarItemVisibilityPriorityLow)
+
 
         # AXES
         axesToolsSsegmentDescriptions = [
