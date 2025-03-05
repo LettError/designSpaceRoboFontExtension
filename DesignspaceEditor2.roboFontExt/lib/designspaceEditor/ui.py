@@ -73,6 +73,14 @@ except Exception:
 
 class DesignspaceEditorOperator(ufoOperator.UFOOperator):
 
+    ##### to be removed when RF get a updated ufoOperator
+    def sourceNameGenerator(self, prefix="source", count=1):
+        name = f"{prefix}.{count}"
+        for sourceDescriptor in self.sources:
+            if sourceDescriptor.name == name:
+                return self.sourceNameGenerator(prefix=prefix, count=count + 1)
+        return name
+
     def _instantiateFont(self, path):
         for font in AllFonts():
             if font.path == path:
@@ -1389,7 +1397,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         sourceDescriptor = self.operator.addSourceDescriptor(
             path=font.path,
             filename=filename,
-            name=f"source.{len(self.operator.sources) + 1}",
+            name=self.operator.sourceNameGenerator(),
             familyName=font.info.familyName,
             styleName=font.info.styleName,
             location=defaultLocation
