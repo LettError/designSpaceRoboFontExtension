@@ -4,6 +4,9 @@
 DesignSpaceEditor2
 ==================
 
+A fork of DSE2 that adds a button access Prepolator and Batch with the current designspace object.
+If these extensions are not installed, nothing will change.
+
 Create and edit designspaces with Robofont 4.5+, with support for scripting.
 
 ## Documentation

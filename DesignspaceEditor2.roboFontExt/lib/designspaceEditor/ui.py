@@ -31,6 +31,17 @@ from designspaceEditor.locationPreview import LocationPreview
 from designspaceEditor.designspaceSubscribers import registerOperator, unregisterOperator
 from designspaceEditor import extensionIdentifier
 
+try:
+    import prepolator
+    has_prepolator = True
+except ImportError:
+    has_prepolator = False
+
+try:
+    import batch
+    has_batch = True
+except ImportError:
+    has_batch = False
 
 designspaceBundle = ExtensionBundle("DesignspaceEditor2")
 
@@ -939,6 +950,26 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             selectable=True,
             visibleByDefault=tabItem not in ["Notes"],
         ) for tabItem in self.tabItems]
+
+        if has_prepolator:
+            toolbarItems.append(
+                dict(
+                    itemIdentifier="prepolator",
+                    label="Prepolator",
+                    callback=self.toolbarPrepolator,
+                    imageObject=symbolImage("hand.point.up.braille", (1, 0, 1, 1))
+                    )
+                )
+
+        if has_batch:
+            toolbarItems.append(
+                dict(
+                    itemIdentifier="batch",
+                    label="Batch",
+                    callback=self.toolbarBatch,
+                    imageObject=symbolImage("square.and.arrow.up", (1, 0, 1, 1))
+                    )
+                )
 
         toolbarItems.extend([
             dict(itemIdentifier=AppKit.NSToolbarSpaceItemIdentifier),
@@ -2008,6 +2039,12 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         return True
 
     # toolbar
+    
+    def toolbarPrepolator(self, sender):
+        prepolator.OpenPrepolator(ufoOperator=self.operator)
+
+    def toolbarBatch(self, sender):
+        batch.BatchController([self.operator.path])
 
     def toolbarSelectTab(self, sender):
         selectedTab = sender.label()
