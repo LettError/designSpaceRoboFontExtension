@@ -939,6 +939,30 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             visibleByDefault=tabItem not in ["Notes"],
         ) for tabItem in self.tabItems]
 
+        other_extensions = []
+        if self.hasPreplatorSupport:
+            other_extensions.append(
+                dict(
+                    itemIdentifier="prepolator",
+                    label="Prepolator",
+                    callback=self.toolbarPrepolator,
+                    imageObject=symbolImage("atom", (1, 0, 1, 1))
+                    )
+                )
+        if self.hasBatchSupport:
+            other_extensions.append(
+                dict(
+                    itemIdentifier="batch",
+                    label="Batch",
+                    callback=self.toolbarBatch,
+                    imageObject=symbolImage("arrow.right.filled.filter.arrow.right", (1, 0, 1, 1))
+                    )
+                )
+        if other_extensions:
+            toolbarItems.append(dict(itemIdentifier=AppKit.NSToolbarSpaceItemIdentifier))
+
+        toolbarItems.extend(other_extensions)
+
         toolbarItems.extend([
             dict(itemIdentifier=AppKit.NSToolbarSpaceItemIdentifier,
             ),
@@ -982,6 +1006,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             items["batch"].setVisibilityPriority_(AppKit.NSToolbarItemVisibilityPriorityLow)
         if "prepolator" in items:
             items["prepolator"].setVisibilityPriority_(AppKit.NSToolbarItemVisibilityPriorityLow)
+
 
         # AXES
         axesToolsSsegmentDescriptions = [
@@ -1208,47 +1233,6 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         self.observeNotifications()
 
     def started(self):
-        # moving import tests here to ensure loading
-        try:
-            import prepolator
-            has_prepolator = True
-        except ImportError:
-            has_prepolator = False
-
-        try:
-            import batch
-            has_batch = True
-        except ImportError:
-            has_batch = False
-
-        if has_prepolator:
-            self.w.addToolbarItem(
-                dict(
-                    itemIdentifier="prepolator",
-                    label="Prepolator",
-                    callback=self.toolbarPrepolator,
-                    imageObject=symbolImage("atom", (1, 0, 1, 1))
-                    ),
-                -3
-                )
-
-        if has_batch:
-            self.w.addToolbarItem(
-                dict(
-                    itemIdentifier="batch",
-                    label="Batch",
-                    callback=self.toolbarBatch,
-                    imageObject=symbolImage("arrow.right.filled.filter.arrow.right", (1, 0, 1, 1))
-                    ),
-                -3
-                )
-
-        items = self.w.getToolbarItems()
-        if "batch" in items:
-            items["batch"].setVisibilityPriority_(AppKit.NSToolbarItemVisibilityPriorityLow)
-        if "prepolator" in items:
-            items["prepolator"].setVisibilityPriority_(AppKit.NSToolbarItemVisibilityPriorityLow)
-
         with SendNotification(action="OpenDesignspace", designspace=self.operator):
             self.w.open()
         registerOperator(self.operator)
@@ -1294,6 +1278,22 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             self.variableFonts.editor.set(variableFontsParser.extractVariableFonts(self.operator))
             self.notes.editor.set(self.operator.lib.get(designspacenotesLibKey, ""))
             self.updateColumnHeadersFromAxes()
+
+    @property
+    def hasPreplatorSupport(self):    
+        try:
+            import prepolator
+            return True
+        except ImportError:
+            return False
+
+    @property
+    def hasBatchSupport(self):
+        try:
+            import batch
+            return True
+        except ImportError:
+            return False
 
     # AXES
 
@@ -2056,10 +2056,14 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
     # toolbar
     
     def toolbarPrepolator(self, sender):
-        prepolator.OpenPrepolator(ufoOperator=self.operator)
+        import prepolator
+        if self.operator.sources:
+            prepolator.OpenPrepolator(ufoOperator=self.operator)
 
     def toolbarBatch(self, sender):
-        batch.BatchController([self.operator.path])
+        import batch
+        if self.operator.path:
+            batch.BatchController([self.operator.path])
 
     def toolbarSelectTab(self, sender):
         selectedTab = sender.label()
