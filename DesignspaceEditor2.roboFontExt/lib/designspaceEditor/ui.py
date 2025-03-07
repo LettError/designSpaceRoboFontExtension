@@ -31,7 +31,6 @@ from designspaceEditor.locationPreview import LocationPreview
 from designspaceEditor.designspaceSubscribers import registerOperator, unregisterOperator
 from designspaceEditor import extensionIdentifier
 
-
 designspaceBundle = ExtensionBundle("DesignspaceEditor2")
 
 registeredAxisTags = [
@@ -948,9 +947,33 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             visibleByDefault=tabItem not in ["Notes"],
         ) for tabItem in self.tabItems]
 
-        toolbarItems.extend([
-            dict(itemIdentifier=AppKit.NSToolbarSpaceItemIdentifier),
+        other_extensions = []
+        if self.hasPreplatorSupport:
+            other_extensions.append(
+                dict(
+                    itemIdentifier="prepolator",
+                    label="Prepolator",
+                    callback=self.toolbarPrepolator,
+                    imageObject=symbolImage("atom", (1, 0, 1, 1))
+                    )
+                )
+        if self.hasBatchSupport:
+            other_extensions.append(
+                dict(
+                    itemIdentifier="batch",
+                    label="Batch",
+                    callback=self.toolbarBatch,
+                    imageObject=symbolImage("arrow.right.filled.filter.arrow.right", (1, 0, 1, 1))
+                    )
+                )
+        if other_extensions:
+            toolbarItems.append(dict(itemIdentifier=AppKit.NSToolbarSpaceItemIdentifier))
 
+        toolbarItems.extend(other_extensions)
+
+        toolbarItems.extend([
+            dict(itemIdentifier=AppKit.NSToolbarSpaceItemIdentifier,
+            ),
             dict(
                 itemIdentifier="preview",
                 label="Preview",
@@ -985,6 +1008,13 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             # ),
         ])
         self.w.addToolbar("DesignSpaceToolbar", toolbarItems, addStandardItems=False)
+
+        items = self.w.getToolbarItems()
+        if "batch" in items:
+            items["batch"].setVisibilityPriority_(AppKit.NSToolbarItemVisibilityPriorityLow)
+        if "prepolator" in items:
+            items["prepolator"].setVisibilityPriority_(AppKit.NSToolbarItemVisibilityPriorityLow)
+
 
         # AXES
         axesToolsSsegmentDescriptions = [
@@ -1256,6 +1286,22 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             self.variableFonts.editor.set(variableFontsParser.extractVariableFonts(self.operator))
             self.notes.editor.set(self.operator.lib.get(designspacenotesLibKey, ""))
             self.updateColumnHeadersFromAxes()
+
+    @property
+    def hasPreplatorSupport(self):    
+        try:
+            import prepolator
+            return True
+        except ImportError:
+            return False
+
+    @property
+    def hasBatchSupport(self):
+        try:
+            import batch
+            return True
+        except ImportError:
+            return False
 
     # AXES
 
@@ -2016,6 +2062,16 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         return True
 
     # toolbar
+    
+    def toolbarPrepolator(self, sender):
+        import prepolator
+        if self.operator.sources:
+            prepolator.OpenPrepolator(ufoOperator=self.operator)
+
+    def toolbarBatch(self, sender):
+        import batch
+        if self.operator.path:
+            batch.BatchController([self.operator.path])
 
     def toolbarSelectTab(self, sender):
         selectedTab = sender.label()
