@@ -113,7 +113,7 @@ def storeVariableFonts(text, operator):
     Store variable fonts as objects from a string for a given operator and
     store the variable fonts string representation in the operator lib.
     """
-    parsed = parseVariableFonts(text, operator.writerClass.variableFontDescriptorClas)
+    parsed = parseVariableFonts(text, operator.writerClass.variableFontDescriptorClass)
     operator.lib[variableFontsLibKey] = text
     operator.variableFonts.clear()
     operator.variableFonts.extend(parsed)
