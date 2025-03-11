@@ -8,6 +8,7 @@ from mojo.events import postEvent
 from mojo.extensions import getExtensionDefault, ExtensionBundle
 
 
+
 def holdRecursionDecorator(func):
     """
     A decorator preventing calling the same method inside itself.
@@ -137,7 +138,7 @@ symbolColorMap = dict(
 )
 
 
-def symbolImage(symbolName, color, flipped=False):
+def symbolImage(symbolName, color, flipped=False, pointSize=18.0, weight="light", scale="medium"):
     if osVersionCurrent >= osVersion12_0:
         image = AppKit.NSImage.imageWithSystemSymbolName_accessibilityDescription_(symbolName, "")
         if isinstance(color, tuple):
@@ -145,9 +146,36 @@ def symbolImage(symbolName, color, flipped=False):
         else:
             color = symbolColorMap[color]()
 
-        configuration = AppKit.NSImageSymbolConfiguration.configurationWithHierarchicalColor_(
-            color
+        pointSize = float(pointSize)
+
+        scales = {
+            "small": AppKit.NSImageSymbolScaleSmall,
+            "medium": AppKit.NSImageSymbolScaleMedium,
+            "large": AppKit.NSImageSymbolScaleLarge,
+        }
+        scale = scales.get(scale, AppKit.NSImageSymbolScaleMedium)
+
+        weights = {
+            "ultraLight": AppKit.NSFontWeightUltraLight,
+            "thin":       AppKit.NSFontWeightThin,
+            "light":      AppKit.NSFontWeightLight,
+            "regular":    AppKit.NSFontWeightRegular,
+            "medium":     AppKit.NSFontWeightMedium,
+            "semibold":   AppKit.NSFontWeightSemibold,
+            "bold":       AppKit.NSFontWeightBold,
+            "heavy":      AppKit.NSFontWeightHeavy,
+            "black":      AppKit.NSFontWeightBlack,
+        }
+        weight = weights.get(weight, AppKit.NSFontWeightRegular)
+                    
+        baseConfig = AppKit.NSImageSymbolConfiguration.configurationWithHierarchicalColor_(color)
+        newConfig = AppKit.NSImageSymbolConfiguration.configurationWithPointSize_weight_scale_(
+            pointSize,
+            weight,
+            scale
         )
+        # newConfig = AppKit.NSImageSymbolConfiguration.configurationWithScale_(scale)
+        configuration = baseConfig.configurationByApplyingConfiguration_(newConfig)
         image = image.imageWithSymbolConfiguration_(configuration)
     else:
         # older systems
