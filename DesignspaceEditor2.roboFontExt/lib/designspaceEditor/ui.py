@@ -89,7 +89,7 @@ class DesignspaceEditorOperator(ufoOperator.UFOOperator):
     def updateFonts(self, fonts=None):
         if fonts is None:
             fonts = AllFonts()
-        super().udpateFonts([font.asDefcon() for font in fonts])
+        super().updateFonts([font.asDefcon() for font in fonts])
 
     # axes
 
@@ -947,9 +947,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             visibleByDefault=tabItem not in ["Notes"],
         ) for tabItem in self.tabItems]
 
-        other_extensions = []
+        otherExtensions = []
         if self.hasPreplatorSupport:
-            other_extensions.append(
+            otherExtensions.append(
                 dict(
                     itemIdentifier="prepolator",
                     label="Prepolator",
@@ -958,7 +958,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                     )
                 )
         if self.hasBatchSupport:
-            other_extensions.append(
+            otherExtensions.append(
                 dict(
                     itemIdentifier="batch",
                     label="Batch",
@@ -966,10 +966,10 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                     imageObject=symbolImage("arrow.right.filled.filter.arrow.right", (1, 0, 1, 1))
                     )
                 )
-        if other_extensions:
+        if otherExtensions:
             toolbarItems.append(dict(itemIdentifier=AppKit.NSToolbarSpaceItemIdentifier))
 
-        toolbarItems.extend(other_extensions)
+        toolbarItems.extend(otherExtensions)
 
         toolbarItems.extend([
             dict(itemIdentifier=AppKit.NSToolbarSpaceItemIdentifier,
