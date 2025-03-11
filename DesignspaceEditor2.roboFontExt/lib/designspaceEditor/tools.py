@@ -139,46 +139,45 @@ symbolColorMap = dict(
 
 
 def symbolImage(symbolName, color, flipped=False, pointSize=18.0, weight="light", scale="medium"):
+    image = None
     if osVersionCurrent >= osVersion12_0:
         image = AppKit.NSImage.imageWithSystemSymbolName_accessibilityDescription_(symbolName, "")
-        if isinstance(color, tuple):
-            color = AppKit.NSColor.colorWithCalibratedRed_green_blue_alpha_(*color)
-        else:
-            color = symbolColorMap[color]()
+        if image:
+            if isinstance(color, tuple):
+                color = AppKit.NSColor.colorWithCalibratedRed_green_blue_alpha_(*color)
+            else:
+                color = symbolColorMap[color]()
 
-        pointSize = float(pointSize)
+            scales = {
+                "small":  AppKit.NSImageSymbolScaleSmall,
+                "medium": AppKit.NSImageSymbolScaleMedium,
+                "large":  AppKit.NSImageSymbolScaleLarge,
+            }
+            scale = scales.get(scale, AppKit.NSImageSymbolScaleMedium)
 
-        scales = {
-            "small": AppKit.NSImageSymbolScaleSmall,
-            "medium": AppKit.NSImageSymbolScaleMedium,
-            "large": AppKit.NSImageSymbolScaleLarge,
-        }
-        scale = scales.get(scale, AppKit.NSImageSymbolScaleMedium)
-
-        weights = {
-            "ultraLight": AppKit.NSFontWeightUltraLight,
-            "thin":       AppKit.NSFontWeightThin,
-            "light":      AppKit.NSFontWeightLight,
-            "regular":    AppKit.NSFontWeightRegular,
-            "medium":     AppKit.NSFontWeightMedium,
-            "semibold":   AppKit.NSFontWeightSemibold,
-            "bold":       AppKit.NSFontWeightBold,
-            "heavy":      AppKit.NSFontWeightHeavy,
-            "black":      AppKit.NSFontWeightBlack,
-        }
-        weight = weights.get(weight, AppKit.NSFontWeightRegular)
-                    
-        baseConfig = AppKit.NSImageSymbolConfiguration.configurationWithHierarchicalColor_(color)
-        newConfig = AppKit.NSImageSymbolConfiguration.configurationWithPointSize_weight_scale_(
-            pointSize,
-            weight,
-            scale
-        )
-        # newConfig = AppKit.NSImageSymbolConfiguration.configurationWithScale_(scale)
-        configuration = baseConfig.configurationByApplyingConfiguration_(newConfig)
-        image = image.imageWithSymbolConfiguration_(configuration)
-    else:
-        # older systems
+            weights = {
+                "ultraLight": AppKit.NSFontWeightUltraLight,
+                "thin":       AppKit.NSFontWeightThin,
+                "light":      AppKit.NSFontWeightLight,
+                "regular":    AppKit.NSFontWeightRegular,
+                "medium":     AppKit.NSFontWeightMedium,
+                "semibold":   AppKit.NSFontWeightSemibold,
+                "bold":       AppKit.NSFontWeightBold,
+                "heavy":      AppKit.NSFontWeightHeavy,
+                "black":      AppKit.NSFontWeightBlack,
+            }
+            weight = weights.get(weight, AppKit.NSFontWeightRegular)
+                        
+            baseConfig = AppKit.NSImageSymbolConfiguration.configurationWithHierarchicalColor_(color)
+            newConfig = AppKit.NSImageSymbolConfiguration.configurationWithPointSize_weight_scale_(
+                float(pointSize),
+                weight,
+                scale
+            )
+            configuration = baseConfig.configurationByApplyingConfiguration_(newConfig)
+            image = image.imageWithSymbolConfiguration_(configuration)
+    if not image:
+        # older systems, or missing SF symbol
         bundle = ExtensionBundle("DesignspaceEditor2")
         image = bundle.getResourceImage(f"toolbar_30_30_{symbolName}")
     if flipped and image:
