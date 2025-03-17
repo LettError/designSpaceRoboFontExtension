@@ -1,7 +1,7 @@
 #for n in installedFonts():
 #    if "SF" in n:
 #        print(n)
-        
+
 
 # width and height of the square output document
 dim = 275
@@ -13,6 +13,8 @@ names = [
     ("􀅵", "SFPro-Regular", "info.circle.fill"),
     ("􁌵", "SFPro-Regular", "info.bubble.fill"),
     ("􀜍", "SFPro-Regular", "wand.and.stars"),
+    ("􂧿", "SFPro-Regular", "arrow.right.filled.filter.arrow.right"),
+    ("􀬚", "SFPro-Regular", "atom"),
     ]
 
 for sym, fontName, symbolName in names:
@@ -36,4 +38,4 @@ for sym, fontName, symbolName in names:
         translate(-.5*w, -.5*h)
         drawPath(bp)
     saveImage(f"{symbolName}_{symbolName}.svg")
-    
+
