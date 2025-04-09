@@ -922,7 +922,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
     def build(self):
         self.operator = DesignspaceEditorOperator(extrapolate=True)
 
-        self.w = vanilla.Window((900, 500), "Designspace Editor", minSize=(720, 400))
+        self.w = vanilla.Window((950, 500), "Designspace Editor", minSize=(720, 400))
         self.w.vanillaWrapper = weakref.ref(self)
         self.w.bind("should close", self.windowShouldClose)
 
@@ -1500,10 +1500,10 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     def sourcesListDropCallback(self, sender, dropInfo):
         isProposal = dropInfo["isProposal"]
-        existingUFOPaths = [sourceDescriptor.path for sourceDescriptor in self.operator.sources]
+        #existingUFOPaths = [sourceDescriptor.path for sourceDescriptor in self.operator.sources]
 
         paths = dropInfo["data"]
-        paths = [path for path in paths if os.path.splitext(path)[-1].lower() == ".ufo" and path not in existingUFOPaths]
+        paths = [path for path in paths if os.path.splitext(path)[-1].lower() == ".ufo"]    # and path not in existingUFOPaths]
 
         if not paths:
             return False
