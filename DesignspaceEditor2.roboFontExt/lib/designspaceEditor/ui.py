@@ -1089,9 +1089,10 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         )
 
         sourcesEditorToolsSsegmentDescriptions = [
-            dict(title="Add Open UFOs to Designspace"),
+            dict(title="Add Open UFOs"),
             # dict(title="Load Names"),
-            dict(title="Replace UFO"),
+            #dict(title="Replace UFO"),
+            dict(title="Refresh UFOs"),
         ]
         self.sources.editorTools = vanilla.SegmentedButton(
             (72, 5, 300, 22),
@@ -1403,39 +1404,43 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 if font.path not in existingSourcePaths:
                     self.addSourceFromFont(font)
         elif value == 1:
-            # Replace UFO
-            selection = self.sources.list.getSelection()
-            if len(selection) == 1:
-                index = selection[0]
-                item = self.sources.list[index]
-                sourceDescriptor = item["object"]
+            self.operator.sourcesChanged(clearCaches=True)
 
-                def callback(paths):
-                    if paths:
-                        font = OpenFont(paths[0], showInterface=False)
-                        sourceDescriptor.path = font.path
-                        sourceDescriptor.familyName = font.info.familyName
-                        sourceDescriptor.styleName = font.info.styleName
-                        if self.operator.path is not None:
-                            sourceDescriptor.filename = os.path.relpath(font.path, os.path.dirname(self.operator.path))
-                        else:
-                            sourceDescriptor.filename = font.path
-                        self.operator.fonts[sourceDescriptor.name] = font.asDefcon()
-                        item.update(self.wrapSourceDescriptor(sourceDescriptor))
-                        self.setDocumentNeedSave(True, who="Sources")
+    def replaceSelectedUFO(self):
+        # handle the replacement of the selected UFO in the sources list
+        # Replace UFO
+        selection = self.sources.list.getSelection()
+        if len(selection) == 1:
+            index = selection[0]
+            item = self.sources.list[index]
+            sourceDescriptor = item["object"]
 
-                self.showGetFile(
-                    messageText=f"New UFO for {os.path.basename(sourceDescriptor.path)}",
-                    allowsMultipleSelection=False,
-                    fileTypes=["ufo"],
-                    callback=callback
-                )
-            else:
-                self.showMessage(
-                    messageText="Cannot replace source UFOs",
-                    informativeText="Selection only one source item to be replace"
-                )
+            def callback(paths):
+                if paths:
+                    font = OpenFont(paths[0], showInterface=False)
+                    sourceDescriptor.path = font.path
+                    sourceDescriptor.familyName = font.info.familyName
+                    sourceDescriptor.styleName = font.info.styleName
+                    if self.operator.path is not None:
+                        sourceDescriptor.filename = os.path.relpath(font.path, os.path.dirname(self.operator.path))
+                    else:
+                        sourceDescriptor.filename = font.path
+                    self.operator.fonts[sourceDescriptor.name] = font.asDefcon()
+                    item.update(self.wrapSourceDescriptor(sourceDescriptor))
+                    self.setDocumentNeedSave(True, who="Sources")
 
+            self.showGetFile(
+                messageText=f"New UFO for {os.path.basename(sourceDescriptor.path)}",
+                allowsMultipleSelection=False,
+                fileTypes=["ufo"],
+                callback=callback
+            )
+        else:
+            self.showMessage(
+                messageText="Cannot replace source UFOs",
+                informativeText="Selection only one source item to be replace"
+            )
+        
     def addSourceFromPath(self, path):
         font = OpenFont(path, showInterface=False)
         self.addSourceFromFont(font)
@@ -1762,6 +1767,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
         def forceSourcesChangeCallback(menuItem):
             self.operator.sourcesChanged(clearCaches=True)
+        
+        def replaceUFO(menuItem):
+            self.replaceSelectedUFO()
 
         def sliderCallback(slider):
             item[columnIdentifier] = slider.get()
@@ -1866,13 +1874,16 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                     menu.append("----")
                     menu.append(dict(title="Open Source UFO", callback=openUFO))
                     menu.append(dict(title="Reveal Source in Finder", callback=revealInFinderCallback))
+                if len(selectedItems) == 1:
+                    menu.append("----")
+                    menu.append(dict(title="Replace Source UFO", callback=replaceUFO))
                 menu.append("----")
                 menu.append(dict(title="Move to Default Location", callback=menuMakeDefaultCallback))
                 if len(selectedItems) == 1:
                     menu.append(dict(title="Set Preview to Selection", callback=menuSetPreviewToSelectionCallback))
 
-            menu.append("----")
-            menu.append(dict(title="Force Refresh of All Sources", callback=forceSourcesChangeCallback))
+            #menu.append("----")
+            #menu.append(dict(title="Force Refresh of All Sources", callback=forceSourcesChangeCallback))
 
         if selectedItems and sender.designspaceContent == "instances":
             menu.append("----")
