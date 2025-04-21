@@ -323,7 +323,7 @@ class GenerateInstanceSheet:
             instanceDescriptor.path = os.path.abspath(os.path.join(os.path.dirname(self.operator.path), filename))
 
         self.instances = instances
-        self.w = vanilla.Sheet((350, 140), parentWindow=parentWindow)
+        self.w = vanilla.Sheet((350, 160), parentWindow=parentWindow)
 
         split = 100
         self.w.mathModelText = vanilla.TextBox((10, 10, split, 22), "Math model:", alignment="right")
@@ -332,6 +332,7 @@ class GenerateInstanceSheet:
 
         self.w.roundCheckBox = vanilla.CheckBox((split + 20, 45, -10, 22), "Round Geometry")
         self.w.mathModelSuffix = vanilla.CheckBox((split + 20, 70, -10, 22), "Add Math Model Suffix")
+        self.w.doKerningCheckBox = vanilla.CheckBox((split + 20, 95, -10, 22), "Ignore Kerning + Groups")
 
         # self.w.instancesRootText = vanilla.TextBox((10, 105, split, 22), "Instances Folder:", alignment="right")
         # self.w.instancesRoot = vanilla.EditText((split + 20, 105 - 2, -10, 22), "foo")
@@ -348,6 +349,8 @@ class GenerateInstanceSheet:
         mathModel = self.w.mathModel.get()
         shouldRound = self.w.roundCheckBox.get()
         addMathModelSuffix = self.w.mathModelSuffix.get()
+        ignoreKerning = self.w.doKerningCheckBox.get()
+        print("ignoreKerning", ignoreKerning)
 
         prereserveuseVarlib = self.operator.useVarlib
         prereserveRoundGeometry = self.operator.roundGeometry
@@ -358,7 +361,10 @@ class GenerateInstanceSheet:
         self.operator.findDefault()
 
         for item in self.instances:
+            preserveDoKerningState = item['object'].kerning
             instanceDescriptor = item["object"]
+            if ignoreKerning:
+                item['object'].kerning = False
             try:
                 font = self.operator.makeInstance(instanceDescriptor)
                 if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
@@ -367,10 +373,11 @@ class GenerateInstanceSheet:
                 if addMathModelSuffix:
                     fileName, ext = os.path.splitext(fontPath)
                     fontPath = f"{fileName}-{('mm', 'varLib')[mathModel]}{ext}"
-
                 font.save(path=fontPath)
             except Exception as e:
                 print(f"Failed to generate instance: {e}")
+            finally:
+                item["object"].kerning = preserveDoKerningState
 
         self.operator.useVarlib = prereserveuseVarlib
         self.operator.roundGeometry = prereserveRoundGeometry
@@ -2283,7 +2290,8 @@ if __name__ == '__main__':
     pathForBundle = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     designspaceBundle = ExtensionBundle(path=pathForBundle)
 
-    path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
+    #path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
+    path = "/Users/erik/code/mutatorSans/MutatorSans.designspace"
     # path = "/Users/frederik/Documents/fontsGit/RoboType/RF.designspace"
-    path = None
+    #path = None
     DesignspaceEditorController(path)
