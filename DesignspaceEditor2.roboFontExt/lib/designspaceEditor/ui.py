@@ -1831,6 +1831,20 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         def openUFO(menuItem):
             self.openSelectedItem(sender)
         
+        def generateUFO(menuItem):
+            #print('generateUFO callback', menuItem)
+            self.instancesEditorGenerateToolsCallback(sender=None)
+            
+        def duplicateInstanceUFO(menuItem):
+            # more or less duplicated from instancesEditorToolsCallback
+            #print('duplicateInstanceUFO callback', menuItem)
+            for index in self.instances.list.getSelection():
+                item = self.instances.list[index]
+                instanceDescriptor = item["object"]
+                self.operator.addInstanceDescriptor(
+                    **deepcopy(instanceDescriptor.asdict())
+                )
+        
         def duplicateSourceUFO(menuItem):
             # Duplicate the source. Shows a message that this will break the designspace
             # until the copy has been moved to a new location. 
@@ -1842,6 +1856,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 data['name'] += ".copy"
                 self.operator.addSourceDescriptor(**data)
             self.operator.sourcesChanged(clearCaches=True)
+            self.setDocumentNeedSave(True, who="Sources")
 
         # this manages the columns with axis values
         menu = []
@@ -1892,8 +1907,10 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
         if selectedItems and sender.designspaceContent == "instances":
             menu.append("----")
-            menu.append(dict(title="Open Instance UFO", callback=openUFO))
-            menu.append(dict(title="Reveal Instance in Finder", callback=revealInFinderCallback))
+            menu.append(dict(title="Generate UFO", callback=generateUFO))
+            menu.append(dict(title="Open UFO UFO", callback=openUFO))
+            menu.append(dict(title="Reveal UFO in Finder", callback=revealInFinderCallback))
+            menu.append(dict(title="Duplicate UFO", callback=duplicateInstanceUFO))
             menu.append("----")
             menu.append(dict(title="Update UFO Filename", callback=updateUFOFilenameFromFontNames))
             # menu.append(dict(title="Update PostScript Font Name", callback=updatePostScriptFontNameFromFontNamesCallback))
@@ -1901,9 +1918,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             menu.append(dict(title="Convert to User Location", callback=convertInstanceToUserLocation))
             menu.append(dict(title="Convert to Design Location", callback=convertInstanceToDesignLocation))
             if len(selectedItems) == 1:
-                menu.append(dict(title="Set Preview to Selection", callback=menuSetPreviewToSelectionCallback))
+                menu.append(dict(title="Set as Preview Location", callback=menuSetPreviewToSelectionCallback))
             if len(selectedItems) == 2:
-                menu.append(dict(title="New instance inbetween", callback=newInstanceBetween))
+                menu.append(dict(title="New Inbetween", callback=newInstanceBetween))
 
         return menu
 
