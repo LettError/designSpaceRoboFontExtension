@@ -1828,17 +1828,28 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
             self.instancesChanged()
 
-        # def updatePostScriptFontNameFromFontNamesCallback(menuItem):
-        #     for item in selectedItems:
-        #         instanceDescriptor = item["object"]
-        #         psName = f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}"
-        #         psName = psName.replace(" ", "")    # does this need to filter more?
-        #         instanceDescriptor.postScriptFontName = psName
-        #         item.update(self.wrapInstanceDescriptor(instanceDescriptor))
-        #     self.instancesChanged()
-
         def openUFO(menuItem):
             self.openSelectedItem(sender)
+        
+        def duplicateSourceUFO(menuItem):
+            dupes = len(selectedItems)
+            plural = "s"
+            if dupes == 1:
+                plural = ""
+            self.showMessage(
+                f"You're about to duplicate {dupes} source{plural}.",
+                informativeText = "The designspace will not work until you have moved each source to a new, unique location.")
+            for item in selectedItems:
+                d = item['object'].asdict()
+                #'name': 'temp_master.4'
+                d['name'] += ".copy"
+                d['font'] = item['object'].font
+                print("item['object'].font", item['object'].font)
+                print(d)
+                self.operator.addSourceDescriptor(**d)
+            self.operator.loadFonts(reload=True)
+            self.operator.findDefault()
+            self.operator.changed()
 
         menu = []
         for axisDescriptor in self.operator.axes:
@@ -1872,15 +1883,16 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 menu.append("----")
                 if item["object"].path and os.path.exists(item["object"].path):
                     menu.append("----")
-                    menu.append(dict(title="Open Source UFO", callback=openUFO))
-                    menu.append(dict(title="Reveal Source in Finder", callback=revealInFinderCallback))
+                    menu.append(dict(title="Duplicate UFO", callback=duplicateSourceUFO))
+                    menu.append(dict(title="Open UFO", callback=openUFO))
+                    menu.append(dict(title="Reveal UFO in Finder", callback=revealInFinderCallback))
                 if len(selectedItems) == 1:
                     menu.append("----")
-                    menu.append(dict(title="Replace Source UFO", callback=replaceUFO))
+                    menu.append(dict(title="Replace UFO", callback=replaceUFO))
                 menu.append("----")
                 menu.append(dict(title="Move to Default Location", callback=menuMakeDefaultCallback))
                 if len(selectedItems) == 1:
-                    menu.append(dict(title="Set Preview to Selection", callback=menuSetPreviewToSelectionCallback))
+                    menu.append(dict(title="Set as Preview Location", callback=menuSetPreviewToSelectionCallback))
 
             #menu.append("----")
             #menu.append(dict(title="Force Refresh of All Sources", callback=forceSourcesChangeCallback))
