@@ -1157,15 +1157,15 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             callback=self.instancesEditorToolsCallback,
             segmentDescriptions=instancesEditorToolsSsegmentDescriptions
         )
-        instancesEditorGenerateToolsSsegmentDescriptions = [
-            dict(title="Generate Instance"),
-        ]
-        self.instances.generateTools = vanilla.SegmentedButton(
-            (330, 5, 150, 22),
-            selectionStyle="momentary",
-            callback=self.instancesEditorGenerateToolsCallback,
-            segmentDescriptions=instancesEditorGenerateToolsSsegmentDescriptions
-        )
+        # instancesEditorGenerateToolsSsegmentDescriptions = [
+        #     dict(title="Generate Instance"),
+        # ]
+        # self.instances.generateTools = vanilla.SegmentedButton(
+        #     (330, 5, 150, 22),
+        #     selectionStyle="momentary",
+        #     callback=self.instancesEditorGenerateToolsCallback,
+        #     segmentDescriptions=instancesEditorGenerateToolsSsegmentDescriptions
+        # )
 
         instancesDoubleClickCell = RFDoubleClickCell.alloc().init()
         instancesDoubleClickCell.setDoubleClickCallback_(self.instancesListDoubleClickCallback)
@@ -1795,6 +1795,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
         def newInstanceBetweenMultiples(menuItem):
             # make a new instance at the average of all selected instances
+            print("\n\nnewInstanceBetweenMultiples")
             locations = []
             discreteSpaces = []
             primaryInstance = None
@@ -1818,16 +1819,44 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 wantDiscrete = None
             averageLocation = self.operator.newDefaultLocation(discreteLocation=wantDiscrete)
             # calculate average of all continuous axes
-            values = {}
+            valuesX = {}
+            valuesY = {}
+            willBeAnisotropic = []
             for l in locations:
+                print("\tlooking at", l)
                 for axisName, axisValue in l.items():
-                    if not axisName in values:
-                        values[axisName] = []
-                    values[axisName].append(axisValue)
-            for axisName, axisValues in values.items():
-                averageLocation[axisName] = sum(axisValues)/len(axisValues)
+                    print("\t\txx", axisName, axisValue)
+                    if not axisName in valuesX:
+                        valuesX[axisName] = []
+                    if not axisName in valuesY:
+                        valuesY[axisName] = []
+                    if type(axisValue) == tuple:
+                        valuesX[axisName].append(axisValue[0])
+                        valuesY[axisName].append(axisValue[1])
+                        willBeAnisotropic.append(axisName)
+                    else:
+                        valuesX[axisName].append(axisValue)
+                        valuesY[axisName].append(axisValue)
+                print("\t\t-- valuesX", valuesX)
+                print("\t\t-- valuesY", valuesY)
+            for axisName in valuesX.keys():
+                if axisName in willBeAnisotropic:
+                    # axis has anisotropic values
+                    xAverage = sum(valuesX[axisName])/len(valuesX[axisName])
+                    yAverage = sum(valuesY[axisName])/len(valuesX[axisName])
+                    print("\t= calculating anisotropic", xAverage, yAverage)
+                    if xAverage != yAverage:
+                        averageLocation[axisName] = (xAverage, yAverage)
+                    else:
+                        averageLocation[axisName] = xAverage
+                else:
+                    # axis has flat values
+                    xAverage = sum(valuesX[axisName])/len(valuesX[axisName])
+                    print("\t= straight", axisName, xAverage, averageLocation)
+                    averageLocation[axisName] = xAverage
             if wantDiscrete is not None:
                 averageLocation.update(wantDiscrete)
+            print("-- candidate:", averageLocation)
             newFamilyName = primaryInstance.familyName
             newStyleName = self.operator.locationToDescriptiveString(averageLocation)
             instanceUFOFileName = postScriptNameTransformer(newFamilyName, newStyleName) + ".ufo"
@@ -1910,28 +1939,27 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 menu.append("----")
                 if item["object"].path and os.path.exists(item["object"].path):
                     menu.append("----")
-                    menu.append(dict(title="Duplicate UFO", callback=duplicateSourceUFO))
+                    menu.append(dict(title="Duplicate", callback=duplicateSourceUFO))
                     menu.append(dict(title="Open UFO", callback=openUFO))
-                    menu.append(dict(title="Reveal UFO in Finder", callback=revealInFinderCallback))
+                    menu.append(dict(title="Reveal in Finder", callback=revealInFinderCallback))
                 if len(selectedItems) == 1:
                     menu.append("----")
-                    menu.append(dict(title="Replace UFO", callback=replaceUFO))
+                    menu.append(dict(title="Replace", callback=replaceUFO))
                 menu.append("----")
                 menu.append(dict(title="Move to Default Location", callback=menuMakeDefaultCallback))
                 if len(selectedItems) == 1:
                     menu.append(dict(title="Set as Preview Location", callback=menuSetPreviewToSelectionCallback))
-
             #menu.append("----")
             #menu.append(dict(title="Force Refresh of All Sources", callback=forceSourcesChangeCallback))
 
         if selectedItems and sender.designspaceContent == "instances":
             menu.append("----")
             menu.append(dict(title="Generate UFO", callback=generateUFO))
-            menu.append(dict(title="Open UFO UFO", callback=openUFO))
-            menu.append(dict(title="Reveal UFO in Finder", callback=revealInFinderCallback))
-            menu.append(dict(title="Duplicate UFO", callback=duplicateInstanceUFO))
+            menu.append(dict(title="Open UFO", callback=openUFO))
+            menu.append(dict(title="Reveal in Finder", callback=revealInFinderCallback))
+            menu.append(dict(title="Duplicate", callback=duplicateInstanceUFO))
             menu.append("----")
-            menu.append(dict(title="Update UFO Filename", callback=updateUFOFilenameFromFontNames))
+            menu.append(dict(title="Update Filename", callback=updateUFOFilenameFromFontNames))
             # menu.append(dict(title="Update PostScript Font Name", callback=updatePostScriptFontNameFromFontNamesCallback))
             menu.append("----")
             menu.append(dict(title="Convert to User Location", callback=convertInstanceToUserLocation))
@@ -1939,7 +1967,8 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             if len(selectedItems) == 1:
                 menu.append(dict(title="Set as Preview Location", callback=menuSetPreviewToSelectionCallback))
             if len(selectedItems) > 1:
-                menu.append(dict(title="New Inbetween", callback=newInstanceBetweenMultiples))
+                menu.append("----")
+                menu.append(dict(title="New Inbetween Location", callback=newInstanceBetweenMultiples))
         return menu
 
     def convertAxisTo(self, axisDescriptor, destinationClass, **kwargs):
