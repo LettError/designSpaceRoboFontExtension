@@ -1091,7 +1091,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             dict(title="Add Open UFOs"),
             # dict(title="Load Names"),
             #dict(title="Replace UFO"),
-            dict(title="Refresh UFOs"),
+            dict(title="Refresh"),
         ]
         self.sources.editorTools = vanilla.SegmentedButton(
             (72, 5, 300, 22),
@@ -1148,25 +1148,14 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         )
 
         instancesEditorToolsSsegmentDescriptions = [
-            dict(title="Duplicate"),
-            dict(title="Add Sources as Instances")
+            dict(title="Add Sources as Instances"),
         ]
         self.instances.editorTools = vanilla.SegmentedButton(
-            (72, 5, 250, 22),
+            (72, 5, 400, 22),
             selectionStyle="momentary",
             callback=self.instancesEditorToolsCallback,
             segmentDescriptions=instancesEditorToolsSsegmentDescriptions
         )
-        # instancesEditorGenerateToolsSsegmentDescriptions = [
-        #     dict(title="Generate Instance"),
-        # ]
-        # self.instances.generateTools = vanilla.SegmentedButton(
-        #     (330, 5, 150, 22),
-        #     selectionStyle="momentary",
-        #     callback=self.instancesEditorGenerateToolsCallback,
-        #     segmentDescriptions=instancesEditorGenerateToolsSsegmentDescriptions
-        # )
-
         instancesDoubleClickCell = RFDoubleClickCell.alloc().init()
         instancesDoubleClickCell.setDoubleClickCallback_(self.instancesListDoubleClickCallback)
         instancesDoubleClickCell.setImage_(infoImage)
@@ -1590,15 +1579,6 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
     def instancesEditorToolsCallback(self, sender):
         value = sender.get()
         if value == 0:
-            # duplicate
-            for index in self.instances.list.getSelection():
-                item = self.instances.list[index]
-                instanceDescriptor = item["object"]
-                self.operator.addInstanceDescriptor(
-                    **deepcopy(instanceDescriptor.asdict())
-                )
-
-        elif value == 1:
             # Add Sources as Instances
             existingLocations = [instanceDescriptor.getFullDesignLocation(self.operator) for instanceDescriptor in self.operator.instances]
             for sourceDescriptor in self.operator.sources:
