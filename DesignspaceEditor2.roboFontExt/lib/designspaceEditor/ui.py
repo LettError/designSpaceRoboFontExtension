@@ -1793,34 +1793,53 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             selectedDesignLocation = selectedObject.getFullDesignLocation(self.operator)
             self.operator.setPreviewLocation(selectedDesignLocation)
 
-        def newInstanceBetween(menuItem):
+        def newInstanceBetweenMultiples(menuItem):
             # make a new instance at the average of all selected instances
-            first = selectedItems[0]['object']
-            firstLocation = first.getFullDesignLocation(self.operator)
-            firstContinuous, firstDiscrete = self.operator.splitLocation(firstLocation)
-            second = selectedItems[1]['object']
-            secondLocation = second.getFullDesignLocation(self.operator)
-            secondContinuous, secondDiscrete = self.operator.splitLocation(secondLocation)
-            # make sure both selected instances are in the same discrete space
-            if firstDiscrete != secondDiscrete:
-                self.showMessage("Can't make a new instance:", "Select instances in the same discrete spaces.")
+            locations = []
+            discreteSpaces = []
+            primaryInstance = None
+            for instance in selectedItems:
+                instanceObject = instance['object']
+                loc = instanceObject.getFullDesignLocation(self.operator)
+                locContinuous, locDiscrete = self.operator.splitLocation(loc)
+                locations.append(locContinuous)
+                if locDiscrete not in discreteSpaces:
+                    discreteSpaces.append(locDiscrete)
+                if primaryInstance is None:
+                    primaryInstance = instanceObject
+            if len(discreteSpaces) > 1:
+                self.showMessage("Can't make a new instance:", "Select instances at the same discrete location.")
                 return
-            location = self.operator.newDefaultLocation(discreteLocation=firstDiscrete)
-            for axisName in firstContinuous.keys():
-                newValue = .5 * (firstContinuous.get(axisName) + secondContinuous.get(axisName))
-                location[axisName] = newValue
-            newFamilyName = first.familyName
-            newStyleName = f"{first.styleName}_{second.styleName}"
-            # postScriptFontName = f"{newFamilyName}-{newStyleName}"
+
+            # could be 1, could be 0
+            if len(discreteSpaces) == 1:
+                wantDiscrete = discreteSpaces[0]
+            else:
+                wantDiscrete = None
+            averageLocation = self.operator.newDefaultLocation(discreteLocation=wantDiscrete)
+            # calculate average of all continuous axes
+            values = {}
+            for l in locations:
+                for axisName, axisValue in l.items():
+                    if not axisName in values:
+                        values[axisName] = []
+                    values[axisName].append(axisValue)
+            for axisName, axisValues in values.items():
+                averageLocation[axisName] = sum(axisValues)/len(axisValues)
+            if wantDiscrete is not None:
+                averageLocation.update(wantDiscrete)
+            newFamilyName = primaryInstance.familyName
+            newStyleName = self.operator.locationToDescriptiveString(averageLocation)
             instanceUFOFileName = postScriptNameTransformer(newFamilyName, newStyleName) + ".ufo"
             self.operator.addInstanceDescriptor(
-                familyName=first.familyName,
+                familyName=newFamilyName,
                 styleName=newStyleName,
-                designLocation=location,
+                designLocation=averageLocation,
                 filename=instanceUFOFileName,
                 # postScriptFontName=postScriptFontName,
             )
-
+            self.instancesChanged()
+                
         def updateUFOFilenameFromFontNames(menuItem):
             for item in selectedItems:
                 instanceDescriptor = item["object"]
@@ -1919,9 +1938,8 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             menu.append(dict(title="Convert to Design Location", callback=convertInstanceToDesignLocation))
             if len(selectedItems) == 1:
                 menu.append(dict(title="Set as Preview Location", callback=menuSetPreviewToSelectionCallback))
-            if len(selectedItems) == 2:
-                menu.append(dict(title="New Inbetween", callback=newInstanceBetween))
-
+            if len(selectedItems) > 1:
+                menu.append(dict(title="New Inbetween", callback=newInstanceBetweenMultiples))
         return menu
 
     def convertAxisTo(self, axisDescriptor, destinationClass, **kwargs):
