@@ -350,7 +350,6 @@ class GenerateInstanceSheet:
         shouldRound = self.w.roundCheckBox.get()
         addMathModelSuffix = self.w.mathModelSuffix.get()
         ignoreKerning = self.w.doKerningCheckBox.get()
-        print("ignoreKerning", ignoreKerning)
 
         prereserveuseVarlib = self.operator.useVarlib
         prereserveRoundGeometry = self.operator.roundGeometry
@@ -1476,6 +1475,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             sourceHasMutedGlyphs=dotSymbol if sourceDescriptor.mutedGlyphNames else "",
             object=sourceDescriptor
         )
+        # axis values in the sources panel
         for axis, value in sourceDescriptor.location.items():
             wrapped[f"axis_{axis}"] = value
         return wrapped
@@ -1832,25 +1832,18 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             self.openSelectedItem(sender)
         
         def duplicateSourceUFO(menuItem):
-            dupes = len(selectedItems)
-            plural = "s"
-            if dupes == 1:
-                plural = ""
+            # Duplicate the source. Shows a message that this will break the designspace
+            # until the copy has been moved to a new location. 
             self.showMessage(
-                f"You're about to duplicate {dupes} source{plural}.",
-                informativeText = "The designspace will not work until you have moved each source to a new, unique location.")
+                f"Duplicate sources:",
+                informativeText = "The designspace will not work until you move each to a new location.")
             for item in selectedItems:
-                d = item['object'].asdict()
-                #'name': 'temp_master.4'
-                d['name'] += ".copy"
-                d['font'] = item['object'].font
-                print("item['object'].font", item['object'].font)
-                print(d)
-                self.operator.addSourceDescriptor(**d)
-            self.operator.loadFonts(reload=True)
-            self.operator.findDefault()
-            self.operator.changed()
+                data = deepcopy(item['object'].asdict())
+                data['name'] += ".copy"
+                self.operator.addSourceDescriptor(**data)
+            self.operator.sourcesChanged(clearCaches=True)
 
+        # this manages the columns with axis values
         menu = []
         for axisDescriptor in self.operator.axes:
             if axisDescriptor.name == axisName:
