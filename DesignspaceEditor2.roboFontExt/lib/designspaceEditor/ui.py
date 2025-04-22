@@ -1151,7 +1151,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             dict(title="Add Sources as Instances"),
         ]
         self.instances.editorTools = vanilla.SegmentedButton(
-            (72, 5, 400, 22),
+            (72, 5, 200, 22),
             selectionStyle="momentary",
             callback=self.instancesEditorToolsCallback,
             segmentDescriptions=instancesEditorToolsSsegmentDescriptions
@@ -1775,7 +1775,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
         def newInstanceBetweenMultiples(menuItem):
             # make a new instance at the average of all selected instances
-            print("\n\nnewInstanceBetweenMultiples")
+            #print("\n\nnewInstanceBetweenMultiples")
             locations = []
             discreteSpaces = []
             primaryInstance = None
@@ -1803,9 +1803,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             valuesY = {}
             willBeAnisotropic = []
             for l in locations:
-                print("\tlooking at", l)
+                #print("\tlooking at", l)
                 for axisName, axisValue in l.items():
-                    print("\t\txx", axisName, axisValue)
+                    #print("\t\txx", axisName, axisValue)
                     if not axisName in valuesX:
                         valuesX[axisName] = []
                     if not axisName in valuesY:
@@ -1817,14 +1817,14 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                     else:
                         valuesX[axisName].append(axisValue)
                         valuesY[axisName].append(axisValue)
-                print("\t\t-- valuesX", valuesX)
-                print("\t\t-- valuesY", valuesY)
+                #print("\t\t-- valuesX", valuesX)
+                #print("\t\t-- valuesY", valuesY)
             for axisName in valuesX.keys():
                 if axisName in willBeAnisotropic:
                     # axis has anisotropic values
                     xAverage = sum(valuesX[axisName])/len(valuesX[axisName])
                     yAverage = sum(valuesY[axisName])/len(valuesX[axisName])
-                    print("\t= calculating anisotropic", xAverage, yAverage)
+                    #print("\t= calculating anisotropic", xAverage, yAverage)
                     if xAverage != yAverage:
                         averageLocation[axisName] = (xAverage, yAverage)
                     else:
@@ -1832,11 +1832,11 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 else:
                     # axis has flat values
                     xAverage = sum(valuesX[axisName])/len(valuesX[axisName])
-                    print("\t= straight", axisName, xAverage, averageLocation)
+                    #print("\t= straight", axisName, xAverage, averageLocation)
                     averageLocation[axisName] = xAverage
             if wantDiscrete is not None:
                 averageLocation.update(wantDiscrete)
-            print("-- candidate:", averageLocation)
+            #print("-- candidate:", averageLocation)
             newFamilyName = primaryInstance.familyName
             newStyleName = self.operator.locationToDescriptiveString(averageLocation)
             instanceUFOFileName = postScriptNameTransformer(newFamilyName, newStyleName) + ".ufo"
