@@ -1288,7 +1288,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             self.updateColumnHeadersFromAxes()
 
     @property
-    def hasPreplatorSupport(self):    
+    def hasPreplatorSupport(self):
         try:
             import prepolator
             return True
@@ -1636,8 +1636,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     @coalescingDecorator(delay=0.2)
     def rulesEditorCallback(self, sender):
-        rulesParser.storeRules(sender.get(), self.operator)
-        self.setDocumentNeedSave(True, who="Rules")
+        with self.holdChanges:
+            rulesParser.storeRules(sender.get(), self.operator)
+            self.setDocumentNeedSave(True, who="Rules")
 
     # labels
 
@@ -1654,8 +1655,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     @coalescingDecorator(delay=0.2)
     def locationLabelsEditorCallback(self, sender):
-        labelsParser.storeLocationLabels(sender.get(), self.operator)
-        self.setDocumentNeedSave(True, who="LocationLabels")
+        with self.holdChanges:
+            labelsParser.storeLocationLabels(sender.get(), self.operator)
+            self.setDocumentNeedSave(True, who="LocationLabels")
 
     # variable fonts
 
@@ -1682,8 +1684,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     @coalescingDecorator(delay=0.2)
     def variableFontsEditorCallback(self, sender):
-        variableFontsParser.storeVariableFonts(sender.get(), self.operator)
-        self.setDocumentNeedSave(True, who="VariableFonts")
+        with self.holdChanges:
+            variableFontsParser.storeVariableFonts(sender.get(), self.operator)
+            self.setDocumentNeedSave(True, who="VariableFonts")
 
     # problems
 
@@ -1696,8 +1699,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
     # notes
     @coalescingDecorator(delay=0.2)
     def notesEditorCallback(self, sender):
-        self.operator.lib[designspacenotesLibKey] = sender.get()
-        self.setDocumentNeedSave(True, who="Notes")
+        with self.holdChanges:
+            self.operator.lib[designspacenotesLibKey] = sender.get()
+            self.setDocumentNeedSave(True, who="Notes")
 
     def validate(self):
         # validate with the designspaceProblems checker
@@ -2062,7 +2066,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         return True
 
     # toolbar
-    
+
     def toolbarPrepolator(self, sender):
         import prepolator
         if self.operator.sources:
@@ -2271,7 +2275,6 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     @notificationConductor
     def designspaceEditorLocationLabelsDidChange(self, notification):
-        print(self.locationLabels)
         self.locationLabels.editor.set(labelsParser.extractLocationLabels(self.operator))
 
     @notificationConductor
