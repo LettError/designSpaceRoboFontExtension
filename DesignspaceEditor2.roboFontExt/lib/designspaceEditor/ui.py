@@ -1949,8 +1949,8 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             menu.append(dict(title=f"Update Filename{plural}", callback=updateUFOFilenameFromFontNames))
             # menu.append(dict(title="Update PostScript Font Name", callback=updatePostScriptFontNameFromFontNamesCallback))
             menu.append("----")
-            menu.append(dict(title="Convert to User Location", callback=convertInstanceToUserLocation))
-            menu.append(dict(title="Convert to Design Location", callback=convertInstanceToDesignLocation))
+            menu.append(dict(title=f"Convert to User Location{plural}", callback=convertInstanceToUserLocation))
+            menu.append(dict(title=f"Convert to Design Location{plural}", callback=convertInstanceToDesignLocation))
             if len(selectedItems) == 1:
                 menu.append(dict(title="Set as Preview Location", callback=menuSetPreviewToSelectionCallback))
             if len(selectedItems) > 1:
