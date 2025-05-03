@@ -1284,7 +1284,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             self.updateColumnHeadersFromAxes()
 
     @property
-    def hasPreplatorSupport(self):    
+    def hasPreplatorSupport(self):
         try:
             import prepolator
             return True
@@ -1628,8 +1628,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     @coalescingDecorator(delay=0.2)
     def rulesEditorCallback(self, sender):
-        rulesParser.storeRules(sender.get(), self.operator)
-        self.setDocumentNeedSave(True, who="Rules")
+        with self.holdChanges:
+            rulesParser.storeRules(sender.get(), self.operator)
+            self.setDocumentNeedSave(True, who="Rules")
 
     # labels
 
@@ -1646,8 +1647,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     @coalescingDecorator(delay=0.2)
     def locationLabelsEditorCallback(self, sender):
-        labelsParser.storeLocationLabels(sender.get(), self.operator)
-        self.setDocumentNeedSave(True, who="LocationLabels")
+        with self.holdChanges:
+            labelsParser.storeLocationLabels(sender.get(), self.operator)
+            self.setDocumentNeedSave(True, who="LocationLabels")
 
     # variable fonts
 
@@ -1674,8 +1676,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     @coalescingDecorator(delay=0.2)
     def variableFontsEditorCallback(self, sender):
-        variableFontsParser.storeVariableFonts(sender.get(), self.operator)
-        self.setDocumentNeedSave(True, who="VariableFonts")
+        with self.holdChanges:
+            variableFontsParser.storeVariableFonts(sender.get(), self.operator)
+            self.setDocumentNeedSave(True, who="VariableFonts")
 
     # problems
 
@@ -1688,8 +1691,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
     # notes
     @coalescingDecorator(delay=0.2)
     def notesEditorCallback(self, sender):
-        self.operator.lib[designspacenotesLibKey] = sender.get()
-        self.setDocumentNeedSave(True, who="Notes")
+        with self.holdChanges:
+            self.operator.lib[designspacenotesLibKey] = sender.get()
+            self.setDocumentNeedSave(True, who="Notes")
 
     def validate(self):
         # validate with the designspaceProblems checker
@@ -1916,14 +1920,15 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
         if sender.designspaceContent == "sources":
             if selectedItems:
+                plural = "s" if len(selectedItems) > 1 else ""
                 menu.append("----")
                 if item["object"].path and os.path.exists(item["object"].path):
                     menu.append("----")
-                    menu.append(dict(title="Duplicate", callback=duplicateSourceUFO))
-                    menu.append(dict(title="Open UFO", callback=openUFO))
+                    menu.append(dict(title=f"Open UFO{plural}", callback=openUFO))
                     menu.append(dict(title="Reveal in Finder", callback=revealInFinderCallback))
-                if len(selectedItems) == 1:
                     menu.append("----")
+                    menu.append(dict(title="Duplicate", callback=duplicateSourceUFO))
+                if len(selectedItems) == 1:
                     menu.append(dict(title="Replace", callback=replaceUFO))
                 menu.append("----")
                 menu.append(dict(title="Move to Default Location", callback=menuMakeDefaultCallback))
@@ -1933,22 +1938,24 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             #menu.append(dict(title="Force Refresh of All Sources", callback=forceSourcesChangeCallback))
 
         if selectedItems and sender.designspaceContent == "instances":
+            plural = "s" if len(selectedItems) > 1 else ""
             menu.append("----")
-            menu.append(dict(title="Generate UFO", callback=generateUFO))
-            menu.append(dict(title="Open UFO", callback=openUFO))
+            menu.append(dict(title=f"Generate UFO{plural}", callback=generateUFO))
+            menu.append(dict(title=f"Open UFO{plural}", callback=openUFO))
             menu.append(dict(title="Reveal in Finder", callback=revealInFinderCallback))
+            menu.append("----")
             menu.append(dict(title="Duplicate", callback=duplicateInstanceUFO))
             menu.append("----")
-            menu.append(dict(title="Update Filename", callback=updateUFOFilenameFromFontNames))
+            menu.append(dict(title=f"Update Filename{plural}", callback=updateUFOFilenameFromFontNames))
             # menu.append(dict(title="Update PostScript Font Name", callback=updatePostScriptFontNameFromFontNamesCallback))
             menu.append("----")
-            menu.append(dict(title="Convert to User Location", callback=convertInstanceToUserLocation))
-            menu.append(dict(title="Convert to Design Location", callback=convertInstanceToDesignLocation))
+            menu.append(dict(title=f"Convert to User Location{plural}", callback=convertInstanceToUserLocation))
+            menu.append(dict(title=f"Convert to Design Location{plural}", callback=convertInstanceToDesignLocation))
             if len(selectedItems) == 1:
                 menu.append(dict(title="Set as Preview Location", callback=menuSetPreviewToSelectionCallback))
             if len(selectedItems) > 1:
                 menu.append("----")
-                menu.append(dict(title="New Inbetween Location", callback=newInstanceBetweenMultiples))
+                menu.append(dict(title="New In-between Location", callback=newInstanceBetweenMultiples))
         return menu
 
     def convertAxisTo(self, axisDescriptor, destinationClass, **kwargs):
@@ -2129,7 +2136,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         return True
 
     # toolbar
-    
+
     def toolbarPrepolator(self, sender):
         import prepolator
         if self.operator.sources:
@@ -2338,7 +2345,6 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     @notificationConductor
     def designspaceEditorLocationLabelsDidChange(self, notification):
-        print(self.locationLabels)
         self.locationLabels.editor.set(labelsParser.extractLocationLabels(self.operator))
 
     @notificationConductor
