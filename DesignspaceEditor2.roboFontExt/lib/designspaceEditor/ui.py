@@ -1920,14 +1920,15 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
         if sender.designspaceContent == "sources":
             if selectedItems:
+                plural = "s" if len(selectedItems) > 1 else ""
                 menu.append("----")
                 if item["object"].path and os.path.exists(item["object"].path):
                     menu.append("----")
-                    menu.append(dict(title="Duplicate", callback=duplicateSourceUFO))
-                    menu.append(dict(title="Open UFO", callback=openUFO))
+                    menu.append(dict(title=f"Open UFO{plural}", callback=openUFO))
                     menu.append(dict(title="Reveal in Finder", callback=revealInFinderCallback))
-                if len(selectedItems) == 1:
                     menu.append("----")
+                    menu.append(dict(title="Duplicate", callback=duplicateSourceUFO))
+                if len(selectedItems) == 1:
                     menu.append(dict(title="Replace", callback=replaceUFO))
                 menu.append("----")
                 menu.append(dict(title="Move to Default Location", callback=menuMakeDefaultCallback))
@@ -1937,13 +1938,15 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             #menu.append(dict(title="Force Refresh of All Sources", callback=forceSourcesChangeCallback))
 
         if selectedItems and sender.designspaceContent == "instances":
+            plural = "s" if len(selectedItems) > 1 else ""
             menu.append("----")
-            menu.append(dict(title="Generate UFO", callback=generateUFO))
-            menu.append(dict(title="Open UFO", callback=openUFO))
+            menu.append(dict(title=f"Generate UFO{plural}", callback=generateUFO))
+            menu.append(dict(title=f"Open UFO{plural}", callback=openUFO))
             menu.append(dict(title="Reveal in Finder", callback=revealInFinderCallback))
+            menu.append("----")
             menu.append(dict(title="Duplicate", callback=duplicateInstanceUFO))
             menu.append("----")
-            menu.append(dict(title="Update Filename", callback=updateUFOFilenameFromFontNames))
+            menu.append(dict(title=f"Update Filename{plural}", callback=updateUFOFilenameFromFontNames))
             # menu.append(dict(title="Update PostScript Font Name", callback=updatePostScriptFontNameFromFontNamesCallback))
             menu.append("----")
             menu.append(dict(title="Convert to User Location", callback=convertInstanceToUserLocation))
@@ -1952,7 +1955,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 menu.append(dict(title="Set as Preview Location", callback=menuSetPreviewToSelectionCallback))
             if len(selectedItems) > 1:
                 menu.append("----")
-                menu.append(dict(title="New Inbetween Location", callback=newInstanceBetweenMultiples))
+                menu.append(dict(title="New In-between Location", callback=newInstanceBetweenMultiples))
         return menu
 
     def convertAxisTo(self, axisDescriptor, destinationClass, **kwargs):
