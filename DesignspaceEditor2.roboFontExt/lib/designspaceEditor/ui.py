@@ -323,7 +323,7 @@ class GenerateInstanceSheet:
             instanceDescriptor.path = os.path.abspath(os.path.join(os.path.dirname(self.operator.path), filename))
 
         self.instances = instances
-        self.w = vanilla.Sheet((350, 140), parentWindow=parentWindow)
+        self.w = vanilla.Sheet((350, 160), parentWindow=parentWindow)
 
         split = 100
         self.w.mathModelText = vanilla.TextBox((10, 10, split, 22), "Math model:", alignment="right")
@@ -332,6 +332,7 @@ class GenerateInstanceSheet:
 
         self.w.roundCheckBox = vanilla.CheckBox((split + 20, 45, -10, 22), "Round Geometry")
         self.w.mathModelSuffix = vanilla.CheckBox((split + 20, 70, -10, 22), "Add Math Model Suffix")
+        self.w.doKerningCheckBox = vanilla.CheckBox((split + 20, 95, -10, 22), "Ignore Kerning + Groups")
 
         # self.w.instancesRootText = vanilla.TextBox((10, 105, split, 22), "Instances Folder:", alignment="right")
         # self.w.instancesRoot = vanilla.EditText((split + 20, 105 - 2, -10, 22), "foo")
@@ -348,6 +349,7 @@ class GenerateInstanceSheet:
         mathModel = self.w.mathModel.get()
         shouldRound = self.w.roundCheckBox.get()
         addMathModelSuffix = self.w.mathModelSuffix.get()
+        ignoreKerning = self.w.doKerningCheckBox.get()
 
         prereserveuseVarlib = self.operator.useVarlib
         prereserveRoundGeometry = self.operator.roundGeometry
@@ -358,7 +360,10 @@ class GenerateInstanceSheet:
         self.operator.findDefault()
 
         for item in self.instances:
+            preserveDoKerningState = item['object'].kerning
             instanceDescriptor = item["object"]
+            if ignoreKerning:
+                item['object'].kerning = False
             try:
                 font = self.operator.makeInstance(instanceDescriptor)
                 if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
@@ -367,10 +372,11 @@ class GenerateInstanceSheet:
                 if addMathModelSuffix:
                     fileName, ext = os.path.splitext(fontPath)
                     fontPath = f"{fileName}-{('mm', 'varLib')[mathModel]}{ext}"
-
                 font.save(path=fontPath)
             except Exception as e:
                 print(f"Failed to generate instance: {e}")
+            finally:
+                item["object"].kerning = preserveDoKerningState
 
         self.operator.useVarlib = prereserveuseVarlib
         self.operator.roundGeometry = prereserveRoundGeometry
@@ -1082,9 +1088,10 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         )
 
         sourcesEditorToolsSsegmentDescriptions = [
-            dict(title="Add Open UFOs to Designspace"),
+            dict(title="Add Open UFOs"),
             # dict(title="Load Names"),
-            dict(title="Replace UFO"),
+            #dict(title="Replace UFO"),
+            dict(title="Refresh"),
         ]
         self.sources.editorTools = vanilla.SegmentedButton(
             (72, 5, 300, 22),
@@ -1141,25 +1148,14 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         )
 
         instancesEditorToolsSsegmentDescriptions = [
-            dict(title="Duplicate"),
-            dict(title="Add Sources as Instances")
+            dict(title="Add Sources as Instances"),
         ]
         self.instances.editorTools = vanilla.SegmentedButton(
-            (72, 5, 250, 22),
+            (72, 5, 200, 22),
             selectionStyle="momentary",
             callback=self.instancesEditorToolsCallback,
             segmentDescriptions=instancesEditorToolsSsegmentDescriptions
         )
-        instancesEditorGenerateToolsSsegmentDescriptions = [
-            dict(title="Generate Instance"),
-        ]
-        self.instances.generateTools = vanilla.SegmentedButton(
-            (330, 5, 150, 22),
-            selectionStyle="momentary",
-            callback=self.instancesEditorGenerateToolsCallback,
-            segmentDescriptions=instancesEditorGenerateToolsSsegmentDescriptions
-        )
-
         instancesDoubleClickCell = RFDoubleClickCell.alloc().init()
         instancesDoubleClickCell.setDoubleClickCallback_(self.instancesListDoubleClickCallback)
         instancesDoubleClickCell.setImage_(infoImage)
@@ -1396,39 +1392,43 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 if font.path not in existingSourcePaths:
                     self.addSourceFromFont(font)
         elif value == 1:
-            # Replace UFO
-            selection = self.sources.list.getSelection()
-            if len(selection) == 1:
-                index = selection[0]
-                item = self.sources.list[index]
-                sourceDescriptor = item["object"]
+            self.operator.sourcesChanged(clearCaches=True)
 
-                def callback(paths):
-                    if paths:
-                        font = OpenFont(paths[0], showInterface=False)
-                        sourceDescriptor.path = font.path
-                        sourceDescriptor.familyName = font.info.familyName
-                        sourceDescriptor.styleName = font.info.styleName
-                        if self.operator.path is not None:
-                            sourceDescriptor.filename = os.path.relpath(font.path, os.path.dirname(self.operator.path))
-                        else:
-                            sourceDescriptor.filename = font.path
-                        self.operator.fonts[sourceDescriptor.name] = font.asDefcon()
-                        item.update(self.wrapSourceDescriptor(sourceDescriptor))
-                        self.setDocumentNeedSave(True, who="Sources")
+    def replaceSelectedUFO(self):
+        # handle the replacement of the selected UFO in the sources list
+        # Replace UFO
+        selection = self.sources.list.getSelection()
+        if len(selection) == 1:
+            index = selection[0]
+            item = self.sources.list[index]
+            sourceDescriptor = item["object"]
 
-                self.showGetFile(
-                    messageText=f"New UFO for {os.path.basename(sourceDescriptor.path)}",
-                    allowsMultipleSelection=False,
-                    fileTypes=["ufo"],
-                    callback=callback
-                )
-            else:
-                self.showMessage(
-                    messageText="Cannot replace source UFOs",
-                    informativeText="Selection only one source item to be replace"
-                )
+            def callback(paths):
+                if paths:
+                    font = OpenFont(paths[0], showInterface=False)
+                    sourceDescriptor.path = font.path
+                    sourceDescriptor.familyName = font.info.familyName
+                    sourceDescriptor.styleName = font.info.styleName
+                    if self.operator.path is not None:
+                        sourceDescriptor.filename = os.path.relpath(font.path, os.path.dirname(self.operator.path))
+                    else:
+                        sourceDescriptor.filename = font.path
+                    self.operator.fonts[sourceDescriptor.name] = font.asDefcon()
+                    item.update(self.wrapSourceDescriptor(sourceDescriptor))
+                    self.setDocumentNeedSave(True, who="Sources")
 
+            self.showGetFile(
+                messageText=f"New UFO for {os.path.basename(sourceDescriptor.path)}",
+                allowsMultipleSelection=False,
+                fileTypes=["ufo"],
+                callback=callback
+            )
+        else:
+            self.showMessage(
+                messageText="Cannot replace source UFOs",
+                informativeText="Selection only one source item to be replace"
+            )
+        
     def addSourceFromPath(self, path):
         font = OpenFont(path, showInterface=False)
         self.addSourceFromFont(font)
@@ -1464,6 +1464,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             sourceHasMutedGlyphs=dotSymbol if sourceDescriptor.mutedGlyphNames else "",
             object=sourceDescriptor
         )
+        # axis values in the sources panel
         for axis, value in sourceDescriptor.location.items():
             wrapped[f"axis_{axis}"] = value
         return wrapped
@@ -1578,15 +1579,6 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
     def instancesEditorToolsCallback(self, sender):
         value = sender.get()
         if value == 0:
-            # duplicate
-            for index in self.instances.list.getSelection():
-                item = self.instances.list[index]
-                instanceDescriptor = item["object"]
-                self.operator.addInstanceDescriptor(
-                    **deepcopy(instanceDescriptor.asdict())
-                )
-
-        elif value == 1:
             # Add Sources as Instances
             existingLocations = [instanceDescriptor.getFullDesignLocation(self.operator) for instanceDescriptor in self.operator.instances]
             for sourceDescriptor in self.operator.sources:
@@ -1759,6 +1751,9 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
         def forceSourcesChangeCallback(menuItem):
             self.operator.sourcesChanged(clearCaches=True)
+        
+        def replaceUFO(menuItem):
+            self.replaceSelectedUFO()
 
         def sliderCallback(slider):
             item[columnIdentifier] = slider.get()
@@ -1782,34 +1777,82 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             selectedDesignLocation = selectedObject.getFullDesignLocation(self.operator)
             self.operator.setPreviewLocation(selectedDesignLocation)
 
-        def newInstanceBetween(menuItem):
+        def newInstanceBetweenMultiples(menuItem):
             # make a new instance at the average of all selected instances
-            first = selectedItems[0]['object']
-            firstLocation = first.getFullDesignLocation(self.operator)
-            firstContinuous, firstDiscrete = self.operator.splitLocation(firstLocation)
-            second = selectedItems[1]['object']
-            secondLocation = second.getFullDesignLocation(self.operator)
-            secondContinuous, secondDiscrete = self.operator.splitLocation(secondLocation)
-            # make sure both selected instances are in the same discrete space
-            if firstDiscrete != secondDiscrete:
-                self.showMessage("Can't make a new instance:", "Select instances in the same discrete spaces.")
+            #print("\n\nnewInstanceBetweenMultiples")
+            locations = []
+            discreteSpaces = []
+            primaryInstance = None
+            for instance in selectedItems:
+                instanceObject = instance['object']
+                loc = instanceObject.getFullDesignLocation(self.operator)
+                locContinuous, locDiscrete = self.operator.splitLocation(loc)
+                locations.append(locContinuous)
+                if locDiscrete not in discreteSpaces:
+                    discreteSpaces.append(locDiscrete)
+                if primaryInstance is None:
+                    primaryInstance = instanceObject
+            if len(discreteSpaces) > 1:
+                self.showMessage("Can't make a new instance:", "Select instances at the same discrete location.")
                 return
-            location = self.operator.newDefaultLocation(discreteLocation=firstDiscrete)
-            for axisName in firstContinuous.keys():
-                newValue = .5 * (firstContinuous.get(axisName) + secondContinuous.get(axisName))
-                location[axisName] = newValue
-            newFamilyName = first.familyName
-            newStyleName = f"{first.styleName}_{second.styleName}"
-            # postScriptFontName = f"{newFamilyName}-{newStyleName}"
+
+            # could be 1, could be 0
+            if len(discreteSpaces) == 1:
+                wantDiscrete = discreteSpaces[0]
+            else:
+                wantDiscrete = None
+            averageLocation = self.operator.newDefaultLocation(discreteLocation=wantDiscrete)
+            # calculate average of all continuous axes
+            valuesX = {}
+            valuesY = {}
+            willBeAnisotropic = []
+            for l in locations:
+                #print("\tlooking at", l)
+                for axisName, axisValue in l.items():
+                    #print("\t\txx", axisName, axisValue)
+                    if not axisName in valuesX:
+                        valuesX[axisName] = []
+                    if not axisName in valuesY:
+                        valuesY[axisName] = []
+                    if type(axisValue) == tuple:
+                        valuesX[axisName].append(axisValue[0])
+                        valuesY[axisName].append(axisValue[1])
+                        willBeAnisotropic.append(axisName)
+                    else:
+                        valuesX[axisName].append(axisValue)
+                        valuesY[axisName].append(axisValue)
+                #print("\t\t-- valuesX", valuesX)
+                #print("\t\t-- valuesY", valuesY)
+            for axisName in valuesX.keys():
+                if axisName in willBeAnisotropic:
+                    # axis has anisotropic values
+                    xAverage = sum(valuesX[axisName])/len(valuesX[axisName])
+                    yAverage = sum(valuesY[axisName])/len(valuesX[axisName])
+                    #print("\t= calculating anisotropic", xAverage, yAverage)
+                    if xAverage != yAverage:
+                        averageLocation[axisName] = (xAverage, yAverage)
+                    else:
+                        averageLocation[axisName] = xAverage
+                else:
+                    # axis has flat values
+                    xAverage = sum(valuesX[axisName])/len(valuesX[axisName])
+                    #print("\t= straight", axisName, xAverage, averageLocation)
+                    averageLocation[axisName] = xAverage
+            if wantDiscrete is not None:
+                averageLocation.update(wantDiscrete)
+            #print("-- candidate:", averageLocation)
+            newFamilyName = primaryInstance.familyName
+            newStyleName = self.operator.locationToDescriptiveString(averageLocation)
             instanceUFOFileName = postScriptNameTransformer(newFamilyName, newStyleName) + ".ufo"
             self.operator.addInstanceDescriptor(
-                familyName=first.familyName,
+                familyName=newFamilyName,
                 styleName=newStyleName,
-                designLocation=location,
+                designLocation=averageLocation,
                 filename=instanceUFOFileName,
                 # postScriptFontName=postScriptFontName,
             )
-
+            self.instancesChanged()
+                
         def updateUFOFilenameFromFontNames(menuItem):
             for item in selectedItems:
                 instanceDescriptor = item["object"]
@@ -1817,18 +1860,37 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 item.update(self.wrapInstanceDescriptor(instanceDescriptor))
             self.instancesChanged()
 
-        # def updatePostScriptFontNameFromFontNamesCallback(menuItem):
-        #     for item in selectedItems:
-        #         instanceDescriptor = item["object"]
-        #         psName = f"{instanceDescriptor.familyName}-{instanceDescriptor.styleName}"
-        #         psName = psName.replace(" ", "")    # does this need to filter more?
-        #         instanceDescriptor.postScriptFontName = psName
-        #         item.update(self.wrapInstanceDescriptor(instanceDescriptor))
-        #     self.instancesChanged()
-
         def openUFO(menuItem):
             self.openSelectedItem(sender)
+        
+        def generateUFO(menuItem):
+            #print('generateUFO callback', menuItem)
+            self.instancesEditorGenerateToolsCallback(sender=None)
+            
+        def duplicateInstanceUFO(menuItem):
+            # more or less duplicated from instancesEditorToolsCallback
+            #print('duplicateInstanceUFO callback', menuItem)
+            for index in self.instances.list.getSelection():
+                item = self.instances.list[index]
+                instanceDescriptor = item["object"]
+                self.operator.addInstanceDescriptor(
+                    **deepcopy(instanceDescriptor.asdict())
+                )
+        
+        def duplicateSourceUFO(menuItem):
+            # Duplicate the source. Shows a message that this will break the designspace
+            # until the copy has been moved to a new location. 
+            self.showMessage(
+                f"Duplicate sources:",
+                informativeText = "The designspace will not work until you move each to a new location.")
+            for item in selectedItems:
+                data = deepcopy(item['object'].asdict())
+                data['name'] += ".copy"
+                self.operator.addSourceDescriptor(**data)
+            self.operator.sourcesChanged(clearCaches=True)
+            self.setDocumentNeedSave(True, who="Sources")
 
+        # this manages the columns with axis values
         menu = []
         for axisDescriptor in self.operator.axes:
             if axisDescriptor.name == axisName:
@@ -1861,31 +1923,36 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 menu.append("----")
                 if item["object"].path and os.path.exists(item["object"].path):
                     menu.append("----")
-                    menu.append(dict(title="Open Source UFO", callback=openUFO))
-                    menu.append(dict(title="Reveal Source in Finder", callback=revealInFinderCallback))
+                    menu.append(dict(title="Duplicate", callback=duplicateSourceUFO))
+                    menu.append(dict(title="Open UFO", callback=openUFO))
+                    menu.append(dict(title="Reveal in Finder", callback=revealInFinderCallback))
+                if len(selectedItems) == 1:
+                    menu.append("----")
+                    menu.append(dict(title="Replace", callback=replaceUFO))
                 menu.append("----")
                 menu.append(dict(title="Move to Default Location", callback=menuMakeDefaultCallback))
                 if len(selectedItems) == 1:
-                    menu.append(dict(title="Set Preview to Selection", callback=menuSetPreviewToSelectionCallback))
-
-            menu.append("----")
-            menu.append(dict(title="Force Refresh of All Sources", callback=forceSourcesChangeCallback))
+                    menu.append(dict(title="Set as Preview Location", callback=menuSetPreviewToSelectionCallback))
+            #menu.append("----")
+            #menu.append(dict(title="Force Refresh of All Sources", callback=forceSourcesChangeCallback))
 
         if selectedItems and sender.designspaceContent == "instances":
             menu.append("----")
-            menu.append(dict(title="Open Instance UFO", callback=openUFO))
-            menu.append(dict(title="Reveal Instance in Finder", callback=revealInFinderCallback))
+            menu.append(dict(title="Generate UFO", callback=generateUFO))
+            menu.append(dict(title="Open UFO", callback=openUFO))
+            menu.append(dict(title="Reveal in Finder", callback=revealInFinderCallback))
+            menu.append(dict(title="Duplicate", callback=duplicateInstanceUFO))
             menu.append("----")
-            menu.append(dict(title="Update UFO Filename", callback=updateUFOFilenameFromFontNames))
+            menu.append(dict(title="Update Filename", callback=updateUFOFilenameFromFontNames))
             # menu.append(dict(title="Update PostScript Font Name", callback=updatePostScriptFontNameFromFontNamesCallback))
             menu.append("----")
             menu.append(dict(title="Convert to User Location", callback=convertInstanceToUserLocation))
             menu.append(dict(title="Convert to Design Location", callback=convertInstanceToDesignLocation))
             if len(selectedItems) == 1:
-                menu.append(dict(title="Set Preview to Selection", callback=menuSetPreviewToSelectionCallback))
-            if len(selectedItems) == 2:
-                menu.append(dict(title="New instance inbetween", callback=newInstanceBetween))
-
+                menu.append(dict(title="Set as Preview Location", callback=menuSetPreviewToSelectionCallback))
+            if len(selectedItems) > 1:
+                menu.append("----")
+                menu.append(dict(title="New Inbetween Location", callback=newInstanceBetweenMultiples))
         return menu
 
     def convertAxisTo(self, axisDescriptor, destinationClass, **kwargs):
@@ -2286,7 +2353,8 @@ if __name__ == '__main__':
     pathForBundle = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     designspaceBundle = ExtensionBundle(path=pathForBundle)
 
-    path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
+    #path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
+    path = "/Users/erik/code/mutatorSans/MutatorSans.designspace"
     # path = "/Users/frederik/Documents/fontsGit/RoboType/RF.designspace"
-    path = None
+    #path = None
     DesignspaceEditorController(path)
