@@ -1082,9 +1082,10 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         )
 
         sourcesEditorToolsSsegmentDescriptions = [
-            dict(title="Add Open UFOs to Designspace"),
+            dict(title="Open All"),
+            dict(title="Add Open"),
             # dict(title="Load Names"),
-            dict(title="Replace UFO"),
+            dict(title="Replace"),
         ]
         self.sources.editorTools = vanilla.SegmentedButton(
             (72, 5, 300, 22),
@@ -1303,6 +1304,42 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         except ImportError:
             return False
 
+
+    # MENU
+    def glyphEditorWantsContextualMenuItems(self, info):
+        # Build a glypheditor contextual menu for DSE
+        # with all locations in this designspace
+        # Put all the items in a DSE2 > submemu
+        # https://robofont.com/documentation/how-tos/subscriber/custom-font-overview-contextual-menu/
+
+        locationMenuItems = []
+        self.menuItemTextToLocationTable = {}
+        for s in self.operator.sources:
+            locationText = f"Source {os.path.basename(s.path)}"
+            self.menuItemTextToLocationTable[locationText] = s.getFullDesignLocation(self.operator)
+            locationMenuItems.append((locationText, self.changePreviewLocationMenuCallback))
+        locationMenuItems.append("----")
+        for s in self.operator.instances:
+            if s.familyName and s.styleName:
+                locationText = f"Instance {s.familyName} {s.styleName}"
+            else:
+                locationText = f"Instance {self.operator.locationToDescriptiveString(s.location)}"
+            self.menuItemTextToLocationTable[locationText] = s.getFullDesignLocation(self.operator)
+            locationMenuItems.append((locationText, self.changePreviewLocationMenuCallback))
+        # could add axis min / default / max as well        
+        myMenuItems = [
+            ("DSE2 Preview Locations",
+                locationMenuItems,
+            )
+        ]
+        info["itemDescriptions"].extend(myMenuItems)
+    
+    def changePreviewLocationMenuCallback(self, sender):
+        # callback for glypheditor contextual menu for DSE.
+        designLocation = self.menuItemTextToLocationTable.get(sender.title())
+        if designLocation is not None:
+            self.operator.setPreviewLocation(designLocation)
+
     # AXES
 
     def axisToolsCallback(self, sender):
@@ -1390,12 +1427,24 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
     def sourcesEditorToolsCallback(self, sender):
         value = sender.get()
         if value == 0:
+            # Open all the UFOs in this designspace
+            designSpaceSourcePaths = [sourceDescriptor.path for sourceDescriptor in self.operator.sources]
+            currentOpenFontPaths = []
+            for font in AllFonts():
+                currentOpenFontPaths.append(font.path)
+            progress = self.startProgress("Opening Source UFOs…", len(self.operator.sources))
+            for path in designSpaceSourcePaths:
+                if path in currentOpenFontPaths: continue
+                OpenFont(path, showInterface=True)
+                progress.update()
+            progress.close()
+        elif value == 1:
             # Add Open UFOs
             existingSourcePaths = [sourceDescriptor.path for sourceDescriptor in self.operator.sources]
             for font in AllFonts():
                 if font.path not in existingSourcePaths:
                     self.addSourceFromFont(font)
-        elif value == 1:
+        elif value == 2:
             # Replace UFO
             selection = self.sources.list.getSelection()
             if len(selection) == 1:
