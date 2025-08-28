@@ -1314,6 +1314,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
         locationMenuItems = []
         self.menuItemTextToLocationTable = {}
+        designspaceFileName = os.path.basename(self.operator.path)
         for s in self.operator.sources:
             locationText = f"Source {os.path.basename(s.path)}"
             self.menuItemTextToLocationTable[locationText] = s.getFullDesignLocation(self.operator)
@@ -1328,7 +1329,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             locationMenuItems.append((locationText, self.changePreviewLocationMenuCallback))
         # could add axis min / default / max as well        
         myMenuItems = [
-            ("DSE2 Preview Locations",
+            (f"{designspaceFileName} Locations",
                 locationMenuItems,
             )
         ]
@@ -2335,7 +2336,8 @@ if __name__ == '__main__':
     pathForBundle = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     designspaceBundle = ExtensionBundle(path=pathForBundle)
 
-    path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
+    #path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
     # path = "/Users/frederik/Documents/fontsGit/RoboType/RF.designspace"
-    path = None
+    path = "/Users/erik/code/mutatorSans/MutatorSans.designspace"
+    #path = None
     DesignspaceEditorController(path)
