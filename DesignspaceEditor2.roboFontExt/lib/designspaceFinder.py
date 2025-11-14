@@ -3,11 +3,7 @@ from pathlib import Path
 from mojo.extensions import getExtensionDefault
 
 
-try:
-    from designspaceEditor import extensionIdentifier, DesignspaceEditorController
-except ImportError:
-    print("this really needs the DesignspaceEditor extension installed")
-
+from designspaceEditor import extensionIdentifier
 from designspaceEditor.ui import DesignspaceEditorController
 
 # Useful docs
@@ -29,17 +25,20 @@ def sourcePathsFromDesignspace(filename):
     # without building the whole designspace.
     # Check if the ufoPath exists. 
     root = Path(filename).parent
-    et = ET.parse(filename)	
     paths = []
-    ds = et.getroot()
-    sources_element = ds.find('sources')
-    if sources_element is not None:
-        for et in sources_element:
-            p = et.attrib.get('filename')
-            if p:
-                ufoPath = (root / Path(p)).resolve()
-                if ufoPath.exists():
-                    paths.append(ufoPath)
+    try:
+        et = ET.parse(filename)	
+        ds = et.getroot()
+        sources_element = ds.find('sources')
+        if sources_element is not None:
+            for et in sources_element:
+                p = et.attrib.get('filename')
+                if p:
+                    ufoPath = (root / Path(p)).resolve()
+                    if ufoPath.exists():
+                        paths.append(ufoPath)
+    except:
+        print(f"Note: failed to read designspace {filename}. You might want to check that one.")
     return paths
     
 def findNearbyDesignspaces(ufoPath, verbose=False):
