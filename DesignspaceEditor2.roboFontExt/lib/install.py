@@ -82,9 +82,12 @@ def RelevantDesignspaces(usingFont, layerName=None):
 
     optionally provide a `layerName`.
     """
-    layerNames = [layerName]
-    if layerName in None:
+    layerNames = []
+    if layerName is None:
         layerNames.append(usingFont.defaultLayerName)
+    else:
+        layerNames.append(layerName)
+
     relevantDesignspaces = []
     for designspace in AllDesignspaces(usingFont):
         for source in designspace.sources:
