@@ -37,7 +37,7 @@ def sourcePathsFromDesignspace(filename):
         for et in sources_element:
             p = et.attrib.get('filename')
             if p:
-                ufoPath = (root / Path(p)).absolute()
+                ufoPath = (root / Path(p)).resolve()
                 if ufoPath.exists():
                     paths.append(ufoPath)
     return paths
@@ -64,7 +64,8 @@ def findNearbyDesignspaces(ufoPath, verbose=False):
     candidates = []
     for pat in patterns:
         for n in ufoParent.glob(pat + '*.designspace'):
-            ab = Path(n).absolute()
+            print('>>', Path(n), Path(n).resolve())
+            ab = Path(n).resolve()
             if ab not in candidates:
                 candidates.append(ab)
     results = []
