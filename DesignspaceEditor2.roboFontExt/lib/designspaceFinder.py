@@ -107,10 +107,13 @@ if __name__ == "__main__":
     f = CurrentFont()
     if f:
         start = time.time()        
-        nearby = findNearbyDesignspaces(f.path, verbose=True)
         recent = findRecentDesignspaces(f.path, verbose=True)
+        nearby = findNearbyDesignspaces(f.path, verbose=True)
         
-        result = nearby + [d for d in recent if d not in nearby]
+        # nearby results first
+        #result = nearby + [d for d in recent if d not in nearby]
+        # resent results first
+        result = recent + [d for d in nearby if d not in recent]
         
         if len(result) == 1:
             print(f"action: opening 1 result: {result[0]}")
