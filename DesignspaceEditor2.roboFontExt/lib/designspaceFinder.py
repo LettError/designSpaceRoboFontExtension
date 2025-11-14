@@ -120,10 +120,6 @@ if __name__ == "__main__":
             except AttributeError:
                 print('(DSE issue opening the same doc twice)')
                 
-            if doc is not None:
-                for loc, font in doc.fonts:
-                    print(loc, font)
-        
         elif len(result) > 1:
             print(f"action: show dialog for {len(result)} files")
             for p in result:
