@@ -2,7 +2,6 @@ import glob, os, time
 from pathlib import Path
 from mojo.extensions import getExtensionDefault
 
-
 from designspaceEditor import extensionIdentifier
 from designspaceEditor.ui import DesignspaceEditorController
 
@@ -102,35 +101,3 @@ def findRecentDesignspaces(ufoPath, verbose=False):
         print(f"\t\tfound {len(results)} candidates")
     return results
 
-
-
-if __name__ == "__main__":
-    f = CurrentFont()
-    if f:
-        start = time.time()        
-        recent = findRecentDesignspaces(f.path, verbose=True)
-        nearby = findNearbyDesignspaces(f.path, verbose=True)
-        
-        # nearby results first
-        #result = nearby + [d for d in recent if d not in nearby]
-        # resent results first
-        result = recent + [d for d in nearby if d not in recent]
-        
-        if len(result) == 1:
-            print(f"action: opening 1 result: {result[0]}")
-
-            doc = None
-            try:
-                doc = OpenDesignspace(result[0])
-            except AttributeError:
-                print('(DSE issue opening the same doc twice)')
-                
-        elif len(result) > 1:
-            print(f"action: show dialog for {len(result)} files")
-            for p in result:
-                print(f"\t\t{p}")
-
-        else:
-            print("regrets")
-        
-        print(f"(duration {time.time()-start})")
