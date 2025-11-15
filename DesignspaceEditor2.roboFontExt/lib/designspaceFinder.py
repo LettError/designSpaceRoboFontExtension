@@ -11,8 +11,6 @@ from designspaceEditor.ui import DesignspaceEditorController
 
 # This is all VERY ROUGH
 
-recentDocumentPathsKey = f"{extensionIdentifier}.recentDocumentPaths"
-
 # idk if this is necessary, fonttools does it this way. 
 try:
     import xml.etree.cElementTree as ET
@@ -21,30 +19,33 @@ except ImportError:
 
 
 def sourcePathsFromDesignspace(filename):
-    # This usee elementtree to get to the source.filename attribute
-    # without building the whole designspace.
-    # Check if the ufoPath exists. 
-    root = Path(filename).parent
+    '''
+    Check if the ufo path exists in the designspace’s source.
+    This usee elementtree to get to the source.filename attribute
+    without building the whole designspace.
+    '''
     paths = []
-    try:
-        et = ET.parse(filename)	
-        ds = et.getroot()
-        sources_element = ds.find('sources')
-        if sources_element is not None:
-            for et in sources_element:
-                p = et.attrib.get('filename')
-                if p:
-                    ufoPath = (root / Path(p)).resolve()
-                    if ufoPath.exists():
-                        paths.append(ufoPath)
-    except:
-        print(f"Note: failed to read designspace {filename}. You might want to check that one.")
+    if Path(filename).suffix == ".designspace":
+        root = Path(filename).parent
+        try:
+            et = ET.parse(filename)	
+            ds = et.getroot()
+            sources_element = ds.find('sources')
+            if sources_element is not None:
+                for et in sources_element:
+                    p = et.attrib.get('filename')
+                    if p:
+                        ufoPath = (root / p).resolve()
+                        if ufoPath.exists():
+                            paths.append(ufoPath)
+        except:
+            print(f"Note: failed to read designspace {filename}. You might want to check that one.")
     return paths
     
 def findNearbyDesignspaces(ufoPath, verbose=False):
-    # Check nearby directories for designspaces
+    '''Check nearby directories for designspaces'''
     seenCount = 0
-    ufoPath = Path(ufoPath)
+    ufoPath = Path(ufoPath).resolve()
     ufoParent = ufoPath.parent
     deep = len(ufoPath.parents)
     patterns = [
@@ -80,9 +81,10 @@ def findNearbyDesignspaces(ufoPath, verbose=False):
     return results
 
 def findRecentDesignspaces(ufoPath, verbose=False):
-    # Look through the recent documents of the DSE extension.
+    '''Look through the recent documents of the DSE extension.'''
+    recentDocumentPathsKey = f"{extensionIdentifier}.recentDocumentPaths"
     seenCount = 0
-    ufoPath = Path(ufoPath)
+    ufoPath = Path(ufoPath).resolve()
     results = []
     other = []
     missing = []
