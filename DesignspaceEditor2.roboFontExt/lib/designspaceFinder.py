@@ -2,7 +2,6 @@ import glob, os, time
 from pathlib import Path
 from mojo.extensions import getExtensionDefault
 
-
 from designspaceEditor import extensionIdentifier
 from designspaceEditor.ui import DesignspaceEditorController
 
@@ -10,8 +9,6 @@ from designspaceEditor.ui import DesignspaceEditorController
 # https://docs.python.org/3/library/glob.html
 
 # This is all VERY ROUGH
-
-recentDocumentPathsKey = f"{extensionIdentifier}.recentDocumentPaths"
 
 # idk if this is necessary, fonttools does it this way. 
 try:
@@ -21,30 +18,33 @@ except ImportError:
 
 
 def sourcePathsFromDesignspace(filename):
-    # This usee elementtree to get to the source.filename attribute
-    # without building the whole designspace.
-    # Check if the ufoPath exists. 
-    root = Path(filename).parent
+    '''
+    Check if the ufo path exists in the designspace’s source.
+    This usee elementtree to get to the source.filename attribute
+    without building the whole designspace.
+    '''
     paths = []
-    try:
-        et = ET.parse(filename)	
-        ds = et.getroot()
-        sources_element = ds.find('sources')
-        if sources_element is not None:
-            for et in sources_element:
-                p = et.attrib.get('filename')
-                if p:
-                    ufoPath = (root / Path(p)).resolve()
-                    if ufoPath.exists():
-                        paths.append(ufoPath)
-    except:
-        print(f"Note: failed to read designspace {filename}. You might want to check that one.")
+    if Path(filename).suffix == ".designspace":
+        root = Path(filename).parent
+        try:
+            et = ET.parse(filename)	
+            ds = et.getroot()
+            sources_element = ds.find('sources')
+            if sources_element is not None:
+                for et in sources_element:
+                    p = et.attrib.get('filename')
+                    if p:
+                        ufoPath = (root / p).resolve()
+                        if ufoPath.exists():
+                            paths.append(ufoPath)
+        except:
+            print(f"Note: failed to read designspace {filename}. You might want to check that one.")
     return paths
     
 def findNearbyDesignspaces(ufoPath, verbose=False):
-    # Check nearby directories for designspaces
+    '''Check nearby directories for designspaces'''
     seenCount = 0
-    ufoPath = Path(ufoPath)
+    ufoPath = Path(ufoPath).resolve()
     ufoParent = ufoPath.parent
     deep = len(ufoPath.parents)
     patterns = [
@@ -80,9 +80,10 @@ def findNearbyDesignspaces(ufoPath, verbose=False):
     return results
 
 def findRecentDesignspaces(ufoPath, verbose=False):
-    # Look through the recent documents of the DSE extension.
+    '''Look through the recent documents of the DSE extension.'''
+    recentDocumentPathsKey = f"{extensionIdentifier}.recentDocumentPaths"
     seenCount = 0
-    ufoPath = Path(ufoPath)
+    ufoPath = Path(ufoPath).resolve()
     results = []
     other = []
     missing = []
@@ -100,35 +101,3 @@ def findRecentDesignspaces(ufoPath, verbose=False):
         print(f"\t\tfound {len(results)} candidates")
     return results
 
-
-
-if __name__ == "__main__":
-    f = CurrentFont()
-    if f:
-        start = time.time()        
-        recent = findRecentDesignspaces(f.path, verbose=True)
-        nearby = findNearbyDesignspaces(f.path, verbose=True)
-        
-        # nearby results first
-        #result = nearby + [d for d in recent if d not in nearby]
-        # resent results first
-        result = recent + [d for d in nearby if d not in recent]
-        
-        if len(result) == 1:
-            print(f"action: opening 1 result: {result[0]}")
-
-            doc = None
-            try:
-                doc = OpenDesignspace(result[0])
-            except AttributeError:
-                print('(DSE issue opening the same doc twice)')
-                
-        elif len(result) > 1:
-            print(f"action: show dialog for {len(result)} files")
-            for p in result:
-                print(f"\t\t{p}")
-
-        else:
-            print("regrets")
-        
-        print(f"(duration {time.time()-start})")
