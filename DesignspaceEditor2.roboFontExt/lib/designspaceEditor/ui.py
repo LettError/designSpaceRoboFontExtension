@@ -912,6 +912,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
             for controller in AllDesignspaceWindows():
                 if controller.operator.path == path:
                     controller.w.show()
+                    self.operator = controller.operator
                     return
 
         self.holdChanges = HoldChanges()
@@ -1327,14 +1328,14 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
                 locationText = f"Instance {self.operator.locationToDescriptiveString(s.location)}"
             self.menuItemTextToLocationTable[locationText] = s.getFullDesignLocation(self.operator)
             locationMenuItems.append((locationText, self.changePreviewLocationMenuCallback))
-        # could add axis min / default / max as well        
+        # could add axis min / default / max as well
         myMenuItems = [
             (f"{designspaceFileName} Locations",
                 locationMenuItems,
             )
         ]
         info["itemDescriptions"].extend(myMenuItems)
-    
+
     def changePreviewLocationMenuCallback(self, sender):
         # callback for glypheditor contextual menu for DSE.
         designLocation = self.menuItemTextToLocationTable.get(sender.title())
