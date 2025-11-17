@@ -8,7 +8,6 @@ from mojo.events import addObserver
 from mojo.extensions import ExtensionBundle, getExtensionDefault, setExtensionDefault
 from mojo.subscriber import registerSubscriberEvent, Subscriber, registerRoboFontSubscriber, registerCurrentFontSubscriber
 from mojo.UI import GetFile, CurrentFontWindow
-from mojo.roboFont import version
 
 from designspaceEditor.ui import DesignspaceEditorController, DesignspaceEditorOperator
 from designspaceEditor import extensionIdentifier
@@ -26,7 +25,7 @@ if oldBundle.bundleExists():
         "An old version of Designspace edit is still installed. This can cause issues while opening designspace files."
     )
 designspaceBundle = ExtensionBundle("DesignspaceEditor2")
-fontToolbarIconName = "font_toolbar_open_editor" if version < "5" else "font_toolbar_open_editor_5"
+fontToolbarIconName = "font_toolbar_open_editor"
 fontToolbarIcon = designspaceBundle.getResourceImage(fontToolbarIconName)
 
 
@@ -409,15 +408,15 @@ class DesignspaceFontToolbarSubscriber(Subscriber):
         #     self.fw = CurrentFontWindow()
             
         # Create the button and add it to the toolbar
-        new_item = {
+        newItem = {
            'itemIdentifier':  'designspaceEditor',
-           'label':           'Designspace Editor',
+           'label':           'Designspace',
            'toolTip':         'Open Designspace Editor',
            'imageObject':     fontToolbarIcon,
            'imageTemplate':   True,
            'callback':        self.openDesignspaceCallback,
         }
-        info['itemDescriptions'].insert(2, new_item)
+        info['itemDescriptions'].append(newItem)
 
     def openDesignspaceCallback(self, sender):
         def getDesignspaceFile(directory):
@@ -436,7 +435,6 @@ class DesignspaceFontToolbarSubscriber(Subscriber):
             self.fw = CurrentFontWindow()
         # Right now, we need to get the font on button press, but we should consider only grabbing the font object once on the subscriber firing?
         self.f = self.fw._font
-        print("Button pressed!", self.f)
         if self.f.path:
             recent = designspaceFinder.findRecentDesignspaces(self.f.path, verbose=True)
             nearby = designspaceFinder.findNearbyDesignspaces(self.f.path, verbose=True)
