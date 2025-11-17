@@ -411,7 +411,7 @@ class DesignspaceFontToolbarSubscriber(Subscriber):
         newItem = {
            'itemIdentifier':  'designspaceEditor',
            'label':           'Designspace',
-           'toolTip':         'Open Designspace Editor',
+           'toolTip':         'Designspace Editor',
            'imageObject':     fontToolbarIcon,
            'imageTemplate':   True,
            'callback':        self.openDesignspaceCallback,
