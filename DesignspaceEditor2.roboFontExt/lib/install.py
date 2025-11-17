@@ -358,9 +358,11 @@ class NoDesignspaceFoundSheetController(ezui.WindowController):
         if paths:
             for path in paths:
                 OpenDesignspace(path)
+        self.w.close()
             
     def newDesignspaceButtonCallback(self, sender):
         NewDesignspace()
+        self.w.close()
 
 
 
@@ -378,7 +380,7 @@ class MultipleDesignspacesFoundSheetController(ezui.WindowController):
         
         ---
         
-        !!!!!! Multiple relevant designspaces were found. Which would you like to open? @label2
+        !!!!!! More than one designspace was found. Which would you like to open? @label2
         
         |-files----|            @fileTable
         |          |
@@ -411,7 +413,7 @@ class MultipleDesignspacesFoundSheetController(ezui.WindowController):
                         identifier="path",
                         title="Designspaces",
                         cellClassArguments=dict(
-                            showFullPath=True
+                            showFullPath=False
                         )
                     )
                 ]
@@ -422,9 +424,7 @@ class MultipleDesignspacesFoundSheetController(ezui.WindowController):
         )
         self.w = ezui.EZSheet(
             content=content,
-            size=(280, 250),
-            minSize=(290, 200),
-            maxSize=(290, 600),
+            size=(270, 250),
             descriptionData=descriptionData,
             parent=window,
             controller=self,
@@ -447,6 +447,7 @@ class MultipleDesignspacesFoundSheetController(ezui.WindowController):
         
     def fileTableDoubleClickCallback(self, sender):
         self.openSelectedTableItems()
+        self.w.close()
         
     def fileTableSelectionCallback(self, sender):
         sel = sender.getSelectedItems()
@@ -487,11 +488,11 @@ class DesignspaceFontToolbarSubscriber(Subscriber):
         # toolbar = sender.toolbar()
         # window = toolbar._window()  # Gets a DoodleNSWindow, not a DoodleFontWindow :(
         # # We have to assume the button being clicked is on the active window
-        self.fw = CurrentFontWindow()
-        self.f = self.fw._font
-        if self.f is not None and self.f.path is not None:
-            recent = designspaceFinder.findRecentDesignspaces(self.f.path, verbose=True)
-            nearby = designspaceFinder.findNearbyDesignspaces(self.f.path, verbose=True)
+        fw = CurrentFontWindow()
+        f = fw._font
+        if f is not None and f.path is not None:
+            recent = designspaceFinder.findRecentDesignspaces(f.path, verbose=False)
+            nearby = designspaceFinder.findNearbyDesignspaces(f.path, verbose=False)
             
             # nearby results first
             #results = nearby + [d for d in recent if d not in nearby]
@@ -499,21 +500,18 @@ class DesignspaceFontToolbarSubscriber(Subscriber):
             results = recent + [d for d in nearby if d not in recent]
             
             if len(results) == 1:
-                print(f"action: opening 1 result: {results[0]}")
                 doc = None
                 try:
                     doc = OpenDesignspace(results[0])
                 except AttributeError:
                     print('(DSE issue opening the same doc twice)')
+                    pass
             elif len(results) > 1:
-                print(f"action: show dialog for {len(results)} files")
-                MultipleDesignspacesFoundSheetController(self.fw, results)
-                for p in results:
-                    print(f"\t\t{p}")
+                MultipleDesignspacesFoundSheetController(fw, results)
             else:
-                NoDesignspaceFoundSheetController(self.fw)
+                NoDesignspaceFoundSheetController(fw)
         else:
-            NoDesignspaceFoundSheetController(self.fw)
+            NoDesignspaceFoundSheetController(fw)
 
 
 
