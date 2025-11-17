@@ -8,7 +8,6 @@ from mojo.events import addObserver
 from mojo.extensions import ExtensionBundle, getExtensionDefault, setExtensionDefault
 from mojo.subscriber import registerSubscriberEvent, Subscriber, registerRoboFontSubscriber, registerCurrentFontSubscriber
 from mojo.UI import GetFile, CurrentFontWindow
-from mojo.roboFont import version
 
 from designspaceEditor.ui import DesignspaceEditorController, DesignspaceEditorOperator
 from designspaceEditor import extensionIdentifier
@@ -26,7 +25,7 @@ if oldBundle.bundleExists():
         "An old version of Designspace edit is still installed. This can cause issues while opening designspace files."
     )
 designspaceBundle = ExtensionBundle("DesignspaceEditor2")
-fontToolbarIconName = "font_toolbar_open_editor" if version < "5" else "font_toolbar_open_editor_5"
+fontToolbarIconName = "font_toolbar_open_editor"
 fontToolbarIcon = designspaceBundle.getResourceImage(fontToolbarIconName)
 
 
@@ -289,6 +288,82 @@ class DesignspaceMenuSubscriber(Subscriber):
         self.storeRecentDesignspacePaths()
 
 
+
+class NoDesignspaceFoundSheetController(ezui.WindowController):
+    
+    '''
+    A sheet that opens atop at Font Overview when there are 
+    no designspaces to be found.
+    '''
+
+    def build(self, parent):
+        window = parent.w
+        self.directory = os.path.dirname(parent._font.path) if parent._font.path else None
+        content = """
+        !!!!! Open Designspace Editor  @label1
+        
+        ---
+        
+        !!!!!! No designspaces were found. What would you like to do? @label2
+        
+        (Open Designspace…)     @openDesignspaceButton
+        (New Designspace)       @newDesignspaceButton
+        
+        ===
+        
+        (Cancel)                @cancelButton
+        """
+        descriptionData = dict(
+            label1=dict(
+                width="fill",
+                alignment="center",
+            ),
+            label2=dict(
+                width="fill",
+                alignment="center",
+            ),
+            openDesignspaceButton=dict(
+                width="fill",
+            ),
+            newDesignspaceButton=dict(
+                width="fill",
+            ),
+            cancelButton=dict(
+                keyEquivalent=chr(27),
+                width="fill",
+            ),
+        )
+        self.w = ezui.EZSheet(
+            content=content,
+            size=(210, "auto"),
+            descriptionData=descriptionData,
+            parent=window,
+            controller=self,
+            defaultButton="openDesignspaceButton",
+        )
+        
+    def started(self):
+        self.w.open()
+        
+    def cancelButtonCallback(self, sender):
+        self.w.close()
+        
+    def openDesignspaceButtonCallback(self, sender):
+        paths = GetFile(
+            message="Select designspace file(s)",
+            directory=self.directory,
+            allowsMultipleSelection=True,
+            fileTypes=["designspace"]
+        )
+        if paths:
+            for path in paths:
+                OpenDesignspace(path)
+            
+    def newDesignspaceButtonCallback(self, sender):
+        NewDesignspace()
+
+
+
 class MultipleDesignspacesFoundSheetController(ezui.WindowController):
     
     '''
@@ -303,7 +378,7 @@ class MultipleDesignspacesFoundSheetController(ezui.WindowController):
         
         ---
         
-        !!!!!! Multiple relevant designspaces were found. Please choose which to open. @label2
+        !!!!!! Multiple relevant designspaces were found. Which would you like to open? @label2
         
         |-files----|            @fileTable
         |          |
@@ -347,7 +422,7 @@ class MultipleDesignspacesFoundSheetController(ezui.WindowController):
         )
         self.w = ezui.EZSheet(
             content=content,
-            size=(290, 250),
+            size=(280, 250),
             minSize=(290, 200),
             maxSize=(290, 600),
             descriptionData=descriptionData,
@@ -395,49 +470,26 @@ class DesignspaceFontToolbarSubscriber(Subscriber):
     '''
         
     def fontDocumentWantsToolbarItems(self, info):
-        # Attempt to get the font document window
-        # Currently working around a RF bug (build 2510131211) wherein 
-        # the fontDocumentWantsToolbarItems method doesn’t return a 
-        # font object, even if it exists.
-        # Bug link: https://discord.com/channels/1052516637489766411/1055056019098710027/1439393188040278137
-        self.f = info['font']
-        self.fw = None
-        if self.f is not None:
-            self.fw = self.f.fontWindow()
-        # else:
-        #     # This could be problematic, so we need the bug fixed. The new font document could request a toolbar before the font window becomes "current"
-        #     self.fw = CurrentFontWindow()
-            
         # Create the button and add it to the toolbar
-        new_item = {
+        newItem = {
            'itemIdentifier':  'designspaceEditor',
-           'label':           'Designspace Editor',
-           'toolTip':         'Open Designspace Editor',
+           'label':           'Designspace',
+           'toolTip':         'Designspace Editor',
            'imageObject':     fontToolbarIcon,
            'imageTemplate':   True,
            'callback':        self.openDesignspaceCallback,
         }
-        info['itemDescriptions'].insert(2, new_item)
+        info['itemDescriptions'].insert(-1, newItem)
 
     def openDesignspaceCallback(self, sender):
-        def getDesignspaceFile(directory):
-            # Simple GetFile instead of sheet
-            paths = GetFile(
-                message="Select one or multiple designspace files",
-                directory=directory,
-                allowsMultipleSelection=True,
-                fileTypes=["designspace"]
-            )
-            if paths:
-                for path in paths:
-                    OpenDesignspace(path)
-        # Fix this logic once bug is fixed. This is best case scenario right now all things considered
-        if self.fw is None:
-            self.fw = CurrentFontWindow()
-        # Right now, we need to get the font on button press, but we should consider only grabbing the font object once on the subscriber firing?
+        # # CurrentFontSubscriber has only one instance per app session, 
+        # # so we need to get the window and font dynamically.
+        # toolbar = sender.toolbar()
+        # window = toolbar._window()  # Gets a DoodleNSWindow, not a DoodleFontWindow :(
+        # # We have to assume the button being clicked is on the active window
+        self.fw = CurrentFontWindow()
         self.f = self.fw._font
-        print("Button pressed!", self.f)
-        if self.f.path:
+        if self.f is not None and self.f.path is not None:
             recent = designspaceFinder.findRecentDesignspaces(self.f.path, verbose=True)
             nearby = designspaceFinder.findNearbyDesignspaces(self.f.path, verbose=True)
             
@@ -459,12 +511,9 @@ class DesignspaceFontToolbarSubscriber(Subscriber):
                 for p in results:
                     print(f"\t\t{p}")
             else:
-                directory = os.path.dirname(self.f.path) if self.f.path else None
-                getDesignspaceFile(directory)
+                NoDesignspaceFoundSheetController(self.fw)
         else:
-            ## What should happen here?
-            # getDesignspaceFile(None)
-            NewDesignspace()
+            NoDesignspaceFoundSheetController(self.fw)
 
 
 
