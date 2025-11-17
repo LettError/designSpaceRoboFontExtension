@@ -449,6 +449,7 @@ class MultipleDesignspacesFoundSheetController(ezui.WindowController):
         
     def fileTableDoubleClickCallback(self, sender):
         self.openSelectedTableItems()
+        self.w.close()
         
     def fileTableSelectionCallback(self, sender):
         sel = sender.getSelectedItems()
