@@ -16,7 +16,7 @@
 
 
 <p>Create and edit designspaces with RoboFont 4.5+, with support for scripting and notifications.
-    <br>By TypeMyType and LettError.
+    <br>By TypeMyType, LettError, Ryan Bugden
 </p>
 
 <h3 id="toc">Contents</h3>
@@ -32,6 +32,7 @@
     <li><a href="#variable-fonts">Variable Fonts Tab</a></li>
     <li><a href="#problems">Problems Tab</a></li>
     <li><a href="#notes">Notes Tab</a></li>
+    <li><a href="#ufo-toolbar-designspace-finder">Designspace Finder in font toolbar</a></li>
     <li><a href="#location-preview-window">Preview Window</a></li>
     <li><a href="#designspace-scripting">Scripting with the current designspace</a></li>
     <li><a href="#ufooperator-methods">Useful methods of the UFOOperator</a></li>
@@ -59,6 +60,7 @@
 <li>DSE2 collects and sends designspace-related notifications about changes to the designspace, and also changes in the source font data. Other tools in RF can request interpolated glyphs, kerning and font info at specific locations, using MutatorMath as well as Varlib interpolation models. </li>
 <li>You can experiment with <b>extrapolation</b> and <b>anisotropic interpolations</b> and see previews for such exotic things. <b>Even if these are not supported as Variable fonts, you can export them as UFO.</b></li>
 <li>You can write scripts that use the current designspace.</li>
+<li>Convenient <b>Designspace button</b> in the font window’s toolbar to search for the designspaces it belongs to.</li>
 </ul>
 
 
@@ -450,6 +452,9 @@ Quick buttons for easy axes. Obviously you can edit these values here.
     </tr>
 </table>
 
+
+
+
 <h3>Localised Family Name editor syntax</h3>
 
 <div><pre><code class="language-none"># localised name starts with a ? &lt;language tag&gt; &lt;localised string&gt;
@@ -457,12 +462,19 @@ Quick buttons for easy axes. Obviously you can edit these values here.
 ? ja &#39;モンセラート&#39;</code></pre>
 </div>
 
+
+
 <h3>Muted Glyph editor syntax</h3>
 
 <div><pre><code class="language-none"># a space separated list of glyph names
 a b c d</code></pre>
 </div>
 
+<h3 id="note-on-muted-names">Note on Muted Glyphs</h3>
+
+For each source you can <b>mute</b> specific glyphs. The muted glyph, from that source, will not be included in the calculations.
+
+Glyphnames in the UFO lib <b>public.skipExportGlyphs</b>
 
 <h3 id="note-on-support-layers">Notes on the Layer Name column and support layers</h3>
 
@@ -471,7 +483,7 @@ In the DSE Sources Tab, the <b>Layer Name</b> column can point to an optional la
 The idea is that you can add a source only for that specific glyph at a very specific point in the designspace. Check out <a href="https://github.com/LettError/mutatorSans">Mutator Sans</a> for some examples of a Support Layer.
 
 <ul>
-    <li>Skateboard calls this construction a <b>Support Layer</b></li>
+    <li>UFO tools have referred to this construction as a <b>Support Layer</b></li>
     <li>FontTools / FontMake calls this construction a <b>Sparse Master</b></li>
     <li>Glyphs calls this construction a <b>Brace Layer</b></li>
 </ul>
@@ -808,6 +820,18 @@ This uses <a
 <p>This tab is for your notes and are stored in the Designspace. This can be any kind of note or remark. Notes are not processed in any way.</p>
 
 
+
+<h2 id="ufo-toolbar-designspace-finder">Designspace Finder in font toolbar<a href="#toc">↑</a></h3>
+
+<p>
+    DSE adds a <b>Designspace</b> icon to the font toolbar. Clicking it invokes the <b>Designspace Finder</b>. This looks for .designspace files in folders nearby the UFO: <b>in the same folder as the UFO, one and two folders up</b>, and in the list of recent designspaces. Designspace Finder then checks if the current font is mentioned. If it finds exactly one candidate, a new designspace window is opened. If it finds two or more designspaces, a dialog is shown and you can choose.
+</p>
+<p>
+    Note: If you place your designspace in an exotic location, it will still show up in the "Recent" files after you open it using the <b>Open Designspace…</b> menu.
+</p>
+
+
+
 <h2 id="location-preview-window">Preview Window<a href="#toc">↑</a></h3>
 
 <p>
@@ -958,10 +982,10 @@ print(d.axes)
 </code>
 
 <p>
-    In general: <code>d.useVarlib=True</code> will appply the fonttools.varlib model interpolations. <code>d.useVarlib=False</code> will use the mutatorMath model for interpolations. The Varlib model is very close to how Variable Fonts work. MutatorMath is a bit more flexible: it can do anisotropic interpolation and it is much more flexible with incomplete sets of sources. Both models can extrapolate now, though their results might not be the same if there are unaligned, off-axis masters in the system.</p>
+    In general: <code>d.useVarlib=True</code> will apply the fonttools.varlib model interpolations. <code>d.useVarlib=False</code> will use the mutatorMath model for interpolations. The Varlib model is very close to how Variable Fonts work. MutatorMath is a bit more flexible: it can do anisotropic interpolation and it is much more flexible with incomplete sets of sources. Both models can extrapolate now, though their results might not be the same if there are unaligned, off-axis masters in the system.</p>
 
 <p>
-    UFOOperator will assume locations are in <b>designspace coordinates</b>. You can use the `bend` argument to indicate that a location has to be mapped from user coordinates to design coordinates. The competing coordinate systems can be a bit confusing, especially if you use userLocations in the instances. Often the axis mappings are added much later than the instances, so there will be a moment when you have to carefully look at where the instances are. The DSE has a menu for converting between <b>User coordinates</b> to <b>Design coordinates</b>. So, before you assume the code is getting the wrong results, check your axis mappings and locations, and make sure you are passing the right type to UFOOperator. If you're sure the location is in designspace coordinates, leave `bend=False`.
+    UFOOperator will assume locations are in <b>designspace coordinates</b>. You can use the `bend` argument to indicate that a location has to be mapped from user coordinates to design coordinates. The competing coordinate systems can be a bit confusing, especially if you use userLocations in the instances. Often the axis mappings are added much later than the instances, so there will be a moment when you have to carefully look at where the instances are and which values you want them to have. The DSE has a menu for converting between <b>User coordinates</b> to <b>Design coordinates</b>. So, before you assume the code is getting the wrong results, check your axis mappings and locations, and make sure you are passing the right kind of value to UFOOperator. If you're sure the location is in designspace coordinates, leave `bend=False`.
 </p>
 
 <p>

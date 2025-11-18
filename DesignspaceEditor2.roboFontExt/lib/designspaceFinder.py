@@ -1,14 +1,8 @@
 import glob, os, time
 from pathlib import Path
 from mojo.extensions import getExtensionDefault
-
 from designspaceEditor import extensionIdentifier
-from designspaceEditor.ui import DesignspaceEditorController
 
-# Useful docs
-# https://docs.python.org/3/library/glob.html
-
-# This is all VERY ROUGH
 
 # idk if this is necessary, fonttools does it this way. 
 try:
@@ -17,10 +11,10 @@ except ImportError:
     import xml.etree.ElementTree as ET
 
 
-def sourcePathsFromDesignspace(filename):
+def sourcePathsFromDesignspace(filename, verbose=False):
     '''
     Check if the ufo path exists in the designspace’s source.
-    This usee elementtree to get to the source.filename attribute
+    This uses elementtree to get to the source.filename attribute
     without building the whole designspace.
     '''
     paths = []
@@ -38,7 +32,8 @@ def sourcePathsFromDesignspace(filename):
                         if ufoPath.exists():
                             paths.append(ufoPath)
         except:
-            print(f"Note: failed to read designspace {filename}. You might want to check that one.")
+            if verbose:
+                print(f"Note: failed to read designspace {filename}. You might want to check that one.")
     return paths
     
 def findNearbyDesignspaces(ufoPath, verbose=False):
@@ -63,20 +58,19 @@ def findNearbyDesignspaces(ufoPath, verbose=False):
     candidates = []
     for pat in patterns:
         for n in ufoParent.glob(pat + '*.designspace'):
-            print('>>', Path(n), Path(n).resolve())
             ab = Path(n).resolve()
             if ab not in candidates:
                 candidates.append(ab)
     results = []
     for s in candidates:
         seenCount += 1
-        sourcePaths = sourcePathsFromDesignspace(s)
+        sourcePaths = sourcePathsFromDesignspace(s, verbose=verbose)
         if ufoPath in sourcePaths:
             if s not in results:
                 results.append(str(s))
     if verbose:
         print(f"\tlooked at {seenCount} nearby files")
-        print(f"\t\tfound {len(results)} candidates")
+        print(f"\t\tfound {len(results)} candidate(s)")
     return results
 
 def findRecentDesignspaces(ufoPath, verbose=False):
@@ -93,11 +87,11 @@ def findRecentDesignspaces(ufoPath, verbose=False):
             missing.append(docPath)
             continue
         seenCount += 1
-        sourcePaths = sourcePathsFromDesignspace(docPath)
+        sourcePaths = sourcePathsFromDesignspace(docPath, verbose=verbose)
         if ufoPath in sourcePaths:
             results.append(str(docPath))
     if verbose:
         print(f"\tlooked at {seenCount} recent files")
-        print(f"\t\tfound {len(results)} candidates")
+        print(f"\t\tfound {len(results)} candidate(s)")
     return results
 
