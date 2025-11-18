@@ -1,7 +1,8 @@
 
 try:
     import install
-except ImportError:
+except ImportError as e:
+    print(e)
     # fails cause of the old version is alreayd installed
     from mojo.UI import dontShowAgainMessage
 

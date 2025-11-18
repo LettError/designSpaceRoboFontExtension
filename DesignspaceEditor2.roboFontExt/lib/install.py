@@ -6,8 +6,8 @@ import AppKit
 from mojo.tools import CallbackWrapper
 from mojo.events import addObserver
 from mojo.extensions import ExtensionBundle, getExtensionDefault, setExtensionDefault
-from mojo.subscriber import registerSubscriberEvent, Subscriber, registerRoboFontSubscriber, registerCurrentFontSubscriber
-from mojo.UI import GetFile, CurrentFontWindow
+from mojo.subscriber import registerSubscriberEvent, Subscriber, registerRoboFontSubscriber
+from mojo.UI import GetFile
 
 from designspaceEditor.ui import DesignspaceEditorController, DesignspaceEditorOperator
 from designspaceEditor import extensionIdentifier
@@ -288,29 +288,27 @@ class DesignspaceMenuSubscriber(Subscriber):
         self.storeRecentDesignspacePaths()
 
 
-
 class NoDesignspaceFoundSheetController(ezui.WindowController):
-    
+
     '''
-    A sheet that opens atop at Font Overview when there are 
+    A sheet that opens atop at Font Overview when there are
     no designspaces to be found.
     '''
 
-    def build(self, parent):
-        window = parent.w
-        self.directory = os.path.dirname(parent._font.path) if parent._font.path else None
+    def build(self, window, font):
+        self.directory = os.path.dirname(font.path) if font.path else None
         content = """
         !!!!! Open Designspace Editor  @label1
-        
+
         ---
-        
+
         !!!!!! No designspaces were found. What would you like to do? @label2
-        
+
         (Open Designspace…)     @openDesignspaceButton
         (New Designspace)       @newDesignspaceButton
-        
+
         ===
-        
+
         (Cancel)                @cancelButton
         """
         descriptionData = dict(
@@ -341,13 +339,13 @@ class NoDesignspaceFoundSheetController(ezui.WindowController):
             controller=self,
             defaultButton="openDesignspaceButton",
         )
-        
+
     def started(self):
         self.w.open()
-        
+
     def cancelButtonCallback(self, sender):
         self.w.close()
-        
+
     def openDesignspaceButtonCallback(self, sender):
         paths = GetFile(
             message="Select designspace file(s)",
@@ -359,35 +357,33 @@ class NoDesignspaceFoundSheetController(ezui.WindowController):
             for path in paths:
                 OpenDesignspace(path)
         self.w.close()
-            
+
     def newDesignspaceButtonCallback(self, sender):
         NewDesignspace()
         self.w.close()
 
 
-
 class MultipleDesignspacesFoundSheetController(ezui.WindowController):
-    
+
     '''
-    A sheet that opens atop at Font Overview when there are 
+    A sheet that opens atop at Font Overview when there are
     multiple designspaces found and the user has to pick one.
     '''
 
-    def build(self, parent, dsPaths):
-        window = parent.w
+    def build(self, window, dsPaths):
         content = """
         !!!!! Open Designspace Editor  @label1
-        
+
         ---
-        
+
         !!!!!! More than one designspace was found. Which would you like to open? @label2
-        
+
         |-files----|            @fileTable
         |          |
         |----------|
-        
+
         ===
-        
+
         (Cancel)                @cancelButton
         (Open)                  @openButton
         """
@@ -405,7 +401,7 @@ class MultipleDesignspacesFoundSheetController(ezui.WindowController):
                 height='fill',
                 itemType="dict",
                 showColumnTitles=False,
-                items=[{"path": path} for path in dsPaths], 
+                items=[{"path": path} for path in dsPaths],
                 allowsDropBetweenRows=False,
                 allowsInternalDropReordering=False,
                 columnDescriptions=[
@@ -434,21 +430,21 @@ class MultipleDesignspacesFoundSheetController(ezui.WindowController):
         table = self.w.getItem("fileTable")
         table.setSelectedIndexes([0])
         self.fileTableSelectionCallback(table)
-        
+
     def started(self):
         self.w.open()
-        
+
     def openButtonCallback(self, sender):
         self.openSelectedTableItems()
         self.w.close()
-        
+
     def cancelButtonCallback(self, sender):
         self.w.close()
-        
+
     def fileTableDoubleClickCallback(self, sender):
         self.openSelectedTableItems()
         self.w.close()
-        
+
     def fileTableSelectionCallback(self, sender):
         sel = sender.getSelectedItems()
         openButton = self.w.getItem("openButton")
@@ -456,7 +452,7 @@ class MultipleDesignspacesFoundSheetController(ezui.WindowController):
             openButton.enable(True)
         else:
             openButton.enable(False)
-    
+
     def openSelectedTableItems(self):
         table = self.w.getItem("fileTable")
         paths = [path_dict["path"] for path_dict in table.getSelectedItems()]
@@ -464,59 +460,55 @@ class MultipleDesignspacesFoundSheetController(ezui.WindowController):
             OpenDesignspace(path)
 
 
-
 class DesignspaceFontToolbarSubscriber(Subscriber):
     '''
     Adds a button for opening relevant designspaces into the font toolbar.
     '''
-        
+
     def fontDocumentWantsToolbarItems(self, info):
         # Create the button and add it to the toolbar
         newItem = {
-           'itemIdentifier':  'designspaceEditor',
-           'label':           'Designspace',
-           'toolTip':         'Designspace Editor',
-           'imageObject':     fontToolbarIcon,
-           'imageTemplate':   True,
-           'callback':        self.openDesignspaceCallback,
+            'itemIdentifier':  'designspaceEditor',
+            'label':           'Designspace',
+            'toolTip':         'Designspace Editor',
+            'imageObject':     fontToolbarIcon,
+            'imageTemplate':   True,
+            'callback':        self.openDesignspaceCallback,
         }
         info['itemDescriptions'].insert(-1, newItem)
 
     def openDesignspaceCallback(self, sender):
-        # # CurrentFontSubscriber has only one instance per app session, 
-        # # so we need to get the window and font dynamically.
-        # toolbar = sender.toolbar()
-        # window = toolbar._window()  # Gets a DoodleNSWindow, not a DoodleFontWindow :(
-        # # We have to assume the button being clicked is on the active window
-        fw = CurrentFontWindow()
-        f = fw._font
-        if f is not None and f.path is not None:
-            recent = designspaceFinder.findRecentDesignspaces(f.path, verbose=False)
-            nearby = designspaceFinder.findNearbyDesignspaces(f.path, verbose=False)
-            
+        # CurrentFontSubscriber has only one instance per app session,
+        # so we need to get the window and font dynamically.
+        try:
+            document = sender.toolbar()._window().document()
+        except Exception as e:
+            # something is really wrong if a toolbar has no window
+            print(e)
+            return
+        font = document.getFont()
+        fontWindow = document.getMainWindow()
+        if font is not None and font.path is not None:
+            recent = designspaceFinder.findRecentDesignspaces(font.path, verbose=False)
+            nearby = designspaceFinder.findNearbyDesignspaces(font.path, verbose=False)
+
             # nearby results first
-            #results = nearby + [d for d in recent if d not in nearby]
+            # results = nearby + [d for d in recent if d not in nearby]
             # resent results first
             results = recent + [d for d in nearby if d not in recent]
-            
+
             if len(results) == 1:
-                doc = None
                 try:
-                    doc = OpenDesignspace(results[0])
+                    OpenDesignspace(results[0])
                 except AttributeError:
                     print('(DSE issue opening the same doc twice)')
                     pass
             elif len(results) > 1:
-                MultipleDesignspacesFoundSheetController(fw, results)
+                MultipleDesignspacesFoundSheetController(fontWindow, results)
             else:
-                NoDesignspaceFoundSheetController(fw)
+                NoDesignspaceFoundSheetController(fontWindow, font)
         else:
-            NoDesignspaceFoundSheetController(fw)
-
-
-
-
-
+            NoDesignspaceFoundSheetController(fontWindow, font)
 
 
 # register subscriber events
@@ -651,4 +643,4 @@ for event in designspaceEvents:
     )
 
 registerRoboFontSubscriber(DesignspaceMenuSubscriber)
-registerCurrentFontSubscriber(DesignspaceFontToolbarSubscriber)
+registerRoboFontSubscriber(DesignspaceFontToolbarSubscriber)
