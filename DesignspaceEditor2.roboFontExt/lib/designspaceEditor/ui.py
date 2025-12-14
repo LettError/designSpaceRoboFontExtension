@@ -1307,6 +1307,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
 
     # MENU
+
     def glyphEditorWantsContextualMenuItems(self, info):
         # Build a glypheditor contextual menu for DSE
         # with all locations in this designspace
@@ -1315,24 +1316,25 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
         locationMenuItems = []
         self.menuItemTextToLocationTable = {}
-        designspaceFileName = os.path.basename(self.operator.path)
-        for s in self.operator.sources:
-            locationText = f"Source {os.path.basename(s.path)}"
-            self.menuItemTextToLocationTable[locationText] = s.getFullDesignLocation(self.operator)
+        if self.operator.path:
+            designspaceFileName = os.path.basename(self.operator.path)
+        else:
+            designspaceFileName = "Designspace"
+        for source in self.operator.sources:
+            locationText = f"Source {os.path.basename(source.path)}"
+            self.menuItemTextToLocationTable[locationText] = source.getFullDesignLocation(self.operator)
             locationMenuItems.append((locationText, self.changePreviewLocationMenuCallback))
         locationMenuItems.append("----")
-        for s in self.operator.instances:
-            if s.familyName and s.styleName:
-                locationText = f"Instance {s.familyName} {s.styleName}"
+        for instance in self.operator.instances:
+            if instance.familyName and instance.styleName:
+                locationText = f"Instance {instance.familyName} {instance.styleName}"
             else:
-                locationText = f"Instance {self.operator.locationToDescriptiveString(s.location)}"
-            self.menuItemTextToLocationTable[locationText] = s.getFullDesignLocation(self.operator)
+                locationText = f"Instance {self.operator.locationToDescriptiveString(instance.location)}"
+            self.menuItemTextToLocationTable[locationText] = instance.getFullDesignLocation(self.operator)
             locationMenuItems.append((locationText, self.changePreviewLocationMenuCallback))
         # could add axis min / default / max as well
         myMenuItems = [
-            (f"{designspaceFileName} Locations",
-                locationMenuItems,
-            )
+            (f"{designspaceFileName} Locations", locationMenuItems)
         ]
         info["itemDescriptions"].extend(myMenuItems)
 
