@@ -199,7 +199,10 @@ class NumberListFormatter(AppKit.NSFormatter):
         def formatNumber(value):
             if value == "":
                 return ""
-            value = float(value)
+            try:
+                value = float(value)
+            except Exception:
+                return ""
             if value.is_integer():
                 return f"{int(value)}"
             else:
