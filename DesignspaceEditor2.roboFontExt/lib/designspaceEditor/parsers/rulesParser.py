@@ -18,10 +18,10 @@
 import re
 from fontTools import designspaceLib
 
-from .parserTools import getBlocks, getLines, stringToNumber, numberToString
+from parserTools import getBlocks, getLines, stringToNumber, numberToString
 
 substitionRE = re.compile(r"([a-zA-Z0-9\.\*\+\-\:\^\|\~_]+)\s+\>\s+([a-zA-Z0-9\.\*\+\-\:\^\|\~_]+)")
-conditionsRE = re.compile(r"([a-zA-Z]+)\s+([0-9\.]+)-([0-9\.]+)")
+conditionsRE = re.compile(r"([a-zA-Z0-9\.\*\+\-\:\^\|\~_]+)\s+(-?[0-9\.]+)-(-?[0-9\.]+)")
 
 
 rulesLibKey = "com.letterror.designspaceEditor.rules.text"
@@ -110,12 +110,16 @@ ruleName
 
     weight 800-1000 opsz 200-250
     width 100-300
+    test_1_2_3 -100--50
 """
     result = parseRules(expected, designspaceLib.RuleDescriptor)
     assert len(result) == 1
     descriptor = result[0]
     assert descriptor.name == "ruleName"
     assert descriptor.subs == [("a", "a.alt"), ("agrave", "agrave.alt"), ("b", "b.alt")]
+    assert descriptor.conditionSets[0] == [{'name': 'weight', 'minimum': 800, 'maximum': 1000}, {'name': 'opsz', 'minimum': 200, 'maximum': 250}]
+    assert descriptor.conditionSets[1] == [{'name': 'width', 'minimum': 100, 'maximum': 300}]
+    assert descriptor.conditionSets[2] == [{'name': 'test_1_2_3', 'minimum': -100, 'maximum': -50}]
 
 
 def test_Rules():
