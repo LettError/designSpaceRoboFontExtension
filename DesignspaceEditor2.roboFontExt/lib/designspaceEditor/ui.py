@@ -1492,6 +1492,12 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         else:
             filename = font.path
 
+        # get location information for width and weight from the OS2 info
+        if "width" in defaultLocation and font.info.openTypeOS2WidthClass is not None:
+            defaultLocation["width"] = font.info.openTypeOS2WidthClass * 100
+        if "weight" in defaultLocation and font.info.openTypeOS2WeightClass is not None:
+            defaultLocation["weight"] = font.info.openTypeOS2WeightClass
+
         sourceDescriptor = self.operator.addSourceDescriptor(
             path=font.path,
             filename=filename,
@@ -2332,5 +2338,5 @@ if __name__ == '__main__':
     #path = "/Users/frederik/Documents/dev/letterror/mutatorSans/MutatorSans.designspace"
     # path = "/Users/frederik/Documents/fontsGit/RoboType/RF.designspace"
     path = "/Users/erik/code/mutatorSans/MutatorSans.designspace"
-    #path = None
+    path = None
     DesignspaceEditorController(path)
