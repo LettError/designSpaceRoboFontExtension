@@ -1305,7 +1305,6 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
         except ImportError:
             return False
 
-
     # MENU
 
     def glyphEditorWantsContextualMenuItems(self, info):
@@ -2287,12 +2286,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     @notificationConductor
     def designspaceEditorSourcesDidChange(self, notification):
-        if len(self.operator.sources) == len(self.sources.list):
-            for item, sourceDescriptor in zip(self.sources.list, self.operator.sources):
-                item.update(self.wrapSourceDescriptor(sourceDescriptor))
-        else:
-            self.sources.list.set([self.wrapSourceDescriptor(sourceDescriptor) for sourceDescriptor in self.operator.instances])
-
+        self.sources.list.set([self.wrapSourceDescriptor(sourceDescriptor) for sourceDescriptor in self.operator.sources])
         self.updateColumnHeadersFromAxes()
 
     # instances notifications
@@ -2316,11 +2310,7 @@ class DesignspaceEditorController(Subscriber, WindowController, BaseNotification
 
     @notificationConductor
     def designspaceEditorInstancesDidChange(self, notification):
-        if len(self.operator.instances) == len(self.instances.list):
-            for item, instanceDescriptor in zip(self.instances.list, self.operator.instances):
-                item.update(self.wrapInstanceDescriptor(instanceDescriptor))
-        else:
-            self.instances.list.set([self.wrapInstanceDescriptor(instanceDescriptor) for instanceDescriptor in self.operator.instances])
+        self.instances.list.set([self.wrapInstanceDescriptor(instanceDescriptor) for instanceDescriptor in self.operator.instances])
 
     @notificationConductor
     def designspaceEditorRulesDidChange(self, notification):
