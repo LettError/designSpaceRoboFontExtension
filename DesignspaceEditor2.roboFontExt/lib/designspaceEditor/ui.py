@@ -364,11 +364,12 @@ class GenerateInstanceSheet:
                 if not os.path.exists(os.path.dirname(instanceDescriptor.path)):
                     os.makedirs(os.path.dirname(instanceDescriptor.path))
                 fontPath = instanceDescriptor.path
+                fileName, ext = os.path.splitext(fontPath)
                 if addMathModelSuffix:
-                    fileName, ext = os.path.splitext(fontPath)
                     fontPath = f"{fileName}-{('mm', 'varLib')[mathModel]}{ext}"
 
-                font.save(path=fontPath)
+                struct = "zip" if ext == ".ufoz" else None
+                font.save(path=fontPath, structure=struct)
             except Exception as e:
                 print(f"Failed to generate instance: {e}")
 
